@@ -2886,39 +2886,66 @@ const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
             if(footerLabel) footerLabel.textContent = selectedSubject === 'General' ? 'Daily Goal' : `${selectedSubject} Goal`;
         }
 
+
 function createTaskElementHTML(t, isSubTask = false) {
-    // COLORFUL BUBBLE DESIGN
-    let wrapperClass = "liquid-card group flex items-center justify-between p-4 mb-3 transition-all duration-300 border-l-4 ";
+    // Linear-style List Item: Clean, minimal, focus on typography and spacing
+    let wrapperClass = "group flex items-center justify-between p-3.5 rounded-xl transition-all duration-200 border border-transparent ";
     
-    // Dynamic Border Colors
-    if (t.type === 'main') wrapperClass += "border-l-violet-500 bg-white dark:bg-slate-900";
-    else if (t.type === 'backlog') wrapperClass += "border-l-orange-500 bg-white dark:bg-slate-900";
-    else wrapperClass += "border-l-slate-300 bg-white dark:bg-slate-900";
+    // Subtler Hover States
+    if (t.type === 'main') {
+        wrapperClass += "bg-white dark:bg-[#151e2e] border-slate-100 dark:border-white/5 hover:border-brand-300 dark:hover:border-brand-500/30 hover:shadow-md hover:shadow-brand-500/5 mb-2";
+    } else if (t.type === 'backlog') {
+        wrapperClass += "bg-white dark:bg-[#151e2e] border-slate-100 dark:border-white/5 hover:border-orange-300 dark:hover:border-orange-500/30 hover:shadow-md hover:shadow-orange-500/5 mb-2";
+    } else {
+        wrapperClass += "bg-white dark:bg-[#151e2e] border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 mb-2";
+    }
 
-    if (t.completed) wrapperClass += " opacity-60 grayscale scale-[0.98]";
+    if(isSubTask) {
+        wrapperClass = "flex items-center justify-between p-2 pl-4 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors mb-1 border-l-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600";
+    }
 
-    const safeText = escapeHtml(t.text);
+    if (t.completed) {
+        wrapperClass += " opacity-50 grayscale bg-transparent border-transparent dark:bg-transparent shadow-none";
+    }
+
+    // Refined Tags
+    let typeColorClass = t.type === 'main' 
+        ? 'text-brand-600 bg-brand-50 dark:bg-brand-500/20 dark:text-brand-300' 
+        : (t.type === 'backlog' ? 'text-orange-600 bg-orange-50 dark:bg-orange-500/20 dark:text-orange-300' : 'text-slate-500 bg-slate-100 dark:bg-white/10 dark:text-slate-300');
+    
+    let subjectColor = getSubjectColor(t.subject).replace('bg-', 'bg-opacity-50 bg-'); 
+
+    let displayText = t.text;
+    if(isSubTask && t.chapter) {
+            const prefix = `Study: ${t.chapter} - `;
+            if(displayText.startsWith(prefix)) displayText = displayText.substring(prefix.length);
+    }
+    const safeText = escapeHtml(displayText);
 
     return `
         <div class="${wrapperClass}">
-            <div class="flex items-center gap-4 cursor-pointer flex-1" onclick="toggleTask('${t.id}'); if(!${t.completed}) confetti({particleCount: 50, spread: 40, origin: { y: 0.6 }});">
-                <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${t.completed ? 'bg-green-500 border-green-500' : 'border-slate-300 dark:border-slate-600 group-hover:scale-110'}">
-                    <i data-lucide="check" class="w-4 h-4 text-white transition-transform ${t.completed ? 'scale-100' : 'scale-0'}"></i>
+            <div class="flex items-center gap-4 overflow-hidden cursor-pointer flex-1" onclick="toggleTask('${t.id}')">
+                <div class="w-5 h-5 rounded-[6px] border-2 flex-shrink-0 flex items-center justify-center transition-all duration-300 ${t.completed ? 'bg-brand-500 border-brand-500' : 'border-slate-300 dark:border-slate-600 hover:border-brand-400 dark:hover:border-brand-400 group-hover:scale-105'}">
+                    <i data-lucide="check" class="w-3.5 h-3.5 text-white transform ${t.completed ? 'scale-100' : 'scale-0'} transition-transform duration-200"></i>
                 </div>
                 
-                <div class="flex-1">
-                    <span class="text-base font-bold text-slate-800 dark:text-white ${t.completed ? 'line-through decoration-2 decoration-slate-300' : ''}">${safeText}</span>
-                    ${!isSubTask ? `<div class="flex gap-2 mt-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">${t.subject}</span></div>` : ''}
+                <div class="flex flex-col min-w-0">
+                    <span class="truncate text-[14px] font-medium ${t.completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}">${safeText}</span>
+                    
+                    ${!isSubTask ? `
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${subjectColor}">${t.subject}</span>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${typeColorClass}">${t.type === 'main' ? 'Exam' : (t.type === 'backlog' ? 'Backlog' : 'Task')}</span>
+                    </div>` : ''}
                 </div>
             </div>
             
-            <button onclick="deleteTask('${t.id}')" class="text-slate-300 hover:text-red-500 p-2 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100">
-                <i data-lucide="trash-2" class="w-5 h-5"></i>
+            <button onclick="deleteTask('${t.id}')" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 p-2 rounded-lg transition-all transform hover:scale-110" aria-label="Delete">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
         </div>
     `;
-} 
-
+}
 
 function renderTasks() {
             const list = document.getElementById('overview-task-list');
