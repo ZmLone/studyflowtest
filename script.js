@@ -181,30 +181,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
             initLocalMode();
         };
 
-        // --- DARK MODE LOGIC ---
-        window.toggleTheme = function() {
-            const html = document.documentElement;
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-                document.getElementById('theme-text').textContent = 'Light Mode';
-            } else {
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-                document.getElementById('theme-text').textContent = 'Dark Mode';
-            }
-        };
-
-        // Initialize Theme (Default to Dark)
-        if (localStorage.theme === 'light') {
-            document.documentElement.classList.remove('dark');
-            document.getElementById('theme-text').textContent = 'Light Mode';
-        } else {
-            // Default path
-            document.documentElement.classList.add('dark');
-            document.getElementById('theme-text').textContent = 'Dark Mode';
-        }
-
+        
         // --- DATA ---
 const mainSchedule = [
    // --- CURRENT ACTIVE TARGET: AIATS-4 (JAN 18) ---
@@ -1038,7 +1015,7 @@ window.updateProfileUI = function(user) {
         const avatarText = document.getElementById(`${prefix}-user-avatar-text`);
         const nameEl = document.getElementById(`${prefix}-user-name`);
         const statusEl = document.getElementById(`${prefix}-sync-status`);
-        const btn = document.getElementById(`${prefix}-auth-btn`);
+        const btn = document.getElementById(`${prefix}-auth-btn`); // Might be missing in new UI
 
         if(!card) return;
 
@@ -1046,20 +1023,23 @@ window.updateProfileUI = function(user) {
             card.className = `flex items-center gap-3 px-3 py-3 rounded-2xl border transition-all cursor-pointer ${currentStyle.cardBorder}`;
         }
         
-        avatarBg.className = `flex items-center justify-center font-bold shadow-sm transition-colors ${prefix === 'mobile' ? 'w-10 h-10 rounded-full text-sm' : 'w-9 h-9 rounded-xl text-xs'} ${currentStyle.avatarBg}`;
-        avatarText.textContent = isGuest ? "?" : initial;
-        nameEl.textContent = name;
+        if(avatarBg) avatarBg.className = `flex items-center justify-center font-bold shadow-sm transition-colors ${prefix === 'mobile' ? 'w-10 h-10 rounded-full text-sm' : 'w-10 h-10 rounded-full'} ${currentStyle.avatarBg}`;
+        if(avatarText) avatarText.textContent = isGuest ? "?" : initial;
+        if(nameEl) nameEl.textContent = name;
         
-        statusEl.innerHTML = isGuest 
-            ? `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> <span class="text-slate-500 dark:text-slate-400">Local Only</span>`
+        if(statusEl) statusEl.innerHTML = isGuest 
+            ? `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> <span class="text-slate-500 dark:text-slate-400">Local</span>`
             : `<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> <span class="text-green-600 dark:text-green-400">Synced</span>`;
 
-        btn.innerHTML = `<i data-lucide="${currentStyle.icon}" class="${prefix === 'mobile' ? 'w-5 h-5' : 'w-4 h-4'}"></i>`;
-        
-        if(isGuest) {
-            btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-all`;
-        } else {
-            btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all`;
+        // SAFE CHECK: Only update button if it exists in the HTML
+        if (btn) {
+            btn.innerHTML = `<i data-lucide="${currentStyle.icon}" class="${prefix === 'mobile' ? 'w-5 h-5' : 'w-4 h-4'}"></i>`;
+            
+            if(isGuest) {
+                btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-all`;
+            } else {
+                btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all`;
+            }
         }
     };
 
