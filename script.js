@@ -2906,70 +2906,39 @@ const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
             if(footerLabel) footerLabel.textContent = selectedSubject === 'General' ? 'Daily Goal' : `${selectedSubject} Goal`;
         }
 
- function createTaskElementHTML(t, isSubTask = false) {
-            // Updated Styles for "Pill" look
-            let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
-            
-            if (t.type === 'main') {
-                wrapperClass += "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-md dark:hover:shadow-none hover:shadow-brand-500/5";
-            } else if (t.type === 'backlog') {
-                wrapperClass += "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md hover:shadow-orange-500/5";
-            } else {
-                wrapperClass += "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm";
-            }
+function createTaskElementHTML(t, isSubTask = false) {
+    // COLORFUL BUBBLE DESIGN
+    let wrapperClass = "liquid-card group flex items-center justify-between p-4 mb-3 transition-all duration-300 border-l-4 ";
+    
+    // Dynamic Border Colors
+    if (t.type === 'main') wrapperClass += "border-l-violet-500 bg-white dark:bg-slate-900";
+    else if (t.type === 'backlog') wrapperClass += "border-l-orange-500 bg-white dark:bg-slate-900";
+    else wrapperClass += "border-l-slate-300 bg-white dark:bg-slate-900";
 
-            // Subtasks (inside groups) get a slightly different look
-            if(isSubTask) {
-                wrapperClass = "flex items-center justify-between p-2.5 pl-4 rounded-xl border border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all mb-1";
-            }
+    if (t.completed) wrapperClass += " opacity-60 grayscale scale-[0.98]";
 
-            // Completed State
-            if (t.completed) {
-                wrapperClass += " opacity-60 grayscale";
-            }
+    const safeText = escapeHtml(t.text);
 
-            // Tags
-            let typeColorClass = t.type === 'main' 
-                ? 'text-brand-600 bg-brand-50 dark:bg-brand-900/20 dark:text-brand-300' 
-                : (t.type === 'backlog' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-300' : 'text-slate-500 bg-slate-100 dark:bg-slate-800');
-            
-            let subjectColor = getSubjectColor(t.subject).replace('bg-', 'bg-opacity-50 bg-'); // Make lighter
-
-            let displayText = t.text;
-            if(isSubTask && t.chapter) {
-                 const prefix = `Study: ${t.chapter} - `;
-                 if(displayText.startsWith(prefix)) displayText = displayText.substring(prefix.length);
-            }
-
-            // Safe HTML escape to match your security standards
-            const safeText = escapeHtml(displayText);
-
-            return `
-                <div class="${wrapperClass}">
-                    ${t.completed ? '<div class="absolute inset-0 bg-slate-100/50 dark:bg-black/50 z-0 pointer-events-none"></div>' : ''}
-                    
-                    <div class="flex items-center gap-4 overflow-hidden cursor-pointer flex-1 relative z-10" onclick="toggleTask('${t.id}')">
-                        <div class="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-300 ${t.completed ? 'bg-green-500 border-green-500 scale-110' : 'border-slate-300 dark:border-slate-600 hover:border-brand-400'}">
-                            <i data-lucide="check" class="w-3.5 h-3.5 text-white transform ${t.completed ? 'scale-100' : 'scale-0'} transition-transform duration-200"></i>
-                        </div>
-                        
-                        <div class="flex flex-col min-w-0">
-                            <span class="truncate text-sm font-semibold ${t.completed ? 'text-slate-400 line-through decoration-2 decoration-slate-300' : 'text-slate-800 dark:text-slate-200'}">${safeText}</span>
-                            
-                            ${!isSubTask ? `
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${subjectColor}">${t.subject}</span>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColorClass}">${t.type === 'main' ? 'Exam Prep' : (t.type === 'backlog' ? 'Backlog' : 'Task')}</span>
-                            </div>` : ''}
-                        </div>
-                    </div>
-                    
-                    <button onclick="deleteTask('${t.id}')" class="relative z-10 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-all" aria-label="Delete Task">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+    return `
+        <div class="${wrapperClass}">
+            <div class="flex items-center gap-4 cursor-pointer flex-1" onclick="toggleTask('${t.id}'); if(!${t.completed}) confetti({particleCount: 50, spread: 40, origin: { y: 0.6 }});">
+                <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${t.completed ? 'bg-green-500 border-green-500' : 'border-slate-300 dark:border-slate-600 group-hover:scale-110'}">
+                    <i data-lucide="check" class="w-4 h-4 text-white transition-transform ${t.completed ? 'scale-100' : 'scale-0'}"></i>
                 </div>
-            `;
-        }       
+                
+                <div class="flex-1">
+                    <span class="text-base font-bold text-slate-800 dark:text-white ${t.completed ? 'line-through decoration-2 decoration-slate-300' : ''}">${safeText}</span>
+                    ${!isSubTask ? `<div class="flex gap-2 mt-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">${t.subject}</span></div>` : ''}
+                </div>
+            </div>
+            
+            <button onclick="deleteTask('${t.id}')" class="text-slate-300 hover:text-red-500 p-2 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+            </button>
+        </div>
+    `;
+} 
+
 
 function renderTasks() {
             const list = document.getElementById('overview-task-list');
@@ -3397,3 +3366,37 @@ setTimeout(() => {
         modal.classList.add('hidden');
     }, 300); 
 };
+
+// LIQUID SCROLL PHYSICS
+let lastScrollTop = 0;
+const scrollContainer = document.getElementById('scroll-container');
+
+if(scrollContainer) {
+    scrollContainer.addEventListener('scroll', () => {
+        const st = scrollContainer.scrollTop;
+        const cards = document.querySelectorAll('.liquid-card');
+        
+        // Determine direction
+        if (st > lastScrollTop) {
+            // Scrolling Down -> Tilt Down
+            cards.forEach(card => {
+                card.style.transform = 'perspective(1000px) rotateX(2deg) scale(0.98)';
+            });
+        } else {
+            // Scrolling Up -> Tilt Up
+            cards.forEach(card => {
+                card.style.transform = 'perspective(1000px) rotateX(-2deg) scale(0.98)';
+            });
+        }
+        
+        // Reset after stopping
+        clearTimeout(scrollContainer.scrollTimeout);
+        scrollContainer.scrollTimeout = setTimeout(() => {
+            cards.forEach(card => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) scale(1)';
+            });
+        }, 150);
+
+        lastScrollTop = st <= 0 ? 0 : st;
+    }, false);
+}
