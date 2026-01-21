@@ -181,29 +181,30 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
             initLocalMode();
         };
 
-        // --- DARK MODE LOGIC ---
+// --- DARK MODE LOGIC (FIXED) ---
         window.toggleTheme = function() {
             const html = document.documentElement;
             if (html.classList.contains('dark')) {
                 html.classList.remove('dark');
                 localStorage.setItem('theme', 'light');
-                document.getElementById('theme-text').textContent = 'Light Mode';
+                // Removed: document.getElementById('theme-text').textContent = 'Light Mode';
             } else {
                 html.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
-                document.getElementById('theme-text').textContent = 'Dark Mode';
+                // Removed: document.getElementById('theme-text').textContent = 'Dark Mode';
             }
         };
 
         // Initialize Theme (Default to Dark)
         if (localStorage.theme === 'light') {
             document.documentElement.classList.remove('dark');
-            document.getElementById('theme-text').textContent = 'Light Mode';
+            // Removed: document.getElementById('theme-text').textContent = 'Light Mode';
         } else {
-            // Default path
             document.documentElement.classList.add('dark');
-            document.getElementById('theme-text').textContent = 'Dark Mode';
+            // Removed: document.getElementById('theme-text').textContent = 'Dark Mode';
         }
+
+
 
         // --- DATA ---
 const mainSchedule = [
