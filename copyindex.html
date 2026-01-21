@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyFlow - Master Your Prep</title>
+    
+    <!-- Performance Optimization: Preconnect & DNS Prefetch -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://www.gstatic.com">
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Defer non-critical scripts to unblock rendering -->
+ <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>   
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Enable manual dark mode toggle
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e', 950: '#082f49' },
+                        backlog: { 50: '#fff7ed', 100: '#ffedd5', 500: '#f97316', 600: '#ea580c' },
+                        // Custom dark mode palette adjustments
+                        dark: {
+                            bg: '#020617', // Slate 950
+                            card: '#0f172a', // Slate 900
+                            border: '#1e293b' // Slate 800
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        // Inline script to prevent FOUC (Flash of Unstyled Content) and default to DARK
+        if (localStorage.theme === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 h-screen flex overflow-hidden selection:bg-brand-100 selection:text-brand-900 dark:selection:bg-brand-900 dark:selection:text-brand-100 menu-closed" id="app-body">
+
+    <div id="global-error" class="hidden fixed inset-0 z-[100] bg-white flex items-center justify-center p-8">
+        <div class="max-w-md text-center">
+            <h2 class="text-xl font-bold text-red-600 mb-2">Something went wrong</h2>
+            <p id="global-error-msg" class="text-sm text-slate-600 mb-4">Please refresh the page.</p>
+            <button onclick="location.reload()" class="px-4 py-2 bg-slate-100 rounded-lg text-sm font-bold">Reload</button>
+        </div>
+    </div>
+    
+    
+
+<div id="auth-modal" class="fixed inset-0 z-[60] bg-slate-500/30 dark:bg-black/40 backdrop-blur-xl flex items-center justify-center hidden transition-opacity duration-300">
+        
+        <div class="bg-white/80 dark:bg-[#1c1c1e]/90 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 w-full max-w-[400px] mx-4 relative border border-white/20 dark:border-white/5 ring-1 ring-black/5">
+            
+            <div class="mb-8 text-center flex flex-col items-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center text-white mb-6">
+                    <i data-lucide="layers" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome Back</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">Sign in to sync your progress</p>
+            </div>
+
+            <form id="auth-form" class="space-y-4">
+                <div class="space-y-4">
+                    <div class="relative group">
+                        <input type="email" id="auth-email" required 
+                            class="w-full bg-slate-100 dark:bg-[#2c2c2e] border-0 rounded-xl px-4 py-4 text-[15px] font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500/50 transition-all outline-none" 
+                            placeholder="Email address">
+                    </div>
+                    
+                    <div class="relative group">
+                        <input type="password" id="auth-pass" required 
+                            class="w-full bg-slate-100 dark:bg-[#2c2c2e] border-0 rounded-xl px-4 py-4 text-[15px] font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500/50 transition-all outline-none" 
+                            placeholder="Password">
+                    </div>
+                </div>
+                
+                <div id="auth-error" class="hidden text-red-500 text-xs font-semibold bg-red-50 dark:bg-red-500/10 p-3 rounded-xl flex items-center gap-2 animate-in slide-in-from-top-1">
+                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                    <span id="auth-error-msg">Error message</span>
+                </div>
+
+                <div class="pt-2">
+                    <button type="button" onclick="handleAuth('login')" 
+                        class="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-full text-[15px] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-slate-500/20 dark:shadow-none transition-all duration-200 flex justify-center items-center gap-2">
+                        <span id="auth-btn-text">Sign In</span>
+                        <div id="auth-loader" class="loader hidden border-white/30 border-t-white dark:border-black/30 dark:border-t-black"></div>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 pt-1 text-center">
+                    <button type="button" onclick="handleAuth('signup')" class="text-brand-600 dark:text-brand-400 text-sm font-semibold hover:opacity-80 transition-opacity">
+                        Create new account
+                    </button>
+                </div>
+            </form>
+            
+            <div class="my-6 border-t border-slate-200 dark:border-white/10"></div>
+            
+            <div class="text-center">
+                <button onclick="startDemoMode()" class="text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                    Use offline mode (Local only)
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="toggleMobileMenu()"></div>
+    <div id="mobile-sidebar" class="fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 z-50 flex flex-col shadow-2xl md:hidden transform -translate-x-full">
+        <div class="p-6 pb-2">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3 text-brand-600 dark:text-brand-500">
+                    <div class="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-xl">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-slate-900 dark:text-white">StudyFlow</span>
+                </div>
+                <button onclick="toggleMobileMenu()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" aria-label="Close menu">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+
+
+
+<button onclick="switchView('overview')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5" data-view="overview">
+    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+    Overview
+</button>
+
+<button onclick="switchView('target')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5" data-view="target">
+    <i data-lucide="crosshair" class="w-5 h-5 text-blue-500 fill-blue-500/20"></i>
+    Next Target
+</button>
+
+<button onclick="switchView('backlog')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5" data-view="backlog">
+    <i data-lucide="history" class="w-5 h-5 text-orange-500 fill-orange-500/20"></i>
+    Backlog Plan
+</button>
+
+<button onclick="switchView('mistakes')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5" data-view="mistakes">
+    <i data-lucide="book" class="w-5 h-5 text-rose-500 fill-rose-500/20"></i>
+    Mistake Notebook
+</button>
+
+<button onclick="switchView('leaderboard')" id="nav-leaderboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5" data-view="leaderboard">
+    <i data-lucide="medal" class="w-5 h-5 text-amber-500 fill-amber-500/20"></i>
+    Leaderboard
+</button>  
+<button onclick="switchView('planner')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5" data-view="planner">
+    <i data-lucide="calendar-range" class="w-5 h-5 text-indigo-500 fill-indigo-500/20"></i>
+    Day Planner
+</button>  
+<button onclick="switchView('namaz')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5" data-view="namaz">
+    <i data-lucide="book-heart" class="w-5 h-5 text-emerald-500 fill-emerald-500/20"></i>
+    Spiritual Insights
+</button>
+
+        </div>
+<div class="mt-auto p-6 border-t border-slate-100 dark:border-slate-800 space-y-3 bg-white dark:bg-slate-900">
+
+    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 mb-2">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-bold text-slate-400 uppercase">Daily Goal</span>
+            <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="mobile-sidebar-progress-text">0%</span>
+        </div>
+        <div class="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div id="mobile-sidebar-progress-bar" class="h-full w-0 transition-all duration-500 bg-brand-500"></div>
+        </div>
+    </div>
+    <button onclick="openProfileModal(); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all group">
+           
+        <i data-lucide="user-circle" class="w-5 h-5 group-hover:text-brand-500 transition-colors"></i>
+        Profile Settings
+    </button>
+
+    <div id="mobile-user-card" onclick="handleProfileClick()" class="flex items-center gap-3 px-3 py-3 rounded-2xl border border-transparent transition-all cursor-pointer">
+        <div id="mobile-user-avatar-bg" class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-sm transition-colors">
+            <span id="mobile-user-avatar-text">?</span>
+        </div>
+
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold truncate transition-colors" id="mobile-user-name">Guest</p>
+            <div class="flex items-center gap-1.5">
+                <div id="mobile-status-dot" class="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" id="mobile-sync-status">Local Only</p>
+            </div>
+        </div>
+
+        <button id="mobile-auth-btn" onclick="handleAuthAction(event)" class="p-2 rounded-xl transition-all">
+            <i data-lucide="log-in" class="w-5 h-5"></i>
+        </button>
+    </div>
+</div>        </div>  </div>
+    </div>
+
+  <nav class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col flex-shrink-0 hidden md:flex z-20 transition-colors duration-300">
+        <div class="p-6 pb-2">
+            <div class="flex items-center gap-3 text-brand-600 dark:text-brand-400 mb-8">
+                <div class="p-2 bg-brand-50 dark:bg-slate-800 rounded-xl">
+                    <i data-lucide="layers" class="w-6 h-6"></i>
+                </div>
+                <span class="font-bold text-xl tracking-tight text-slate-900 dark:text-white">StudyFlow</span>
+            </div>
+
+            <div class="space-y-1">
+                <button onclick="switchView('overview')" id="nav-overview" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                    Overview
+                </button>
+                
+                <button onclick="switchView('target')" id="nav-target" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
+                    <i data-lucide="crosshair" class="w-5 h-5 text-blue-500 fill-blue-500/20"></i>
+                    Next Target
+                </button>
+                
+                <button onclick="switchView('backlog')" id="nav-backlog" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
+                    <i data-lucide="history" class="w-5 h-5 text-orange-500 fill-orange-500/20"></i>
+                    Backlog Plan
+                </button>
+                
+                <button onclick="switchView('mistakes')" id="nav-mistakes" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
+                    <i data-lucide="book" class="w-5 h-5 text-rose-500 fill-rose-500/20"></i>
+                    Mistake Notebook
+                </button>
+
+                <button onclick="switchView('leaderboard')" id="nav-leaderboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
+                    <i data-lucide="medal" class="w-5 h-5 text-amber-500 fill-amber-500/20"></i>
+                    Leaderboard
+                </button>
+<button onclick="switchView('planner')" id="nav-planner" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
+    <i data-lucide="calendar-range" class="w-5 h-5 text-indigo-500 fill-indigo-500/20"></i>
+    Day Planner
+</button>
+<button onclick="switchView('namaz')" id="nav-namaz" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all">
+    <i data-lucide="book-heart" class="w-5 h-5 text-emerald-500 fill-emerald-500/20"></i>
+    Spiritual Insights
+</button>
+            </div>
+        </div>
+<div class="mt-auto p-6 border-t border-slate-100 dark:border-slate-800 space-y-3">
+    
+    <button onclick="openProfileModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all group">
+        <i data-lucide="user-circle" class="w-5 h-5 group-hover:text-brand-500 transition-colors"></i>
+        Profile Settings
+    </button>
+
+    <button onclick="toggleTheme()" class="w-full flex items-center justify-between p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" aria-label="Toggle dark mode">
+        <div class="flex items-center gap-2 text-xs font-bold">
+            <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
+            <i data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
+            <span id="theme-text">Dark Mode</span>
+        </div>
+        <div class="w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full relative">
+            <div class="w-2 h-2 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 dark:translate-x-4"></div>
+        </div>
+    </button>
+
+   <div id="desktop-user-card" onclick="handleProfileClick()" class="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-brand-300 dark:hover:border-slate-500 transition-all group">
+        
+        <div id="desktop-user-avatar-bg" class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm transition-colors">
+            <span id="desktop-user-avatar-text">?</span>
+        </div>
+        
+        <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" id="desktop-user-name">Guest</p>
+            <p class="text-[9px] font-bold flex items-center gap-1" id="desktop-sync-status">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Not Synced
+            </p>
+        </div>
+        
+        <button id="desktop-auth-btn" onclick="handleAuthAction(event)" class="text-slate-400 hover:text-brand-600 dark:hover:text-white p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-700 transition-all" title="Log In / Out">
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+        </button>
+    </div>
+    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700">
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-bold text-slate-400 uppercase" id="footer-goal-label">Daily Goal</span>
+            <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="sidebar-progress-text">0%</span>
+        </div>
+        <div class="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div id="sidebar-progress-bar" class="h-full w-0 transition-all duration-500"></div>
+        </div>
+    </div>
+</div>
+            </nav>  
+
+    <main class="flex-1 flex flex-col relative overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+        
+        <div class="md:hidden h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 shrink-0">
+            <span class="font-bold text-lg text-slate-800 dark:text-white">StudyFlow</span>
+            <button onclick="toggleMobileMenu()" class="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg active:bg-slate-200 transition-colors text-slate-600 dark:text-slate-300" aria-label="Toggle menu">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+ <div id="view-overview" class="flex-1 flex flex-col overflow-hidden relative bg-slate-50 dark:bg-black transition-colors">
+            
+<header class="px-4 py-4 md:px-6 md:py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0 z-20 sticky top-0">
+    <div>
+        <h1 class="text-lg md:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="layout-dashboard" class="w-5 h-5 text-brand-500"></i> Dashboard
+        </h1>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5 hidden xs:block" id="overview-date">...</p>
+    </div>
+    
+    <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700">
+            <button onclick="changeDay(-1)" class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all text-slate-600 dark:text-slate-300" aria-label="Previous day"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+            <button onclick="goToToday()" class="px-3 h-7 md:h-8 flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all text-xs font-bold text-slate-700 dark:text-slate-200">Today</button>
+            <button onclick="changeDay(1)" class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all text-slate-600 dark:text-slate-300" aria-label="Next day"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+        </div>
+
+        <button onclick="openPrayerModal()" class="ml-1 md:ml-4 flex items-center gap-2 px-2 py-1.5 md:px-3 md:py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-full font-bold text-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all border border-emerald-200 dark:border-emerald-800/50">
+            <i data-lucide="moon-star" class="w-3.5 h-3.5"></i>
+            <span class="hidden md:inline">Prayers</span>
+            <span id="header-prayer-count" class="bg-emerald-600 text-white text-[9px] px-1.5 py-0.5 rounded ml-0 md:ml-1">0/5</span>
+        </button>
+    </div>
+</header>
+
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8 relative z-10">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        
+                        <div class="md:col-span-2 bg-gradient-to-br from-brand-600 to-blue-700 dark:from-blue-900 dark:to-slate-900 rounded-3xl p-6 text-white shadow-xl shadow-brand-500/10 relative overflow-hidden group transition-all hover:scale-[1.01]">
+                            <div class="absolute -right-10 -top-10 text-white/10 group-hover:text-white/20 transition-colors rotate-12">
+                                <i data-lucide="target" class="w-48 h-48"></i>
+                            </div>
+                            
+                            <div class="relative z-10 flex flex-col h-full justify-between">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-wider mb-3">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                            Primary Goal
+                                        </div>
+                                        <h3 class="text-3xl font-black tracking-tight" id="card-main-name">...</h3>
+                                        <p class="text-sm text-brand-100 font-medium opacity-90" id="card-main-date-info">...</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="block text-5xl font-black tracking-tighter" id="card-main-days">--</span>
+                                        <span class="text-xs font-bold uppercase tracking-widest text-brand-200">Days Left</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-8">
+                                    <div class="flex justify-between text-xs font-bold text-brand-100 mb-2 uppercase tracking-wider">
+                                        <span>Syllabus Covered</span>
+                                        <span id="card-main-text">0%</span>
+                                    </div>
+                                    <div class="h-3 w-full bg-black/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
+                                        <div class="h-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)] w-0 transition-all duration-1000 ease-out" id="card-main-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden flex flex-col justify-between group transition-all hover:border-orange-200 dark:hover:border-orange-900">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-orange-500 font-bold text-[10px] uppercase tracking-wider mb-1">Critical Focus</p>
+                                    <h3 class="text-lg font-bold text-slate-800 dark:text-white leading-tight">Backlog Plan</h3>
+                                </div>
+                                <div class="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-orange-500">
+                                    <i data-lucide="history" class="w-5 h-5"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center py-2">
+                                <span class="text-4xl font-black text-slate-800 dark:text-white" id="backlog-days-large">--</span>
+                                <p class="text-xs text-slate-400 font-bold uppercase mt-1">Days to Catch Up</p>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase">
+                                    <span>Recovery</span>
+                                    <span id="card-backlog-text">0%</span>
+                                </div>
+                                <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-orange-500 to-amber-500 w-0 transition-all duration-1000" id="card-backlog-bar"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+<div id="ai-strategy-container" class="hidden mb-6"></div>
+                    <div>
+                        <div class="flex items-end justify-between mb-4 px-1">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Today's Mission</h2>
+                                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium" id="agenda-date-display">...</p>
+                            </div>
+                            <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-100 dark:border-green-900/50">
+                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                <span class="text-xs font-bold text-green-700 dark:text-green-300">Live Tracker</span>
+                            </div>
+                        </div>
+
+<div id="overview-task-list" class="space-y-3 pb-32 min-h-[200px]">
+</div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white via-white to-transparent dark:from-black dark:via-black dark:to-transparent z-30">
+                <div class="max-w-3xl mx-auto">
+                    <form id="add-task-form" class="flex gap-2 items-center bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 ring-4 ring-slate-100 dark:ring-slate-800 transition-all focus-within:ring-brand-100 dark:focus-within:ring-brand-900/30 transform focus-within:-translate-y-1">
+                        
+                        <div class="pl-3 text-slate-400">
+                            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                        </div>
+
+                        <input type="text" id="new-task-input" placeholder="Add a new task..." 
+                            class="flex-1 bg-transparent border-none text-sm font-medium text-slate-800 dark:text-white placeholder:text-slate-400 focus:ring-0 px-2 py-3 outline-none">
+                        
+                        <div class="flex gap-2 pr-1">
+                            <select id="new-task-type" class="bg-slate-50 dark:bg-slate-800 border-none text-[10px] font-bold text-slate-600 dark:text-slate-300 rounded-lg px-2 py-2 outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors uppercase tracking-wider">
+                                <option value="main">Exam</option>
+                                <option value="backlog">Backlog</option>
+                            </select>
+
+                            <select id="new-task-subject" class="bg-slate-50 dark:bg-slate-800 border-none text-[10px] font-bold text-slate-600 dark:text-slate-300 rounded-lg px-2 py-2 outline-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors uppercase tracking-wider" onchange="updateFooterProgress()">
+                                <option value="General">General</option>
+                                <option value="Physics">Phy</option>
+                                <option value="Chemistry">Chem</option>
+                                <option value="Botany">Bot</option>
+                                <option value="Zoology">Zoo</option>
+                            </select>
+
+                            <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white p-2.5 rounded-xl font-bold transition-all shadow-lg shadow-brand-500/30" aria-label="Add">
+                                <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>       
+
+
+        <div id="view-target" class="hidden flex-1 flex flex-col overflow-hidden bg-white dark:bg-slate-900 transition-colors">
+            <header class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-slate-50/50 dark:bg-slate-900/50">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 tracking-wide">Main Track</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white" id="syllabus-title">Syllabus</h2>
+                </div>
+                
+                <div class="flex-1 max-w-md w-full relative group">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                    </div>
+                    <input type="text" 
+                        onkeyup="handleSearch(this.value, 'main')" 
+                        placeholder="Search topics (e.g., 'Thermodynamics')..." 
+                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-white rounded-xl py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all shadow-sm"
+                    >
+                </div>
+
+                <div class="text-right hidden md:block">
+                    <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Exam Date</div>
+                    <div class="text-lg font-bold text-slate-900 dark:text-white" id="syllabus-date">...</div>
+                    <div class="text-xs font-bold text-brand-600 dark:text-brand-400 mt-1" id="syllabus-days-left">...</div>
+                </div>
+            </header>
+            <div id="main-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4">
+                </div>
+        </div>
+
+        <div id="view-backlog" class="hidden flex-1 flex flex-col overflow-hidden bg-white dark:bg-slate-900 transition-colors">
+            <header class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-orange-50/30 dark:bg-orange-900/10">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 tracking-wide">Recovery Plan</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Backlog: AIATS-5</h2>
+                </div>
+
+                <div class="flex-1 max-w-md w-full relative group">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 group-focus-within:text-orange-500 transition-colors"></i>
+                    </div>
+                    <input type="text" 
+                        onkeyup="handleSearch(this.value, 'backlog')" 
+                        placeholder="Search backlog..." 
+                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-white rounded-xl py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm"
+                    >
+                </div>
+
+                <div class="text-right hidden md:block">
+                    <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Deadline</div>
+                    <div class="text-lg font-bold text-slate-900 dark:text-white">Feb 1, 2026</div>
+                    <div class="text-xs font-bold text-orange-600 dark:text-orange-400 mt-1" id="backlog-days-left">...</div>
+                </div>
+            </header>
+            <div id="backlog-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4">
+                </div>
+        </div>
+
+        <div id="view-mistakes" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors relative">
+    
+            <!-- SECTION A: THE BOOKSHELF (Visible initially) -->
+            <div id="notebook-shelf" class="flex-1 p-8 overflow-y-auto custom-scroll flex flex-col items-center justify-center">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">Mistake Notebooks</h2>
+                    <p class="text-slate-500 dark:text-slate-400">Select a subject to open its error log.</p>
+                </div>
+        
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full">
+                    <!-- Physics Book -->
+                    <div onclick="openNotebook('Physics')" class="group relative cursor-pointer transform transition-all hover:-translate-y-2 duration-300">
+                        <div class="absolute inset-0 bg-blue-600 rounded-r-2xl rounded-l-sm blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                        <div class="relative bg-gradient-to-br from-blue-600 to-blue-800 h-64 rounded-r-2xl rounded-l-md shadow-xl flex flex-col items-center justify-center border-l-8 border-blue-900 overflow-hidden">
+                            <div class="absolute top-0 right-0 w-20 h-full bg-white/5 skew-x-12 transform origin-bottom"></div>
+                            <i data-lucide="atom" class="w-16 h-16 text-white/80 mb-4"></i>
+                            <h3 class="text-2xl font-bold text-white tracking-wider">PHYSICS</h3>
+                            <div class="mt-4 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/30" id="count-physics">0 Errors</div>
+                        </div>
+                    </div>
+        
+                    <!-- Chemistry Book -->
+                    <div onclick="openNotebook('Chemistry')" class="group relative cursor-pointer transform transition-all hover:-translate-y-2 duration-300">
+                        <div class="absolute inset-0 bg-amber-500 rounded-r-2xl rounded-l-sm blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                        <div class="relative bg-gradient-to-br from-amber-500 to-orange-700 h-64 rounded-r-2xl rounded-l-md shadow-xl flex flex-col items-center justify-center border-l-8 border-orange-900 overflow-hidden">
+                            <div class="absolute top-0 right-0 w-20 h-full bg-white/5 skew-x-12 transform origin-bottom"></div>
+                            <i data-lucide="flask-conical" class="w-16 h-16 text-white/80 mb-4"></i>
+                            <h3 class="text-2xl font-bold text-white tracking-wider">CHEMISTRY</h3>
+                            <div class="mt-4 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/30" id="count-chemistry">0 Errors</div>
+                        </div>
+                    </div>
+        
+                    <!-- Biology Book -->
+                    <div onclick="openNotebook('Biology')" class="group relative cursor-pointer transform transition-all hover:-translate-y-2 duration-300">
+                        <div class="absolute inset-0 bg-emerald-600 rounded-r-2xl rounded-l-sm blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                        <div class="relative bg-gradient-to-br from-emerald-600 to-green-800 h-64 rounded-r-2xl rounded-l-md shadow-xl flex flex-col items-center justify-center border-l-8 border-green-900 overflow-hidden">
+                            <div class="absolute top-0 right-0 w-20 h-full bg-white/5 skew-x-12 transform origin-bottom"></div>
+                            <i data-lucide="dna" class="w-16 h-16 text-white/80 mb-4"></i>
+                            <h3 class="text-2xl font-bold text-white tracking-wider">BIOLOGY</h3>
+                            <div class="mt-4 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold text-white border border-white/30" id="count-biology">0 Errors</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- SECTION B: THE OPEN NOTEBOOK (Hidden initially) -->
+            <div id="notebook-content" class="hidden flex-1 flex flex-col h-full bg-white dark:bg-slate-900">
+                <!-- Notebook Header -->
+                <div id="notebook-header-bg" class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between transition-colors bg-slate-50 dark:bg-slate-800/50">
+                    <div class="flex items-center gap-4">
+                        <button onclick="closeNotebook()" class="p-2 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500 dark:text-slate-400">
+                            <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                        </button>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white" id="notebook-title">Subject Notebook</h2>
+                            <p class="text-xs font-medium text-slate-500" id="notebook-subtitle">Error Log</p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('add-mistake-modal').classList.remove('hidden')" class="flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-sm font-bold shadow-lg hover:opacity-90 transition-opacity">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Log Mistake
+                    </button>
+                </div>
+        
+                <!-- Notebook Pages (List) -->
+                <div id="notebook-entries" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50 dark:bg-slate-950 custom-scroll">
+                    <!-- Entries injected here -->
+                </div>
+            </div>
+        
+            <!-- ADD MISTAKE MODAL (Overlay) -->
+            <div id="add-mistake-modal" class="hidden absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
+                    <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                        <h3 class="font-bold text-lg dark:text-white">Log New Error</h3>
+                        <button onclick="document.getElementById('add-mistake-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>
+                    
+                    <div class="p-6 overflow-y-auto custom-scroll space-y-4">
+                        <form id="mistake-form" class="space-y-4">
+                            <!-- Hidden input to store image base64 -->
+                            <input type="hidden" id="mistake-image-base64">
+        
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Subject</label>
+                                <input type="text" id="mistake-subject-display" disabled class="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl px-4 py-2 text-sm font-bold border border-transparent">
+                            </div>
+        
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
+                                    <select id="mistake-type" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm dark:text-white outline-none focus:border-brand-500">
+                                        <option value="Conceptual">Conceptual</option>
+                                        <option value="Silly">Silly/Calculation</option>
+                                        <option value="Memory">Fact/Formula</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Chapter</label>
+                                    <input type="text" id="mistake-chapter" placeholder="e.g. Thermodynamics" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm dark:text-white outline-none focus:border-brand-500">
+                                </div>
+                            </div>
+        
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Question / Mistake Description</label>
+                                <textarea id="mistake-desc" rows="3" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm dark:text-white outline-none focus:border-brand-500 resize-none" placeholder="What went wrong?"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Correct Answer / Explanation</label>
+                                <textarea id="mistake-answer" rows="3" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm dark:text-white outline-none focus:border-brand-500 resize-none" placeholder="What is the correct solution?"></textarea>
+                            </div>
+        
+                            <!-- Image Upload Section -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Attach Image (Optional)</label>
+                                <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center hover:border-brand-500 transition-colors cursor-pointer relative" id="drop-zone">
+                                    <input type="file" id="mistake-file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleImageUpload(this)">
+                                    <div id="upload-placeholder" class="flex flex-col items-center gap-2 text-slate-400">
+                                        <i data-lucide="image-plus" class="w-6 h-6"></i>
+                                        <span class="text-xs">Click to upload screenshot (Max 800KB)</span>
+                                    </div>
+                                    <div id="image-preview-container" class="hidden relative">
+                                        <img id="image-preview" src="" class="max-h-32 mx-auto rounded-lg shadow-sm">
+                                        <button type="button" onclick="clearImage()" class="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md"><i data-lucide="x" class="w-3 h-3"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+        
+                            <button type="submit" class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg hover:bg-brand-700 transition-all">Save to Notebook</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- IMAGE VIEWER MODAL (To see large images) -->
+            <div id="image-viewer-modal" class="hidden fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-4" onclick="this.classList.add('hidden')">
+                <img id="full-size-image" src="" class="max-w-full max-h-full rounded-lg shadow-2xl">
+            </div>
+        </div>
+<div id="view-namaz" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
+    <header class="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="moon-star" class="w-6 h-6 text-emerald-500"></i> Spiritual Growth
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Your journey towards consistency.</p>
+    </header>
+
+    <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
+        <div class="max-w-4xl mx-auto space-y-6">
+            
+            <div class="bg-gradient-to-r from-emerald-800 to-teal-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-10 opacity-10">
+                    <i data-lucide="lamp-ceiling" class="w-64 h-64"></i>
+                </div>
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-700/50 border border-emerald-600/50 text-emerald-100 text-[10px] font-bold uppercase tracking-wider mb-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Upcoming
+                        </div>
+                        <h2 class="text-3xl font-bold">Ramadan 2026</h2>
+                        <p class="text-emerald-100/80 mt-1 max-w-md">"O you who have believed, decreed upon you is fasting... that you may become righteous."</p>
+                    </div>
+                    <div class="text-center bg-black/20 backdrop-blur-sm p-4 rounded-2xl border border-white/10 min-w-[120px]">
+                        <span class="block text-4xl font-black tracking-tight" id="ramadan-days-left">--</span>
+                        <span class="text-[10px] uppercase font-bold text-emerald-200 tracking-widest">Days Left</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                    <div class="p-4 bg-green-100 dark:bg-green-900/20 rounded-full text-green-600 dark:text-green-400">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Strongest Habit</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white" id="insight-best">Analyzing...</h3>
+                        <p class="text-xs text-slate-500">Most consistent prayer this month.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                    <div class="p-4 bg-orange-100 dark:bg-orange-900/20 rounded-full text-orange-600 dark:text-orange-400">
+                        <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Needs Focus</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white" id="insight-worst">Analyzing...</h3>
+                        <p class="text-xs text-slate-500">Often missed. You can fix this!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 dark:bg-amber-900/10 rounded-3xl p-8 border border-amber-100 dark:border-amber-900/30 relative text-center">
+                <i data-lucide="quote" class="w-8 h-8 text-amber-300 dark:text-amber-800/50 absolute top-6 left-6"></i>
+                <h3 class="text-sm font-bold text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-4">Daily Motivation</h3>
+                <p class="text-lg md:text-xl font-medium text-slate-800 dark:text-slate-200 font-serif leading-relaxed italic" id="daily-hadith-text">
+                    "Loading Hadith..."
+                </p>
+                <div class="mt-4 inline-block px-3 py-1 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400" id="daily-hadith-source">
+                    Sahih Bukhari
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div id="view-planner" class="hidden flex-1 flex flex-col overflow-hidden bg-white dark:bg-slate-950 transition-colors">
+    <header class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
+        <div class="flex justify-between items-center max-w-2xl mx-auto w-full">
+            <div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="calendar-range" class="w-5 h-5 text-indigo-500"></i> Planner
+                </h2>
+                <p class="text-xs text-slate-500">Design your perfect day.</p>
+            </div>
+            <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                <button onclick="setPlannerTab('unscheduled')" id="tab-unscheduled" class="px-3 py-1.5 rounded-md text-xs font-bold transition-all bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-300">
+                    To Plan
+                </button>
+                <button onclick="setPlannerTab('scheduled')" id="tab-scheduled" class="px-3 py-1.5 rounded-md text-xs font-bold transition-all text-slate-500 hover:text-slate-800">
+                    Schedule
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto custom-scroll p-4 pb-24">
+        <div class="max-w-2xl mx-auto space-y-6">
+            
+            <div id="planner-section-unscheduled" class="animate-in fade-in duration-300">
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 mb-6 border border-indigo-100 dark:border-indigo-800/50 flex gap-3 items-start">
+                    <i data-lucide="info" class="w-5 h-5 text-indigo-500 shrink-0 mt-0.5"></i>
+                    <p class="text-xs text-indigo-800 dark:text-indigo-200 leading-relaxed">
+                        <strong>How to use:</strong> Tap the <i data-lucide="clock" class="w-3 h-3 inline"></i> icon on any Chapter or Topic below to set its duration (e.g., 3 hours). The app will calculate the time range for you.
+                    </p>
+                </div>
+                
+                <div id="planner-pool-list" class="space-y-4 min-h-[200px]">
+                    </div>
+                
+                <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+                    <h3 class="font-bold text-sm text-slate-700 dark:text-slate-300 mb-3">Quick Add Task</h3>
+                    <form onsubmit="event.preventDefault(); addPlannerTask();" class="flex gap-2">
+                        <input type="text" id="planner-new-text" placeholder="Add custom task..." class="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white outline-none focus:border-indigo-500">
+                        <button type="submit" class="bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 text-white px-4 rounded-xl font-bold transition-all">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="planner-section-scheduled" class="hidden animate-in fade-in duration-300">
+                <div id="planner-schedule-list" class="space-y-4">
+                    </div>
+
+                <div id="planner-completed-container" class="mt-8 hidden">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Completed</span>
+                        <div class="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
+                    </div>
+                    <div id="planner-completed-list" class="space-y-2 opacity-60 hover:opacity-100 transition-opacity">
+                        </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<div id="view-leaderboard" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
+    <header class="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Leaderboard
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Compete with other aspirants.</p>
+        </div>
+        
+        <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <button onclick="switchRankTab('overall')" id="tab-overall" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white">Overall</button>
+            <button onclick="switchRankTab('exam')" id="tab-exam" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Exam %</button>
+            <button onclick="switchRankTab('backlog')" id="tab-backlog" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Backlog %</button>
+            <button onclick="switchRankTab('tests')" id="tab-tests" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Tests</button>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-indigo-900 dark:to-slate-900 rounded-2xl p-6 text-white shadow-xl mb-8 flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Your Performance</p>
+                    <h3 class="text-2xl font-bold" id="lb-user-name">Guest User</h3>
+                    <div class="flex gap-4 mt-2 text-sm font-medium text-slate-300">
+                        <span>Exam: <span id="lb-my-exam" class="text-white">0%</span></span>
+                        <span>Backlog: <span id="lb-my-backlog" class="text-white">0%</span></span>
+                        <span>Tests: <span id="lb-my-tests" class="text-white">0</span></span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-3xl font-black text-yellow-400" id="lb-my-rank">#--</p>
+                    <p class="text-xs font-bold text-slate-400 uppercase">Current Rank</p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <div class="col-span-2 text-center">Rank</div>
+                    <div class="col-span-6">Student</div>
+                    <div class="col-span-4 text-right" id="lb-header-score">Score</div>
+                </div>
+                <div id="leaderboard-list" class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <div class="p-8 text-center text-slate-400">Loading rankings...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </main>
+<div id="profile-modal" class="hidden fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 p-6 animate-in fade-in zoom-in duration-200">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Edit Profile</h3>
+        <p class="text-sm text-slate-500 mb-6">What should we call you?</p>
+        
+        <form onsubmit="event.preventDefault(); saveProfileName();">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Display Name</label>
+            <input type="text" id="profile-name-input" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm dark:text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all placeholder:text-slate-400" placeholder="e.g. Dr. Future">
+            
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="document.getElementById('profile-modal').classList.add('hidden')" class="flex-1 py-3 px-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-xl text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Cancel</button>
+                <button type="submit" class="flex-1 py-3 px-4 bg-brand-600 text-white font-bold rounded-xl text-sm hover:bg-brand-700 shadow-lg shadow-brand-200 dark:shadow-none transition-all">Save Name</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="prayer-modal" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity animate-in fade-in duration-200">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 p-6 relative">
+        <button onclick="document.getElementById('prayer-modal').classList.add('hidden')" class="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500 transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+        <div class="text-center mb-6 mt-2">
+            <div class="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="moon" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Daily Prayers</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium" id="modal-prayer-date">...</p>
+        </div>
+        <div class="grid grid-cols-1 gap-2" id="modal-prayer-list"></div>
+    </div>
+</div>
+<div id="scheduler-modal" class="hidden fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center sm:p-4">
+    <div class="bg-white dark:bg-slate-900 w-full md:w-[400px] md:rounded-2xl rounded-t-2xl border-t md:border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-200">
+        
+        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+            <div>
+                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Plan This Session</h3>
+                <p class="text-xs text-slate-500" id="scheduler-subtitle">Set your timing</p>
+            </div>
+            <button onclick="closeScheduler()" class="p-2 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <input type="hidden" id="scheduler-task-id">
+            <input type="hidden" id="scheduler-is-chapter">
+            <input type="hidden" id="scheduler-chapter-name">
+
+            <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Start Time</label>
+                <div class="relative">
+                    <input type="time" id="scheduler-start" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all">
+                    <i data-lucide="clock" class="absolute right-4 top-3.5 w-5 h-5 text-slate-400"></i>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Duration (Hours)</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button type="button" onclick="setDuration(0.5)" class="dur-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm font-medium transition-colors">0.5h</button>
+                    <button type="button" onclick="setDuration(1)" class="dur-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm font-medium transition-colors">1h</button>
+                    <button type="button" onclick="setDuration(2)" class="dur-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm font-medium transition-colors">2h</button>
+                    <button type="button" onclick="setDuration(3)" class="dur-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm font-medium transition-colors">3h</button>
+                </div>
+                <div class="flex items-center gap-3 mt-2">
+                    <input type="number" id="scheduler-duration" placeholder="Custom" class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500">
+                    <span class="text-sm font-bold text-slate-500">Hours</span>
+                </div>
+            </div>
+
+            <button onclick="confirmSchedule()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-lg shadow-lg shadow-indigo-500/30 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                Set Schedule
+            </button>
+        </div>
+    </div>
+</div>
+<div id="customModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop"></div>
+    
+    <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-[90%] max-w-sm p-6 transform scale-95 opacity-0 transition-all duration-300" id="modalCard">
+        <div id="modalIconBg" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 bg-red-100 dark:bg-red-900/30">
+            <i id="modalIcon" data-lucide="alert-triangle" class="h-8 w-8 text-red-600 dark:text-red-400"></i>
+        </div>
+        
+        <div class="text-center">
+            <h3 id="modalTitle" class="text-xl font-bold text-slate-900 dark:text-white mb-2">Access Denied</h3>
+            <p id="modalMessage" class="text-slate-500 dark:text-slate-400 mb-6 text-sm leading-relaxed">
+                Only VIP members are allowed to enter.
+            </p>
+        </div>
+
+        <button onclick="closeModal()" id="modalBtn" class="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-blue-500/20">
+            Got it
+        </button>
+    </div>
+</div>
+  <script type="module" src="script.js"></script> 
+</body>
+</html>
