@@ -2906,70 +2906,55 @@ const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
             if(footerLabel) footerLabel.textContent = selectedSubject === 'General' ? 'Daily Goal' : `${selectedSubject} Goal`;
         }
 
- function createTaskElementHTML(t, isSubTask = false) {
-            // Updated Styles for "Pill" look
-            let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
+function createTaskElementHTML(t, isSubTask = false) {
+    // New Glass/Pill Design
+    let wrapperClass = "group flex items-center justify-between p-3.5 mb-2 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
+    
+    if (t.type === 'main') {
+        wrapperClass += "bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/5 hover:border-brand-300 dark:hover:border-brand-500/50 hover:shadow-lg hover:shadow-brand-500/5";
+    } else if (t.type === 'backlog') {
+        wrapperClass += "bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/5 hover:border-orange-300 dark:hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/5";
+    } else {
+        wrapperClass += "bg-white dark:bg-slate-800/40 border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-slate-600";
+    }
+
+    if(isSubTask) {
+        wrapperClass = "flex items-center justify-between p-3 pl-4 rounded-xl border border-transparent hover:bg-slate-50 dark:hover:bg-white/5 transition-all mb-1";
+    }
+
+    if (t.completed) {
+        wrapperClass += " opacity-60 grayscale";
+    }
+
+    // Modern Badges
+    let typeColorClass = t.type === 'main' 
+        ? 'text-brand-600 bg-brand-50 dark:bg-brand-500/20 dark:text-brand-300' 
+        : (t.type === 'backlog' ? 'text-orange-600 bg-orange-50 dark:bg-orange-500/20 dark:text-orange-300' : 'text-slate-500 bg-slate-100 dark:bg-slate-700');
+    
+    let subjectColor = getSubjectColor(t.subject).replace('bg-', 'bg-opacity-50 bg-');
+
+    const safeText = escapeHtml(t.text);
+
+    return `
+        <div class="${wrapperClass}">
+            ${t.completed ? '<div class="absolute inset-0 bg-slate-50/50 dark:bg-black/40 z-0 pointer-events-none"></div>' : ''}
             
-            if (t.type === 'main') {
-                wrapperClass += "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-md dark:hover:shadow-none hover:shadow-brand-500/5";
-            } else if (t.type === 'backlog') {
-                wrapperClass += "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md hover:shadow-orange-500/5";
-            } else {
-                wrapperClass += "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm";
-            }
-
-            // Subtasks (inside groups) get a slightly different look
-            if(isSubTask) {
-                wrapperClass = "flex items-center justify-between p-2.5 pl-4 rounded-xl border border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all mb-1";
-            }
-
-            // Completed State
-            if (t.completed) {
-                wrapperClass += " opacity-60 grayscale";
-            }
-
-            // Tags
-            let typeColorClass = t.type === 'main' 
-                ? 'text-brand-600 bg-brand-50 dark:bg-brand-900/20 dark:text-brand-300' 
-                : (t.type === 'backlog' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-300' : 'text-slate-500 bg-slate-100 dark:bg-slate-800');
-            
-            let subjectColor = getSubjectColor(t.subject).replace('bg-', 'bg-opacity-50 bg-'); // Make lighter
-
-            let displayText = t.text;
-            if(isSubTask && t.chapter) {
-                 const prefix = `Study: ${t.chapter} - `;
-                 if(displayText.startsWith(prefix)) displayText = displayText.substring(prefix.length);
-            }
-
-            // Safe HTML escape to match your security standards
-            const safeText = escapeHtml(displayText);
-
-            return `
-                <div class="${wrapperClass}">
-                    ${t.completed ? '<div class="absolute inset-0 bg-slate-100/50 dark:bg-black/50 z-0 pointer-events-none"></div>' : ''}
-                    
-                    <div class="flex items-center gap-4 overflow-hidden cursor-pointer flex-1 relative z-10" onclick="toggleTask('${t.id}')">
-                        <div class="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-300 ${t.completed ? 'bg-green-500 border-green-500 scale-110' : 'border-slate-300 dark:border-slate-600 hover:border-brand-400'}">
-                            <i data-lucide="check" class="w-3.5 h-3.5 text-white transform ${t.completed ? 'scale-100' : 'scale-0'} transition-transform duration-200"></i>
-                        </div>
-                        
-                        <div class="flex flex-col min-w-0">
-                            <span class="truncate text-sm font-semibold ${t.completed ? 'text-slate-400 line-through decoration-2 decoration-slate-300' : 'text-slate-800 dark:text-slate-200'}">${safeText}</span>
-                            
-                            ${!isSubTask ? `
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${subjectColor}">${t.subject}</span>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColorClass}">${t.type === 'main' ? 'Exam Prep' : (t.type === 'backlog' ? 'Backlog' : 'Task')}</span>
-                            </div>` : ''}
-                        </div>
-                    </div>
-                    
-                    <button onclick="deleteTask('${t.id}')" class="relative z-10 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-all" aria-label="Delete Task">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+            <div class="flex items-center gap-4 overflow-hidden cursor-pointer flex-1 relative z-10" onclick="toggleTask('${t.id}')">
+                <div class="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-300 ${t.completed ? 'bg-green-500 border-green-500 scale-105 shadow-sm' : 'border-slate-300 dark:border-slate-600 group-hover:border-brand-400 bg-white dark:bg-slate-800'}">
+                    <i data-lucide="check" class="w-3.5 h-3.5 text-white transform ${t.completed ? 'scale-100' : 'scale-0'} transition-transform duration-200"></i>
                 </div>
-            `;
-        }       
+                
+                <div class="flex flex-col min-w-0">
+                    <span class="truncate text-sm font-semibold ${t.completed ? 'text-slate-400 line-through decoration-2 decoration-slate-300' : 'text-slate-800 dark:text-slate-200'}">${safeText}</span>
+                    ${!isSubTask ? `<div class="flex items-center gap-2 mt-1.5"><span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${subjectColor}">${t.subject}</span><span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${typeColorClass}">${t.type === 'main' ? 'Exam' : (t.type === 'backlog' ? 'Backlog' : 'General')}</span></div>` : ''}
+                </div>
+            </div>
+            
+            <button onclick="deleteTask('${t.id}')" class="relative z-10 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        </div>
+    `;
+} 
+
 
 function renderTasks() {
             const list = document.getElementById('overview-task-list');
@@ -3159,36 +3144,22 @@ window.renderSyllabus = function(type, searchQuery = '') {
     const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
     if(!container) return;
     
-    // 1. Clear Container
     container.innerHTML = '';
-
-    // 2. Prepare Data & Helpers
     const rawData = type === 'main' ? state.nextExam.syllabus : backlogPlan.syllabus;
-    
-    // BUG FIX: Distinguish between "Done Ever" and "Added Today"
-    // 'allCompleted' is for history (Green Strikethrough)
     const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
-    
-    // 'todaysTasks' is for the "Add" button state (Plus vs Check icon)
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = new Set((state.tasks[k] || []).map(t => t.text));
-
     const lowerQuery = searchQuery.toLowerCase().trim();
-
-    // 3. Performance: Create a DocumentFragment
     const fragment = document.createDocumentFragment();
     let hasResults = false;
-
     const safeQuery = escapeRegex(lowerQuery);
     const queryRegex = safeQuery ? new RegExp(`(${safeQuery})`, 'gi') : null;
 
     rawData.forEach((item, chapterIdx) => {
-        // Search Logic
         const chapterMatch = item.topic.toLowerCase().includes(lowerQuery) || item.subject.toLowerCase().includes(lowerQuery);
         const matchingTests = item.dailyTests.filter(dt => {
             if (chapterMatch) return true; 
-            return dt.name.toLowerCase().includes(lowerQuery) || 
-                dt.subs.some(sub => sub.toLowerCase().includes(lowerQuery));
+            return dt.name.toLowerCase().includes(lowerQuery) || dt.subs.some(sub => sub.toLowerCase().includes(lowerQuery));
         });
 
         if (lowerQuery && !chapterMatch && matchingTests.length === 0) return;
@@ -3196,67 +3167,51 @@ window.renderSyllabus = function(type, searchQuery = '') {
         hasResults = true;
         const chapterId = `${type}-chapter-${chapterIdx}`;
         const isChapterExpanded = lowerQuery ? true : state.expandedTests[chapterId];
+        const allDailyTestsCompleted = item.dailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
         
-        const allDailyTests = item.dailyTests || [];
-        const allDailyTestsCompleted = allDailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
-        
+        // NEW CARD STYLING
         const chapterCardClass = allDailyTestsCompleted 
-            ? "bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-transition mb-4"
-            : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-transition mb-4";
+            ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 border border-green-200 dark:border-green-800/50 rounded-2xl overflow-hidden shadow-sm mb-4"
+            : "bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all mb-4 glass-panel";
         
         const chapterHeaderClass = allDailyTestsCompleted
-            ? "bg-green-100 dark:bg-green-900/20 px-4 py-3 border-b border-green-200 dark:border-green-800 flex justify-between items-center cursor-pointer select-none"
-            : "bg-slate-50 dark:bg-slate-800 px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center cursor-pointer select-none";
+            ? "px-5 py-4 border-b border-green-100 dark:border-green-800/30 flex justify-between items-center cursor-pointer select-none"
+            : "px-5 py-4 border-b border-slate-100 dark:border-white/5 flex justify-between items-center cursor-pointer select-none bg-slate-50/50 dark:bg-white/5";
 
         const card = document.createElement('div');
         card.className = chapterCardClass;
         
         const safeTopic = escapeHtml(item.topic);
-        const displayTopic = queryRegex 
-            ? safeTopic.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-900/50 text-slate-900 dark:text-white">$1</span>')
-            : safeTopic;
+        const displayTopic = queryRegex ? safeTopic.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-900/50 text-slate-900 dark:text-white">$1</span>') : safeTopic;
 
         let html = `
             <div class="${chapterHeaderClass}" onclick="toggleChapter('${chapterId}')">
                 <div>
                     <span class="text-[10px] font-bold uppercase tracking-wider ${allDailyTestsCompleted ? 'text-green-700 dark:text-green-300' : 'text-slate-400 dark:text-slate-500'}">${item.subject}</span>
-                    <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-slate-800 dark:text-white">${displayTopic}</h4> 
-                        ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}
-                    </div>
+                    <div class="flex items-center gap-2"><h4 class="font-bold text-slate-800 dark:text-white">${displayTopic}</h4> ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}</div>
                 </div>
-                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
+                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
             </div>
         `;
 
         if (isChapterExpanded) {
             html += `<div class="p-4 grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">`;
-            
             const testsToRender = lowerQuery ? matchingTests : item.dailyTests;
-
             testsToRender.forEach((dt) => {
                 const originalIndex = item.dailyTests.indexOf(dt);
                 const testId = `${chapterId}-test-${originalIndex}`;
                 const isTestExpanded = lowerQuery ? true : state.expandedTests[testId];
-                
                 const total = dt.subs.length;
                 const doneCount = dt.subs.filter(s => allCompleted.has(`Study: ${item.topic} - ${s}`)).length;
                 const isReady = total > 0 && doneCount === total;
                 const isAttempted = state.dailyTestsAttempted[dt.name];
 
                 let cardStyle = "border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-800 hover:border-brand-100 dark:hover:border-brand-900 transition-colors relative";
-                let cardContentStyle = ""; 
-                
-                if (isAttempted) {
-                    cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 transition-colors relative shadow-md text-white";
-                    cardContentStyle = "text-white"; 
-                }
+                if (isAttempted) cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 transition-colors relative shadow-md text-white";
 
                 const showCheckbox = isReady || isAttempted;
                 const safeTestName = escapeHtml(dt.name);
-                const displayName = queryRegex 
-                    ? safeTestName.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') 
-                    : safeTestName;
+                const displayName = queryRegex ? safeTestName.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') : safeTestName;
 
                 html += `
                     <div class="${cardStyle} overflow-hidden">
@@ -3264,58 +3219,27 @@ window.renderSyllabus = function(type, searchQuery = '') {
                             <div class="flex items-center gap-2">
                                 <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
                                 <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                               ${showCheckbox ? 
-    `<input type="checkbox" 
-        ${isAttempted ? 'checked' : ''} 
-        onchange="toggleTestAttempt('${safeQuote(dt.name)}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer"
-    >` : ''
-}        
-
+                               ${showCheckbox ? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${safeQuote(dt.name)}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
                                     <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm select-text cursor-text">${displayName}</span>
                                 </div>
                             </div>
-                                ${isAttempted ? 
-                                `<span class="text-[10px] font-bold text-green-700 bg-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm"><i data-lucide="award" class="w-3 h-3"></i> Done</span>` 
-                            : isReady ? 
-                                `<span class="text-[10px] font-bold text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse"><i data-lucide="check-circle" class="w-3 h-3"></i> Ready</span>` 
-                            :
-                                `<span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'}">${doneCount}/${total}</span>`
-                            }
+                            ${isAttempted ? `<span class="text-[10px] font-bold text-green-700 bg-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm"><i data-lucide="award" class="w-3 h-3"></i> Done</span>` : isReady ? `<span class="text-[10px] font-bold text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse"><i data-lucide="check-circle" class="w-3 h-3"></i> Ready</span>` : `<span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'}">${doneCount}/${total}</span>`}
                         </div>
                         ${isTestExpanded ? `
                             <div class="px-3 pb-3 pt-0 border-t ${isAttempted ? 'border-white/20' : 'border-slate-50 dark:border-slate-700'} animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div class="space-y-1 mt-2 ${cardContentStyle}">
+                                <div class="space-y-1 mt-2 ${isAttempted ? 'text-white' : ''}">
                                     ${dt.subs.map(sub => {
                                         const taskName = `Study: ${item.topic} - ${sub}`;
-                                        
-                                        // HERE IS THE FIX: Check todaysTasks for "Added" status
                                         const isAdded = todaysTasks.has(taskName);
                                         const isDone = allCompleted.has(taskName);
-                                        
                                         const safeSub = escapeHtml(sub);
-                                        const displaySub = queryRegex 
-                                            ? safeSub.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') 
-                                            : safeSub;
-
+                                        const displaySub = queryRegex ? safeSub.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') : safeSub;
                                         let textClass = "text-slate-500 dark:text-slate-400";
                                         if (isAttempted) textClass = "text-white/90";
                                         if (isDone) textClass = isAttempted ? "line-through opacity-70 text-white/70" : "line-through opacity-50 decoration-slate-400 dark:decoration-slate-500";
-                                        
                                         let btnClass = "text-brand-400 hover:text-brand-600 dark:hover:text-brand-300";
                                         if (isAttempted) btnClass = "text-white/80 hover:text-white";
-                                        
-                                        return `
-                                            <div class="flex items-center justify-between group pl-6 py-0.5">
-                                                <span class="text-[11px] truncate w-3/4 ${textClass}" title="${safeSub}">• ${displaySub}</span>
-                                                ${!isDone ? 
-                                                    `
-<button onclick="addSyllabusTask('${safeQuote(item.topic)} - ${safeQuote(sub)}', '${type}', '${item.subject}', '${safeQuote(item.topic)}')" class="${btnClass} transition-colors p-1" title="${isAdded ? 'Already in Agenda' : 'Add to Selected Date'}" aria-label="Add to plan">
-                                                        <i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i>
-                                                    </button>` : 
-                                                    `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500 dark:text-green-400'}"></i>`
-                                                }
-                                            </div>
-                                        `;
+                                        return `<div class="flex items-center justify-between group pl-6 py-0.5"><span class="text-[11px] truncate w-3/4 ${textClass}" title="${safeSub}">• ${displaySub}</span>${!isDone ? `<button onclick="addSyllabusTask('${safeQuote(item.topic)} - ${safeQuote(sub)}', '${type}', '${item.subject}', '${safeQuote(item.topic)}')" class="${btnClass} transition-colors p-1" title="${isAdded ? 'Already in Agenda' : 'Add to Selected Date'}" aria-label="Add to plan"><i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i></button>` : `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500 dark:text-green-400'}"></i>`}</div>`;
                                     }).join('')}
                                 </div>
                             </div>
@@ -3323,10 +3247,8 @@ window.renderSyllabus = function(type, searchQuery = '') {
                     </div>
                 `;
             });
-            
             html += `</div>`;
         }
-
         card.innerHTML = html;
         fragment.appendChild(card);
     });
@@ -3336,9 +3258,10 @@ window.renderSyllabus = function(type, searchQuery = '') {
     } else {
         container.appendChild(fragment); 
     }
-    
     if(window.lucide) lucide.createIcons({ root: container });
 };
+
+
       
     // --- MODAL CONTROLLER ---
 const modal = document.getElementById('customModal');
