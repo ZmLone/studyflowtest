@@ -1942,11 +1942,12 @@ window.fetchLeaderboard = async function() {
         document.getElementById('leaderboard-list').innerHTML = `<div class="p-8 text-center text-red-400">Failed to load rankings.<br>Check Firestore rules.</div>`;
     }
 };
+
 window.renderLeaderboardList = function() {
     const list = document.getElementById('leaderboard-list');
     if(!list) return;
 
-    // 1. Live Recalculate
+    // 1. Live Recalculate Stats
     const myStats = calculateUserStats();
     
     // 2. Update Profile Card (Top Section)
@@ -1961,9 +1962,16 @@ window.renderLeaderboardList = function() {
     let sortedData = [...leaderboardCache];
 
     // --- LEAGUE FILTER ---
-    const currentExamName = state.nextExam.name;
+    const currentExamName = state.nextExam ? state.nextExam.name : "Exam";
     const headerTitle = document.querySelector('#view-leaderboard h1');
-    if(headerTitle) headerTitle.innerHTML = `<i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Leaderboard <span class="hidden md:inline-block text-xs bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded ml-2 align-middle">${currentExamName} Season</span>`;
+    if(headerTitle) {
+         headerTitle.innerHTML = `
+            <i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> 
+            Leaderboard 
+            <span class="hidden md:inline-block text-xs bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full ml-2 align-middle font-medium border border-slate-200 dark:border-white/5">
+                ${currentExamName} Season
+            </span>`;
+    }
 
     // Filter strictly by current exam
     sortedData = sortedData.filter(u => u.currentExam === currentExamName);
@@ -1976,16 +1984,20 @@ window.renderLeaderboardList = function() {
     const myRankIndex = sortedData.findIndex(u => u.id === myId);
     if(myRankEl) myRankEl.textContent = myRankIndex > -1 ? `#${myRankIndex + 1}` : '-';
 
+    // Empty State
     if(sortedData.length === 0) {
-        list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-slate-400 opacity-60">
-            <i data-lucide="flag" class="w-12 h-12 mb-3"></i>
-            <p>New Season Started! Be the first to score.</p>
+        list.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500 opacity-60">
+            <div class="p-4 bg-slate-100 dark:bg-white/5 rounded-full mb-4">
+                <i data-lucide="flag" class="w-8 h-8"></i>
+            </div>
+            <p class="text-sm font-medium">New Season Started! Be the first to score.</p>
         </div>`;
         if(window.lucide) lucide.createIcons({ root: list });
         return;
     }
 
-    // --- NEW MODERN CARD DESIGN ---
+    // --- RENDER LIST ---
     list.innerHTML = sortedData.map((user, index) => {
         const isMe = user.id === myId;
         
@@ -1996,37 +2008,43 @@ window.renderLeaderboardList = function() {
         const testCnt = stats.testCount || 0;
         const overall = stats.overallPct || Math.round((mainPct * 0.7) + (blPct * 0.3));
 
-        // Rank Styling
-        let rankBadge = `<span class="font-bold text-slate-500 text-sm">#${index + 1}</span>`;
-        let cardBorder = isMe ? "border-brand-500 ring-1 ring-brand-500" : "border-slate-200 dark:border-slate-800";
-        let cardBg = isMe ? "bg-brand-50/50 dark:bg-brand-900/10" : "bg-white dark:bg-slate-900";
+        // 1. Rank Badge Logic (Gold/Silver/Bronze/Text)
+        let rankBadge = `<span class="font-bold text-slate-400 text-sm w-8 text-center">#${index + 1}</span>`;
         
+        // 2. Card Styling Logic
+        let cardBorder = isMe 
+            ? "border-brand-500 ring-1 ring-brand-500 bg-brand-50/50 dark:bg-brand-900/10" 
+            : "border-transparent bg-white dark:bg-[#151e2e] hover:border-slate-200 dark:hover:border-white/10 shadow-sm";
+
         if (index === 0) {
-            rankBadge = `<div class="w-8 h-8 rounded-full bg-yellow-400 text-yellow-900 flex items-center justify-center font-bold text-sm shadow-sm"><i data-lucide="crown" class="w-4 h-4"></i></div>`;
-            cardBorder = "border-yellow-400/50";
+            // Gold
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-gradient-to-b from-yellow-300 to-yellow-500 text-yellow-900 flex items-center justify-center font-bold text-sm shadow-md shadow-yellow-500/20"><i data-lucide="crown" class="w-4 h-4"></i></div>`;
+            if(!isMe) cardBorder = "border-yellow-400/30 bg-gradient-to-r from-yellow-50/50 to-white dark:from-yellow-900/10 dark:to-[#151e2e]";
         } else if (index === 1) {
-            rankBadge = `<div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-sm shadow-sm">2</div>`;
+            // Silver
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-gradient-to-b from-slate-200 to-slate-400 text-slate-800 flex items-center justify-center font-bold text-sm shadow-sm">2</div>`;
         } else if (index === 2) {
-            rankBadge = `<div class="w-8 h-8 rounded-full bg-orange-300 text-orange-800 flex items-center justify-center font-bold text-sm shadow-sm">3</div>`;
+            // Bronze
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-gradient-to-b from-orange-200 to-orange-400 text-orange-900 flex items-center justify-center font-bold text-sm shadow-sm">3</div>`;
         }
 
         const userName = user.displayName || (user.email ? user.email.split('@')[0] : 'Anonymous');
         const firstLetter = userName.charAt(0).toUpperCase();
 
         return `
-            <div class="relative flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl border ${cardBorder} ${cardBg} mb-3 transition-all hover:scale-[1.01] hover:shadow-md group">
+            <div class="relative flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-2xl border ${cardBorder} transition-all hover:scale-[1.005] group">
                 
                 <div class="flex items-center gap-4 flex-1">
                     <div class="shrink-0 w-8 flex justify-center">${rankBadge}</div>
                     
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 shadow-inner">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/10 dark:to-white/5 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 shadow-inner">
                             ${firstLetter}
                         </div>
                         <div>
                             <p class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                ${userName}
-                                ${isMe ? '<span class="bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">You</span>' : ''}
+                                ${escapeHtml(userName)}
+                                ${isMe ? '<span class="bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">You</span>' : ''}
                             </p>
                             <p class="text-[10px] text-slate-500 font-medium">League: ${user.currentExam || 'Unknown'}</p>
                         </div>
@@ -2035,20 +2053,20 @@ window.renderLeaderboardList = function() {
 
                 <div class="w-full md:w-48 flex flex-col justify-center">
                     <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase mb-1">
-                        <span>Overall Progress</span>
+                        <span>Progress</span>
                         <span class="${index < 3 ? 'text-brand-600 dark:text-brand-400' : ''}">${overall}%</span>
                     </div>
-                    <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div class="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                         <div class="h-full bg-gradient-to-r from-brand-500 to-indigo-500 rounded-full" style="width: ${overall}%"></div>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 justify-between md:justify-end w-full md:w-auto mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800/50">
-                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-slate-800 last:border-0">
+                <div class="flex items-center gap-2 justify-between md:justify-end w-full md:w-auto mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-white/5">
+                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-white/5 last:border-0">
                         <span class="text-[10px] uppercase font-bold text-slate-400">Exam</span>
                         <span class="text-sm font-bold text-brand-600 dark:text-brand-400">${mainPct}%</span>
                     </div>
-                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-slate-800 last:border-0">
+                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-white/5 last:border-0">
                         <span class="text-[10px] uppercase font-bold text-slate-400">Backlog</span>
                         <span class="text-sm font-bold text-orange-500">${blPct}%</span>
                     </div>
