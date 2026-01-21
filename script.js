@@ -2749,6 +2749,7 @@ function renderAll() {
             
             // Re-scan icons if library is loaded
             if(window.lucide) lucide.createIcons();
+if(window.attachScrollAnimations) window.attachScrollAnimations();
         }
 // FIX: Make all these functions global so HTML buttons can see them
 window.renderAll = renderAll;
@@ -3149,6 +3150,7 @@ function renderTasks() {
         }
 
 // Optimized Render Syllabus with Search & Fragments
+
 window.renderSyllabus = function(type, searchQuery = '') {
     const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
     if(!container) return;
@@ -3159,11 +3161,8 @@ window.renderSyllabus = function(type, searchQuery = '') {
     // 2. Prepare Data & Helpers
     const rawData = type === 'main' ? state.nextExam.syllabus : backlogPlan.syllabus;
     
-    // BUG FIX: Distinguish between "Done Ever" and "Added Today"
-    // 'allCompleted' is for history (Green Strikethrough)
+    // Track History vs Today's Plan
     const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
-    
-    // 'todaysTasks' is for the "Add" button state (Plus vs Check icon)
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = new Set((state.tasks[k] || []).map(t => t.text));
 
@@ -3194,37 +3193,43 @@ window.renderSyllabus = function(type, searchQuery = '') {
         const allDailyTests = item.dailyTests || [];
         const allDailyTestsCompleted = allDailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
         
-        const chapterCardClass = allDailyTestsCompleted 
-            ? "bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-transition mb-4"
-            : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-transition mb-4";
+        // --- PREMIUM UI UPDATE START ---
         
+        // 1. Refined Container Styles (Glass/Rounded)
+        const chapterCardClass = allDailyTestsCompleted 
+            ? "bg-green-50/40 dark:bg-green-900/10 border border-green-200/50 dark:border-green-800/30 rounded-[24px] overflow-hidden mb-4 transition-all duration-300"
+            : "bg-white dark:bg-[#151e2e] border border-slate-200/60 dark:border-white/5 rounded-[24px] overflow-hidden mb-4 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 group";
+        
+        // 2. Header Styles (Clean/Minimal)
         const chapterHeaderClass = allDailyTestsCompleted
-            ? "bg-green-100 dark:bg-green-900/20 px-4 py-3 border-b border-green-200 dark:border-green-800 flex justify-between items-center cursor-pointer select-none"
-            : "bg-slate-50 dark:bg-slate-800 px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center cursor-pointer select-none";
+            ? "px-6 py-5 flex justify-between items-center cursor-pointer select-none opacity-90"
+            : "px-6 py-5 flex justify-between items-center cursor-pointer select-none hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors";
 
         const card = document.createElement('div');
         card.className = chapterCardClass;
         
         const safeTopic = escapeHtml(item.topic);
         const displayTopic = queryRegex 
-            ? safeTopic.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-900/50 text-slate-900 dark:text-white">$1</span>')
+            ? safeTopic.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-500/30 text-slate-900 dark:text-white px-0.5 rounded">$1</span>')
             : safeTopic;
 
         let html = `
             <div class="${chapterHeaderClass}" onclick="toggleChapter('${chapterId}')">
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider ${allDailyTestsCompleted ? 'text-green-700 dark:text-green-300' : 'text-slate-400 dark:text-slate-500'}">${item.subject}</span>
-                    <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-slate-800 dark:text-white">${displayTopic}</h4> 
-                        ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}
+                    <span class="text-[10px] font-bold uppercase tracking-widest ${allDailyTestsCompleted ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'} mb-1 block">${item.subject}</span>
+                    <div class="flex items-center gap-3">
+                        <h4 class="text-lg font-bold text-slate-900 dark:text-white tracking-tight">${displayTopic}</h4> 
+                        ${allDailyTestsCompleted ? '<div class="bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400 p-1 rounded-full"><i data-lucide="check" class="w-3 h-3"></i></div>' : ''}
                     </div>
                 </div>
-                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
+                <div class="w-8 h-8 rounded-full border border-slate-100 dark:border-white/10 flex items-center justify-center bg-white dark:bg-white/5 text-slate-400 group-hover:border-slate-300 dark:group-hover:border-white/20 transition-all">
+                    <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
+                </div>
             </div>
         `;
 
         if (isChapterExpanded) {
-            html += `<div class="p-4 grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">`;
+            html += `<div class="px-6 pb-6 pt-0 space-y-3 animate-enter">`;
             
             const testsToRender = lowerQuery ? matchingTests : item.dailyTests;
 
@@ -3238,75 +3243,78 @@ window.renderSyllabus = function(type, searchQuery = '') {
                 const isReady = total > 0 && doneCount === total;
                 const isAttempted = state.dailyTestsAttempted[dt.name];
 
-                let cardStyle = "border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-800 hover:border-brand-100 dark:hover:border-brand-900 transition-colors relative";
+                // 3. Test Card Styling (Apple-style Lists)
+                let cardStyle = "border border-slate-100 dark:border-white/5 rounded-2xl bg-slate-50/50 dark:bg-black/20 hover:border-slate-200 dark:hover:border-white/10 transition-all overflow-hidden";
                 let cardContentStyle = ""; 
                 
                 if (isAttempted) {
-                    cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 transition-colors relative shadow-md text-white";
+                    // Success State
+                    cardStyle = "border-0 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 transform scale-[0.99]";
                     cardContentStyle = "text-white"; 
                 }
 
                 const showCheckbox = isReady || isAttempted;
                 const safeTestName = escapeHtml(dt.name);
                 const displayName = queryRegex 
-                    ? safeTestName.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') 
+                    ? safeTestName.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-500/30 px-0.5 rounded text-inherit">$1</span>') 
                     : safeTestName;
 
                 html += `
-                    <div class="${cardStyle} overflow-hidden">
-                        <div class="p-3 flex justify-between items-center cursor-pointer" onclick="toggleDailyTest('${testId}')">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
-                                <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                               ${showCheckbox ? 
-    `<input type="checkbox" 
-        ${isAttempted ? 'checked' : ''} 
-        onchange="toggleTestAttempt('${safeQuote(dt.name)}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer"
-    >` : ''
-}        
+                    <div class="${cardStyle}">
+                        <div class="p-4 flex justify-between items-center cursor-pointer select-none" onclick="toggleDailyTest('${testId}')">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/80' : 'text-slate-400'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
+                                <div class="flex items-center gap-3" onclick="event.stopPropagation()">
+                                   ${showCheckbox ? 
+                                    `<div class="relative flex items-center justify-center w-5 h-5">
+                                        <input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${safeQuote(dt.name)}')" class="peer appearance-none w-5 h-5 border-2 border-slate-300 dark:border-white/20 rounded-md checked:bg-white checked:border-white cursor-pointer transition-all">
+                                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></i>
+                                    </div>` : ''}        
 
-                                    <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm select-text cursor-text">${displayName}</span>
+                                    <span class="text-sm font-bold ${isAttempted ? 'text-white' : 'text-slate-700 dark:text-slate-200'}">${displayName}</span>
                                 </div>
                             </div>
-                                ${isAttempted ? 
-                                `<span class="text-[10px] font-bold text-green-700 bg-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm"><i data-lucide="award" class="w-3 h-3"></i> Done</span>` 
+                            
+                            ${isAttempted ? 
+                                `<span class="text-[10px] font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><i data-lucide="award" class="w-3 h-3"></i> Complete</span>` 
                             : isReady ? 
-                                `<span class="text-[10px] font-bold text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse"><i data-lucide="check-circle" class="w-3 h-3"></i> Ready</span>` 
+                                `<span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-500/20 px-2.5 py-1 rounded-full flex items-center gap-1 animate-pulse"><i data-lucide="unlock" class="w-3 h-3"></i> Unlocked</span>` 
                             :
-                                `<span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'}">${doneCount}/${total}</span>`
+                                `<span class="text-[10px] font-bold ${isAttempted ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'} bg-white/50 dark:bg-white/5 px-2 py-0.5 rounded-md">${doneCount}/${total}</span>`
                             }
                         </div>
+
                         ${isTestExpanded ? `
-                            <div class="px-3 pb-3 pt-0 border-t ${isAttempted ? 'border-white/20' : 'border-slate-50 dark:border-slate-700'} animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div class="space-y-1 mt-2 ${cardContentStyle}">
+                            <div class="px-4 pb-4 pt-0 animate-enter">
+                                <div class="h-px w-full ${isAttempted ? 'bg-white/20' : 'bg-slate-200/50 dark:bg-white/5'} mb-3 ml-7"></div>
+                                <div class="space-y-1 ml-7 ${cardContentStyle}">
                                     ${dt.subs.map(sub => {
                                         const taskName = `Study: ${item.topic} - ${sub}`;
-                                        
-                                        // HERE IS THE FIX: Check todaysTasks for "Added" status
                                         const isAdded = todaysTasks.has(taskName);
                                         const isDone = allCompleted.has(taskName);
-                                        
                                         const safeSub = escapeHtml(sub);
                                         const displaySub = queryRegex 
-                                            ? safeSub.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') 
+                                            ? safeSub.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-500/30 px-0.5 rounded text-inherit">$1</span>') 
                                             : safeSub;
 
-                                        let textClass = "text-slate-500 dark:text-slate-400";
+                                        let textClass = "text-slate-600 dark:text-slate-400 font-medium";
                                         if (isAttempted) textClass = "text-white/90";
-                                        if (isDone) textClass = isAttempted ? "line-through opacity-70 text-white/70" : "line-through opacity-50 decoration-slate-400 dark:decoration-slate-500";
+                                        if (isDone) textClass = isAttempted ? "line-through opacity-60 text-white/60" : "line-through opacity-50 text-slate-400";
                                         
-                                        let btnClass = "text-brand-400 hover:text-brand-600 dark:hover:text-brand-300";
-                                        if (isAttempted) btnClass = "text-white/80 hover:text-white";
+                                        let btnClass = "text-brand-500 hover:text-brand-700 dark:hover:text-brand-300 bg-brand-50 dark:bg-brand-500/10 hover:bg-brand-100 dark:hover:bg-brand-500/20 rounded-lg";
+                                        if (isAttempted) btnClass = "text-white/80 hover:text-white hover:bg-white/20 rounded-lg";
                                         
                                         return `
-                                            <div class="flex items-center justify-between group pl-6 py-0.5">
-                                                <span class="text-[11px] truncate w-3/4 ${textClass}" title="${safeSub}">• ${displaySub}</span>
+                                            <div class="flex items-center justify-between group/item py-1.5 px-2 rounded-lg hover:bg-slate-100/50 dark:hover:bg-white/5 transition-colors">
+                                                <div class="flex items-center gap-2 overflow-hidden">
+                                                    <div class="w-1.5 h-1.5 rounded-full ${isDone ? (isAttempted ? 'bg-white/40' : 'bg-slate-300 dark:bg-slate-600') : (isAttempted ? 'bg-white' : 'bg-brand-400')}"></div>
+                                                    <span class="text-[13px] truncate ${textClass}" title="${safeSub}">${displaySub}</span>
+                                                </div>
                                                 ${!isDone ? 
-                                                    `
-<button onclick="addSyllabusTask('${safeQuote(item.topic)} - ${safeQuote(sub)}', '${type}', '${item.subject}', '${safeQuote(item.topic)}')" class="${btnClass} transition-colors p-1" title="${isAdded ? 'Already in Agenda' : 'Add to Selected Date'}" aria-label="Add to plan">
-                                                        <i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i>
+                                                    `<button onclick="addSyllabusTask('${safeQuote(item.topic)} - ${safeQuote(sub)}', '${type}', '${item.subject}', '${safeQuote(item.topic)}')" class="${btnClass} p-1.5 transition-all active:scale-95" title="${isAdded ? 'Already planned' : 'Add to Today'}" aria-label="Add">
+                                                        <i data-lucide="${isAdded ? 'copy-check' : 'plus'}" class="w-4 h-4"></i>
                                                     </button>` : 
-                                                    `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500 dark:text-green-400'}"></i>`
+                                                    `<i data-lucide="check" class="w-4 h-4 mr-1.5 ${isAttempted ? 'text-white' : 'text-emerald-500 dark:text-emerald-400'}"></i>`
                                                 }
                                             </div>
                                         `;
@@ -3326,7 +3334,11 @@ window.renderSyllabus = function(type, searchQuery = '') {
     });
 
     if (!hasResults && lowerQuery) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 dark:text-slate-500">No topics found matching "${escapeHtml(searchQuery)}"</div>`;
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500">
+                <i data-lucide="search-x" class="w-10 h-10 mb-3 opacity-50"></i>
+                <p class="text-sm">No topics found matching "${escapeHtml(searchQuery)}"</p>
+            </div>`;
     } else {
         container.appendChild(fragment); 
     }
@@ -3425,3 +3437,40 @@ if(scrollContainer) {
         lastScrollTop = st <= 0 ? 0 : st;
     }, false);
 }
+
+/* =========================================
+   SCROLL ANIMATION UTILITY
+   ========================================= */
+
+const observerOptions = {
+    root: null,
+    rootMargin: '0px',
+    threshold: 0.1
+};
+
+const observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            // Add the CSS animation class defined in style.css
+            entry.target.classList.add('animate-enter');
+            // Force opacity to 1 to ensure visibility after animation
+            entry.target.style.opacity = 1; 
+            observer.unobserve(entry.target);
+        }
+    });
+}, observerOptions);
+
+// Call this function whenever you render new content (like lists or cards)
+window.attachScrollAnimations = function() {
+    // Select premium UI elements to animate
+    // .bento-card = Dashboard cards
+    // .group = List items (Tasks, Syllabus chapters)
+    const elementsToAnimate = document.querySelectorAll('.bento-card, .group');
+    
+    elementsToAnimate.forEach(el => {
+        // Only observe if it hasn't been animated yet
+        if (!el.classList.contains('animate-enter')) {
+            observer.observe(el);
+        }
+    });
+};
