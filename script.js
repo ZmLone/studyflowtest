@@ -3398,9 +3398,11 @@ setTimeout(() => {
     }, 300); 
 };
 
-// --- SNOWFALL EFFECT ---
+// --- ADVANCED SNOW ENGINE (Physics + Accumulation) ---
 let snowActive = false;
 let snowFrameId = null;
+let snowLedges = []; // Array to store "solid" objects (buttons, cards)
+let lastLedgeUpdate = 0;
 
 window.toggleSnow = function() {
     snowActive = !snowActive;
@@ -3411,22 +3413,16 @@ window.toggleSnow = function() {
 };
 
 function updateSnowUI() {
+    // Same UI logic as before - updates button color/position
     const transform = snowActive ? 'translateX(16px)' : 'translateX(0)';
-    const bg = snowActive ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700';
     
-    // Update PC Button
-    const pcDot = document.getElementById('snow-dot-pc');
-    if(pcDot) {
-        pcDot.style.transform = transform;
-        pcDot.parentElement.className = `relative w-8 h-4 rounded-full transition-colors ${snowActive ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700'}`;
-    }
-
-    // Update Mobile Button
-    const mobDot = document.getElementById('snow-dot-mobile');
-    if(mobDot) {
-        mobDot.style.transform = transform;
-        mobDot.parentElement.className = `relative w-8 h-4 rounded-full transition-colors ${snowActive ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700'}`;
-    }
+    ['snow-dot-pc', 'snow-dot-mobile'].forEach(id => {
+        const dot = document.getElementById(id);
+        if(dot) {
+            dot.style.transform = transform;
+            dot.parentElement.className = `relative w-8 h-4 rounded-full transition-colors ${snowActive ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700'}`;
+        }
+    });
 }
 
 function startSnow() {
@@ -3436,80 +3432,164 @@ function startSnow() {
     canvas.classList.remove('hidden');
     const ctx = canvas.getContext('2d');
     
-    // Resize Canvas
     let width = window.innerWidth;
     let height = window.innerHeight;
     canvas.width = width;
     canvas.height = height;
 
-    // Create Flakes
+    // CONFIGURATION
+    const maxFlakes = 200; // More flakes for realism
     const flakes = [];
-    const maxFlakes = 100; // Adjust for density
 
+    // Initialize Flakes
     for(let i = 0; i < maxFlakes; i++) {
-        flakes.push({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            r: Math.random() * 3 + 1, // Radius
-            d: Math.random() * maxFlakes, // Density (affects speed)
-            alpha: Math.random() * 0.5 + 0.4 // Opacity
+        flakes.push(createFlake(width, height));
+    }
+
+    // 1. SCAN THE SCREEN FOR SURFACES (Buttons, Cards, Headers)
+    function updateSurfaces() {
+        // We only scan every 60 frames (approx 1 sec) or on scroll to save battery
+        snowLedges = [];
+        
+        // Select elements snow should land on
+        const elements = document.querySelectorAll('button, .rounded-xl, .rounded-2xl, .rounded-3xl, header, nav');
+        
+        elements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            // Only care about elements actually on screen
+            if(rect.bottom > 0 && rect.top < height && rect.width > 0) {
+                snowLedges.push({
+                    top: rect.top,
+                    left: rect.left,
+                    right: rect.right,
+                    width: rect.width
+                });
+            }
         });
     }
+
+    // Initial scan
+    updateSurfaces();
+    // Re-scan on scroll (throttled)
+    window.addEventListener('scroll', () => { if(snowActive) updateSurfaces(); }, { passive: true });
 
     function draw() {
         ctx.clearRect(0, 0, width, height);
         
-        // Dynamic Color: White in Dark Mode, Slate-400 in Light Mode
         const isDark = document.documentElement.classList.contains('dark');
-        ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.8)" : "rgba(148, 163, 184, 0.8)";
         
-        ctx.beginPath();
-        for(let i = 0; i < maxFlakes; i++) {
-            const f = flakes[i];
-            ctx.moveTo(f.x, f.y);
-            ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2, true);
-        }
-        ctx.fill();
-        moveFlakes();
-    }
-
-    let angle = 0;
-    function moveFlakes() {
-        angle += 0.01;
-        for(let i = 0; i < maxFlakes; i++) {
-            const f = flakes[i];
+        // Draw each flake
+        flakes.forEach(f => {
+            ctx.beginPath();
             
-            // Update Coordinates
-            f.y += Math.pow(f.d, 2) + 1; // Speed
-            f.x += Math.sin(angle) * 2; // Sway
-
-            // Loop flakes when they exit screen
-            if(f.y > height) {
-                flakes[i] = { x: Math.random() * width, y: 0, r: f.r, d: f.d, alpha: f.alpha };
+            // REALISM: Soft Edges using Radial Gradient
+            const gradient = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+            if (isDark) {
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${f.alpha})`);
+                gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+            } else {
+                gradient.addColorStop(0, `rgba(148, 163, 184, ${f.alpha})`); // Slate-400 for light mode
+                gradient.addColorStop(1, "rgba(148, 163, 184, 0)");
             }
-        }
+            
+            ctx.fillStyle = gradient;
+            ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        updatePhysics();
+        snowFrameId = requestAnimationFrame(draw);
     }
 
-    function loop() {
-        draw();
-        snowFrameId = requestAnimationFrame(loop);
+    let windAngle = 0;
+
+    function updatePhysics() {
+        windAngle += 0.01;
+        const windForce = Math.sin(windAngle) * 0.5;
+
+        flakes.forEach((f, i) => {
+            // IF LANDED:
+            if (f.landed) {
+                f.meltTime--; // Count down melt timer
+                // If melted or surface moved away (scroll), reset
+                if (f.meltTime <= 0) {
+                    resetFlake(f, width, height);
+                }
+                return; // Stop moving if landed
+            }
+
+            // GRAVITY & WIND
+            f.y += f.speed; 
+            f.x += f.sway + windForce;
+
+            // COLLISION DETECTION (The "Accumulation" Logic)
+            // Only check if flake is near a "ledge" (optimization)
+            if (f.y > 0 && f.y < height) {
+                for (let ledge of snowLedges) {
+                    // If flake hits the top of an element (+/- tolerance)
+                    if (Math.abs(f.y - ledge.top) < 3 && 
+                        f.x > ledge.left && 
+                        f.x < ledge.right) {
+                        
+                        // 20% Chance to stick (so it doesn't look too uniform)
+                        if(Math.random() > 0.8) {
+                            f.landed = true;
+                            f.y = ledge.top; // Snap to top
+                            f.meltTime = 100 + Math.random() * 200; // Stay for 1-3 seconds
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // LOOPING (If fell off screen)
+            if(f.y > height) {
+                resetFlake(f, width, height);
+            }
+            // WRAPPING (If blew off side)
+            if(f.x > width) f.x = 0;
+            if(f.x < 0) f.x = width;
+        });
     }
 
-    // Handle Resize
+    // Handle Window Resize
     window.addEventListener('resize', () => {
         width = window.innerWidth;
         height = window.innerHeight;
         canvas.width = width;
         canvas.height = height;
+        updateSurfaces();
     });
 
-    loop();
+    draw();
 }
 
 function stopSnow() {
     const canvas = document.getElementById('snow-canvas');
     if(canvas) canvas.classList.add('hidden');
     if(snowFrameId) cancelAnimationFrame(snowFrameId);
+}
+
+// Helper: Create a fresh snowflake
+function createFlake(w, h) {
+    return {
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 2.5 + 0.5, // Size vary
+        alpha: Math.random() * 0.6 + 0.4, // Opacity
+        speed: Math.random() * 1.5 + 0.5, // Fall speed
+        sway: (Math.random() - 0.5) * 0.5, // Horizontal drift
+        landed: false,
+        meltTime: 0
+    };
+}
+
+// Helper: Reset a flake to the top
+function resetFlake(f, w, h) {
+    f.x = Math.random() * w;
+    f.y = -5; // Start just above screen
+    f.landed = false;
+    f.meltTime = 0;
 }
 
 // Initialize on Load
