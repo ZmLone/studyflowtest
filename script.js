@@ -3398,7 +3398,7 @@ setTimeout(() => {
     }, 300); 
 };
 
-// --- FINAL ULTRA-REALISTIC SNOW ENGINE ---
+// --- FINAL CONTINUOUS BLIZZARD ENGINE ---
 let snowActive = false;
 let snowFrameId = null;
 let snowLedges = []; 
@@ -3436,7 +3436,8 @@ function startSnow() {
     canvas.width = width;
     canvas.height = height;
 
-    const maxFlakes = 400; // Dense snow
+    // CONSTANT DENSITY: Always keep exactly this many flakes
+    const maxFlakes = 450; 
     const flakes = [];
 
     // 1. SCAN LEDGES (Surfaces for accumulation)
@@ -3446,9 +3447,8 @@ function startSnow() {
         elements.forEach(el => {
             const rect = el.getBoundingClientRect();
             if(rect.bottom > 0 && rect.top < height && rect.width > 0) {
-                // Add "ledge" data
                 snowLedges.push({
-                    top: rect.top + 3, // Slight offset for "sitting"
+                    top: rect.top + 3,
                     left: rect.left,
                     right: rect.right
                 });
@@ -3458,9 +3458,8 @@ function startSnow() {
     updateSurfaces();
     window.addEventListener('scroll', () => { if(snowActive) updateSurfaces(); }, { passive: true });
 
-    // 2. CREATE FLAKES (With Depth Z)
+    // 2. INITIAL SPAWN (Fill the screen immediately)
     for(let i = 0; i < maxFlakes; i++) {
-        // Init with random Y so it's already snowing when page loads
         flakes.push(createFlake(width, height, true));
     }
 
@@ -3473,7 +3472,7 @@ function startSnow() {
         
         const isDark = document.documentElement.classList.contains('dark');
         
-        // Dynamic Wind: Varies over time using Sine wave
+        // Wind varies over time
         const windSpeed = Math.sin(globalTime * 0.5) * 0.5 + 0.2; 
 
         flakes.forEach(f => {
@@ -3481,14 +3480,14 @@ function startSnow() {
             ctx.beginPath();
             const gradient = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
             
-            // Color based on Theme + Depth (Z)
-            // Distant flakes (low z) are more transparent
-            const baseAlpha = f.z * (f.landed ? 0.8 : 1); 
+            // Opacity based on depth (Z)
+            const baseAlpha = f.z * (f.landed ? 0.8 : 0.9); 
             
             if (isDark) {
                 gradient.addColorStop(0, `rgba(255, 255, 255, ${baseAlpha})`);
                 gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
             } else {
+                // Slate-400 for light mode
                 gradient.addColorStop(0, `rgba(148, 163, 184, ${baseAlpha})`);
                 gradient.addColorStop(1, "rgba(148, 163, 184, 0)");
             }
@@ -3499,39 +3498,37 @@ function startSnow() {
 
             // PHYSICS UPDATE
             if (f.landed) {
-                // Accumulation Logic
                 f.meltTime--;
+                // If melted, RECYCLE IMMEDIATELY
                 if(f.meltTime <= 0) resetFlake(f, width, height);
                 return;
             }
 
-            // Movement logic based on Z (Depth)
-            // Closer flakes (higher Z) move faster
+            // Move based on Depth (Z)
             f.y += f.speed; 
             f.x += windSpeed * f.z + Math.sin(globalTime + f.swayOffset) * (0.5 * f.z);
 
             // COLLISION (Accumulation)
-            if (f.y < height && f.y > 0) {
-                 // Only verify collision if flake is "heavy" enough (Z > 0.5)
-                 if(f.z > 0.5) {
-                    for (let ledge of snowLedges) {
-                        if (Math.abs(f.y - ledge.top) < 4 && f.x > ledge.left && f.x < ledge.right) {
-                            // High chance to stick
-                            if(Math.random() > 0.4) {
-                                f.landed = true;
-                                f.y = ledge.top; // Snap to surface
-                                f.meltTime = 200 + Math.random() * 300; // Sit for 3-8 seconds
-                            }
-                            break;
+            if (f.y < height && f.y > 0 && f.z > 0.6) {
+                for (let ledge of snowLedges) {
+                    if (Math.abs(f.y - ledge.top) < 4 && f.x > ledge.left && f.x < ledge.right) {
+                        if(Math.random() > 0.6) { // High stick chance
+                            f.landed = true;
+                            f.y = ledge.top;
+                            f.meltTime = 200 + Math.random() * 300;
                         }
+                        break;
                     }
-                 }
+                }
             }
 
-            // LOOP
-            if(f.y > height) resetFlake(f, width, height);
-            if(f.x > width) f.x = -5;
-            if(f.x < -5) f.x = width;
+            // LOOPING (The "Infinite" Logic)
+            // Instead of deleting, we teleport to top
+            if(f.y > height + 10) resetFlake(f, width, height);
+            
+            // Horizontal Wrap
+            if(f.x > width + 10) f.x = -10;
+            if(f.x < -10) f.x = width + 10;
         });
 
         snowFrameId = requestAnimationFrame(draw);
@@ -3554,31 +3551,32 @@ function stopSnow() {
     if(snowFrameId) cancelAnimationFrame(snowFrameId);
 }
 
-// Helper: Create Flake with Physics Properties
+// Helper: Create Flake
 function createFlake(w, h, preWarm = false) {
     const z = Math.random(); // Depth: 0 (Far) to 1 (Near)
     return {
-        // If preWarm is true, spawn anywhere on screen. If false, spawn at top.
         x: Math.random() * w,
-        y: preWarm ? Math.random() * h : -10 - (Math.random() * 50), 
+        // Pre-warm: Spawn anywhere. Normal: Spawn above top.
+        y: preWarm ? Math.random() * h : -20 - (Math.random() * 100), 
         
         z: z,
-        r: (z * 2.5) + 0.5, // Size linked to depth (0.5px to 3px)
-        speed: (z * 1.5) + 0.5, // Speed linked to depth
-        swayOffset: Math.random() * Math.PI * 2, // Random sway phase
+        r: (z * 3) + 1, // Size: 1px to 4px
+        speed: (z * 2) + 0.8, // Speed: 0.8 to 2.8
+        swayOffset: Math.random() * Math.PI * 2,
         
         landed: false,
         meltTime: 0
     };
 }
 
+// Helper: Recycle a flake to the top
 function resetFlake(f, w, h) {
     const z = Math.random();
     f.x = Math.random() * w;
-    f.y = -10 - (Math.random() * 50); // Spawn "above" clouds
+    f.y = -20 - (Math.random() * 100); // Random height above screen for "cloud" effect
     f.z = z;
-    f.r = (z * 2.5) + 0.5;
-    f.speed = (z * 1.5) + 0.5;
+    f.r = (z * 3) + 1;
+    f.speed = (z * 2) + 0.8;
     f.landed = false;
     f.meltTime = 0;
 }
