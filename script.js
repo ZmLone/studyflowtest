@@ -3397,3 +3397,126 @@ setTimeout(() => {
         modal.classList.add('hidden');
     }, 300); 
 };
+
+// --- SNOWFALL EFFECT ---
+let snowActive = false;
+let snowFrameId = null;
+
+window.toggleSnow = function() {
+    snowActive = !snowActive;
+    localStorage.setItem('studyflow_snow', snowActive);
+    updateSnowUI();
+    if(snowActive) startSnow();
+    else stopSnow();
+};
+
+function updateSnowUI() {
+    const transform = snowActive ? 'translateX(16px)' : 'translateX(0)';
+    const bg = snowActive ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700';
+    
+    // Update PC Button
+    const pcDot = document.getElementById('snow-dot-pc');
+    if(pcDot) {
+        pcDot.style.transform = transform;
+        pcDot.parentElement.className = `relative w-8 h-4 rounded-full transition-colors ${snowActive ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700'}`;
+    }
+
+    // Update Mobile Button
+    const mobDot = document.getElementById('snow-dot-mobile');
+    if(mobDot) {
+        mobDot.style.transform = transform;
+        mobDot.parentElement.className = `relative w-8 h-4 rounded-full transition-colors ${snowActive ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700'}`;
+    }
+}
+
+function startSnow() {
+    const canvas = document.getElementById('snow-canvas');
+    if(!canvas) return;
+    
+    canvas.classList.remove('hidden');
+    const ctx = canvas.getContext('2d');
+    
+    // Resize Canvas
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Create Flakes
+    const flakes = [];
+    const maxFlakes = 100; // Adjust for density
+
+    for(let i = 0; i < maxFlakes; i++) {
+        flakes.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            r: Math.random() * 3 + 1, // Radius
+            d: Math.random() * maxFlakes, // Density (affects speed)
+            alpha: Math.random() * 0.5 + 0.4 // Opacity
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        
+        // Dynamic Color: White in Dark Mode, Slate-400 in Light Mode
+        const isDark = document.documentElement.classList.contains('dark');
+        ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.8)" : "rgba(148, 163, 184, 0.8)";
+        
+        ctx.beginPath();
+        for(let i = 0; i < maxFlakes; i++) {
+            const f = flakes[i];
+            ctx.moveTo(f.x, f.y);
+            ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2, true);
+        }
+        ctx.fill();
+        moveFlakes();
+    }
+
+    let angle = 0;
+    function moveFlakes() {
+        angle += 0.01;
+        for(let i = 0; i < maxFlakes; i++) {
+            const f = flakes[i];
+            
+            // Update Coordinates
+            f.y += Math.pow(f.d, 2) + 1; // Speed
+            f.x += Math.sin(angle) * 2; // Sway
+
+            // Loop flakes when they exit screen
+            if(f.y > height) {
+                flakes[i] = { x: Math.random() * width, y: 0, r: f.r, d: f.d, alpha: f.alpha };
+            }
+        }
+    }
+
+    function loop() {
+        draw();
+        snowFrameId = requestAnimationFrame(loop);
+    }
+
+    // Handle Resize
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+    });
+
+    loop();
+}
+
+function stopSnow() {
+    const canvas = document.getElementById('snow-canvas');
+    if(canvas) canvas.classList.add('hidden');
+    if(snowFrameId) cancelAnimationFrame(snowFrameId);
+}
+
+// Initialize on Load
+document.addEventListener('DOMContentLoaded', () => {
+    if(localStorage.getItem('studyflow_snow') === 'true') {
+        snowActive = true;
+        updateSnowUI();
+        startSnow();
+    }
+});

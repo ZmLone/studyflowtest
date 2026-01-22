@@ -183,6 +183,15 @@
             <div id="mobile-sidebar-progress-bar" class="h-full w-0 transition-all duration-500 bg-brand-500"></div>
         </div>
     </div>
+<button onclick="toggleSnow()" id="btn-snow-mobile" class="w-full flex items-center justify-between px-4 py-2 mb-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+        <div class="flex items-center gap-2 text-xs font-bold">
+            <i data-lucide="snowflake" class="w-4 h-4 text-cyan-500"></i>
+            <span>Let it Snow</span>
+        </div>
+        <div class="relative w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full">
+            <div id="snow-dot-mobile" class="absolute top-1 left-1 w-2 h-2 bg-white rounded-full transition-all duration-300"></div>
+        </div>
+    </button>
     <button onclick="openProfileModal(); toggleMobileMenu();" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all group">
            
         <i data-lucide="user-circle" class="w-5 h-5 group-hover:text-brand-500 transition-colors"></i>
@@ -263,6 +272,16 @@
             <i data-lucide="user-circle" class="w-5 h-5 group-hover:text-brand-500 transition-colors"></i>
             Profile Settings
         </button>
+<button onclick="toggleSnow()" id="btn-snow-pc" class="w-full flex items-center justify-between p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
+            <div class="flex items-center gap-2 text-xs font-bold">
+                <i data-lucide="snowflake" class="w-4 h-4 group-hover:text-cyan-500 transition-colors"></i>
+                <span>Let it Snow</span>
+            </div>
+            <div class="relative w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full">
+                <div id="snow-dot-pc" class="absolute top-1 left-1 w-2 h-2 bg-white rounded-full transition-all duration-300"></div>
+            </div>
+        </button>
+
 
         <button onclick="toggleTheme()" class="w-full flex items-center justify-between p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" aria-label="Toggle dark mode">
             <div class="flex items-center gap-2 text-xs font-bold">
@@ -942,6 +961,7 @@
         </button>
     </div>
 </div>
+<canvas id="snow-canvas" class="fixed inset-0 pointer-events-none z-[50] hidden"></canvas>
   <script type="module" src="script.js"></script> 
 </body>
 </html>
