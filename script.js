@@ -3398,12 +3398,12 @@ setTimeout(() => {
     }, 300); 
 };
 
-// --- FINAL "HEAVY SNOW" ENGINE (High Accumulation + Auto-Start) ---
+// --- FINAL ULTRA-REALISTIC SNOW ENGINE ---
 let snowActive = false;
 let snowFrameId = null;
 let snowLedges = []; 
-let lastLedgeUpdate = 0;
 
+// UI Toggles
 window.toggleSnow = function() {
     snowActive = !snowActive;
     localStorage.setItem('studyflow_snow', snowActive);
@@ -3423,6 +3423,7 @@ function updateSnowUI() {
     });
 }
 
+// --- PHYSICS ENGINE ---
 function startSnow() {
     const canvas = document.getElementById('snow-canvas');
     if(!canvas) return;
@@ -3435,104 +3436,105 @@ function startSnow() {
     canvas.width = width;
     canvas.height = height;
 
-    // --- CONFIGURATION FOR REALISM ---
-    const maxFlakes = 350; // Increased for density
+    const maxFlakes = 400; // Dense snow
     const flakes = [];
 
-    for(let i = 0; i < maxFlakes; i++) {
-        flakes.push(createFlake(width, height));
-    }
-
-    // 1. SCAN SCREEN FOR LEDGES (Cards, Buttons, Headers)
+    // 1. SCAN LEDGES (Surfaces for accumulation)
     function updateSurfaces() {
         snowLedges = [];
-        // Target buttons and rounded cards for snow to land on
-        const elements = document.querySelectorAll('button, .rounded-xl, .rounded-2xl, .rounded-3xl, header');
-        
+        const elements = document.querySelectorAll('header, button, .rounded-xl, .rounded-2xl, .rounded-3xl');
         elements.forEach(el => {
             const rect = el.getBoundingClientRect();
             if(rect.bottom > 0 && rect.top < height && rect.width > 0) {
-                // Add a small "lip" to the top surface
+                // Add "ledge" data
                 snowLedges.push({
-                    top: rect.top + 2, // Slight offset to look like it's SITTING on it
+                    top: rect.top + 3, // Slight offset for "sitting"
                     left: rect.left,
                     right: rect.right
                 });
             }
         });
     }
-
     updateSurfaces();
     window.addEventListener('scroll', () => { if(snowActive) updateSurfaces(); }, { passive: true });
 
+    // 2. CREATE FLAKES (With Depth Z)
+    for(let i = 0; i < maxFlakes; i++) {
+        // Init with random Y so it's already snowing when page loads
+        flakes.push(createFlake(width, height, true));
+    }
+
+    // 3. RENDER LOOP
+    let globalTime = 0;
+    
     function draw() {
         ctx.clearRect(0, 0, width, height);
+        globalTime += 0.01;
+        
         const isDark = document.documentElement.classList.contains('dark');
         
+        // Dynamic Wind: Varies over time using Sine wave
+        const windSpeed = Math.sin(globalTime * 0.5) * 0.5 + 0.2; 
+
         flakes.forEach(f => {
+            // DRAW
             ctx.beginPath();
-            // SOFT FLUFFY RENDER
             const gradient = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+            
+            // Color based on Theme + Depth (Z)
+            // Distant flakes (low z) are more transparent
+            const baseAlpha = f.z * (f.landed ? 0.8 : 1); 
+            
             if (isDark) {
-                gradient.addColorStop(0, `rgba(255, 255, 255, ${f.alpha})`);
+                gradient.addColorStop(0, `rgba(255, 255, 255, ${baseAlpha})`);
                 gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
             } else {
-                gradient.addColorStop(0, `rgba(148, 163, 184, ${f.alpha})`); 
+                gradient.addColorStop(0, `rgba(148, 163, 184, ${baseAlpha})`);
                 gradient.addColorStop(1, "rgba(148, 163, 184, 0)");
             }
+            
             ctx.fillStyle = gradient;
             ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
             ctx.fill();
-        });
-        
-        updatePhysics();
-        snowFrameId = requestAnimationFrame(draw);
-    }
 
-    let windAngle = 0;
-
-    function updatePhysics() {
-        windAngle += 0.005; // Gentle wind change
-        const windForce = Math.sin(windAngle) * 0.3;
-
-        flakes.forEach((f) => {
-            // IF LANDED (Accumulated)
+            // PHYSICS UPDATE
             if (f.landed) {
-                f.meltTime--; 
-                // Melt slowly or if scrolled away
-                if (f.meltTime <= 0) resetFlake(f, width, height);
-                return; 
+                // Accumulation Logic
+                f.meltTime--;
+                if(f.meltTime <= 0) resetFlake(f, width, height);
+                return;
             }
 
-            // GRAVITY & PHYSICS
+            // Movement logic based on Z (Depth)
+            // Closer flakes (higher Z) move faster
             f.y += f.speed; 
-            f.x += f.sway + windForce;
+            f.x += windSpeed * f.z + Math.sin(globalTime + f.swayOffset) * (0.5 * f.z);
 
-            // COLLISION LOGIC (High Accumulation)
-            if (f.y > 0 && f.y < height) {
-                for (let ledge of snowLedges) {
-                    // Check if hitting a ledge
-                    if (Math.abs(f.y - ledge.top) < 4 && 
-                        f.x > ledge.left && 
-                        f.x < ledge.right) {
-                        
-                        // 50% chance to stick (High Accumulation)
-                        if(Math.random() > 0.5) {
-                            f.landed = true;
-                            f.y = ledge.top;
-                            // Stay for 5-8 seconds (300-480 frames)
-                            f.meltTime = 300 + Math.random() * 180; 
+            // COLLISION (Accumulation)
+            if (f.y < height && f.y > 0) {
+                 // Only verify collision if flake is "heavy" enough (Z > 0.5)
+                 if(f.z > 0.5) {
+                    for (let ledge of snowLedges) {
+                        if (Math.abs(f.y - ledge.top) < 4 && f.x > ledge.left && f.x < ledge.right) {
+                            // High chance to stick
+                            if(Math.random() > 0.4) {
+                                f.landed = true;
+                                f.y = ledge.top; // Snap to surface
+                                f.meltTime = 200 + Math.random() * 300; // Sit for 3-8 seconds
+                            }
+                            break;
                         }
-                        break;
                     }
-                }
+                 }
             }
 
-            // Reset if off screen
+            // LOOP
             if(f.y > height) resetFlake(f, width, height);
-            if(f.x > width) f.x = 0;
-            if(f.x < 0) f.x = width;
+            if(f.x > width) f.x = -5;
+            if(f.x < -5) f.x = width;
         });
+
+        snowFrameId = requestAnimationFrame(draw);
     }
 
     window.addEventListener('resize', () => {
@@ -3552,30 +3554,38 @@ function stopSnow() {
     if(snowFrameId) cancelAnimationFrame(snowFrameId);
 }
 
-function createFlake(w, h) {
+// Helper: Create Flake with Physics Properties
+function createFlake(w, h, preWarm = false) {
+    const z = Math.random(); // Depth: 0 (Far) to 1 (Near)
     return {
+        // If preWarm is true, spawn anywhere on screen. If false, spawn at top.
         x: Math.random() * w,
-        y: Math.random() * h,
-        r: Math.random() * 3 + 1, // Larger variation (1px to 4px)
-        alpha: Math.random() * 0.5 + 0.5, // Brighter
-        speed: Math.random() * 1 + 0.5, // Slower float
-        sway: (Math.random() - 0.5) * 0.5, 
+        y: preWarm ? Math.random() * h : -10 - (Math.random() * 50), 
+        
+        z: z,
+        r: (z * 2.5) + 0.5, // Size linked to depth (0.5px to 3px)
+        speed: (z * 1.5) + 0.5, // Speed linked to depth
+        swayOffset: Math.random() * Math.PI * 2, // Random sway phase
+        
         landed: false,
         meltTime: 0
     };
 }
 
 function resetFlake(f, w, h) {
+    const z = Math.random();
     f.x = Math.random() * w;
-    f.y = -10; 
+    f.y = -10 - (Math.random() * 50); // Spawn "above" clouds
+    f.z = z;
+    f.r = (z * 2.5) + 0.5;
+    f.speed = (z * 1.5) + 0.5;
     f.landed = false;
     f.meltTime = 0;
 }
 
-// AUTO-START ON FIRST VISIT
+// AUTO-START
 document.addEventListener('DOMContentLoaded', () => {
     const storedVal = localStorage.getItem('studyflow_snow');
-    // If null (First Visit) OR 'true' -> Enable Snow
     if(storedVal === null || storedVal === 'true') {
         snowActive = true;
         updateSnowUI();
