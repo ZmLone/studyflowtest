@@ -3398,10 +3398,11 @@ setTimeout(() => {
     }, 300); 
 };
 
-// --- FINAL "INFINITE BLIZZARD" ENGINE (Consistent Density) ---
+// --- HIGH-PERFORMANCE "CACHED" SNOW ENGINE ---
 let snowActive = false;
 let snowFrameId = null;
 let snowLedges = []; 
+let flakeImage = null; // Stores the pre-rendered snowflake
 
 // UI Toggles
 window.toggleSnow = function() {
@@ -3423,11 +3424,35 @@ function updateSnowUI() {
     });
 }
 
-// --- PHYSICS ENGINE ---
+// --- 1. PERFORMANCE MAGIC: CREATE FLAKE SPRITE ---
+function preRenderFlake() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 20;
+    canvas.height = 20;
+    const ctx = canvas.getContext('2d');
+
+    // Draw a soft, white, fluffy circle ONCE
+    const grad = ctx.createRadialGradient(10, 10, 0, 10, 10, 10);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)');
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(10, 10, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    return canvas;
+}
+
+// --- 2. PHYSICS ENGINE ---
 function startSnow() {
     const canvas = document.getElementById('snow-canvas');
     if(!canvas) return;
     
+    // Create the sprite once
+    if(!flakeImage) flakeImage = preRenderFlake();
+
     canvas.classList.remove('hidden');
     const ctx = canvas.getContext('2d');
     
@@ -3436,12 +3461,11 @@ function startSnow() {
     canvas.width = width;
     canvas.height = height;
 
-    // 1. CONSTANT AIRBORNE PARTICLES
-    const maxFalling = 450; // These are ALWAYS in the air
+    const maxFalling = 450; 
     const fallingFlakes = [];
-    let landedFlakes = []; // These are separate, sitting on buttons
+    let landedFlakes = []; 
 
-    // 2. SCAN SURFACES
+    // LEDGE SCANNER
     function updateSurfaces() {
         snowLedges = [];
         const elements = document.querySelectorAll('header, button, .rounded-xl, .rounded-2xl, .rounded-3xl');
@@ -3449,7 +3473,7 @@ function startSnow() {
             const rect = el.getBoundingClientRect();
             if(rect.bottom > 0 && rect.top < height && rect.width > 0) {
                 snowLedges.push({
-                    top: rect.top + 3,
+                    top: rect.top + 2,
                     left: rect.left,
                     right: rect.right
                 });
@@ -3457,62 +3481,60 @@ function startSnow() {
         });
     }
     updateSurfaces();
+    // Optimization: Only scan on scroll
     window.addEventListener('scroll', () => { if(snowActive) updateSurfaces(); }, { passive: true });
 
-    // 3. INITIAL SPAWN
+    // INITIAL SPAWN
     for(let i = 0; i < maxFalling; i++) {
         fallingFlakes.push(createFlake(width, height, true));
     }
 
-    // 4. MAIN RENDER LOOP
+    // MAIN RENDER LOOP
     let globalTime = 0;
     
     function draw() {
+        // Clear screen
         ctx.clearRect(0, 0, width, height);
         globalTime += 0.01;
-        const isDark = document.documentElement.classList.contains('dark');
-        const windSpeed = Math.sin(globalTime * 0.5) * 0.5 + 0.2; 
+        
+        // Balanced Wind (Swings Left AND Right)
+        const windSpeed = Math.sin(globalTime * 0.3) * 0.5; 
 
-        // A. DRAW LANDED FLAKES (The pile-up)
-        // We filter out melted ones in real-time
+        // A. DRAW LANDED FLAKES (Optimized)
         landedFlakes = landedFlakes.filter(f => {
             f.meltTime--;
-            if(f.meltTime <= 0) return false; // Remove if melted
+            if(f.meltTime <= 0) return false;
 
-            ctx.beginPath();
-            const alpha = f.z * (f.meltTime < 60 ? f.meltTime / 60 : 0.8); // Fade out
-            drawFlakeColor(ctx, f, alpha, isDark);
-            ctx.fill();
+            // Simple opacity fade
+            ctx.globalAlpha = f.meltTime < 60 ? f.meltTime / 60 : 0.8;
+            // Draw Cached Image (Fast!)
+            ctx.drawImage(flakeImage, f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
             return true;
         });
 
-        // B. DRAW & UPDATE FALLING FLAKES (The blizzard)
+        // B. DRAW FALLING FLAKES
         fallingFlakes.forEach(f => {
-            // Draw
-            ctx.beginPath();
-            drawFlakeColor(ctx, f, f.z, isDark);
-            ctx.fill();
+            // Depth-based Opacity
+            ctx.globalAlpha = f.z;
+            
+            // Draw Cached Image (Fast!)
+            ctx.drawImage(flakeImage, f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
 
             // Move
             f.y += f.speed; 
-            f.x += windSpeed * f.z + Math.sin(globalTime + f.swayOffset) * (0.5 * f.z);
+            f.x += windSpeed * f.z + Math.sin(globalTime + f.swayOffset) * (0.3 * f.z);
 
-            // COLLISION CHECK (Clone Logic)
+            // COLLISION (Stick Logic)
             if (f.y < height && f.y > 0 && f.z > 0.5) {
                 for (let ledge of snowLedges) {
                     if (Math.abs(f.y - ledge.top) < 5 && f.x > ledge.left && f.x < ledge.right) {
-                        // High chance to stick
-                        if(Math.random() > 0.4) {
-                            // 1. CLONE into landed array
+                        if(Math.random() > 0.7) { 
                             landedFlakes.push({
                                 x: f.x,
                                 y: ledge.top,
                                 r: f.r,
-                                z: f.z,
-                                meltTime: 200 + Math.random() * 300 // Stay for 3-8s
+                                meltTime: 200 + Math.random() * 200
                             });
-                            
-                            // 2. RESET original instantly (Conserves density)
                             resetFlake(f, width, height);
                         }
                         break;
@@ -3520,15 +3542,19 @@ function startSnow() {
                 }
             }
 
-            // Loop if off screen
+            // Loop / Wrap (The "Everywhere" Fix)
             if(f.y > height + 10) resetFlake(f, width, height);
-            if(f.x > width + 10) f.x = -10;
-            if(f.x < -10) f.x = width + 10;
+            
+            // If it goes off RIGHT, bring to LEFT
+            if(f.x > width + 20) f.x = -20;
+            // If it goes off LEFT, bring to RIGHT
+            if(f.x < -20) f.x = width + 20;
         });
 
         snowFrameId = requestAnimationFrame(draw);
     }
 
+    // Resize Handler
     window.addEventListener('resize', () => {
         width = window.innerWidth;
         height = window.innerHeight;
@@ -3552,9 +3578,9 @@ function createFlake(w, h, preWarm = false) {
     return {
         x: Math.random() * w,
         y: preWarm ? Math.random() * h : -20 - (Math.random() * 100), 
-        z: z,
-        r: (z * 3) + 1, 
-        speed: (z * 2) + 0.8,
+        z: z, // Depth 0-1
+        r: (z * 4) + 2, // Size: 2px to 6px (Big & Fluffy)
+        speed: (z * 2) + 1, // Speed
         swayOffset: Math.random() * Math.PI * 2
     };
 }
@@ -3564,21 +3590,8 @@ function resetFlake(f, w, h) {
     f.x = Math.random() * w;
     f.y = -20 - (Math.random() * 100); 
     f.z = z;
-    f.r = (z * 3) + 1;
-    f.speed = (z * 2) + 0.8;
-}
-
-function drawFlakeColor(ctx, f, alpha, isDark) {
-    const gradient = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
-    if (isDark) {
-        gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
-        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-    } else {
-        gradient.addColorStop(0, `rgba(148, 163, 184, ${alpha})`);
-        gradient.addColorStop(1, "rgba(148, 163, 184, 0)");
-    }
-    ctx.fillStyle = gradient;
-    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    f.r = (z * 4) + 2;
+    f.speed = (z * 2) + 1;
 }
 
 // AUTO-START
