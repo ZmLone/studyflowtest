@@ -43,3 +43,31 @@
 .animate-out { animation-duration: 0.3s; animation-fill-mode: forwards; }
 .fade-out { animation-name: fadeIn; animation-direction: reverse; }
 .slide-out-to-bottom-4 { animation-name: slideDown; }
+
+/* --- KASHMIRI HANDICRAFT ART --- */
+.kashmiri-art-strip {
+    height: 12px;
+    width: 100%;
+    /* Intricate Woven Pattern (Mimics Kani Shawl) */
+    background-color: #7f1d1d; /* Deep Kashmir Red */
+    background-image: 
+        repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(251, 191, 36, 0.3) 5px, rgba(251, 191, 36, 0.3) 10px),
+        repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(20, 83, 45, 0.3) 5px, rgba(20, 83, 45, 0.3) 10px);
+    background-size: 20px 20px;
+    
+    /* Golden Border */
+    border-bottom: 2px solid #d97706;
+    box-shadow: 0 4px 10px -2px rgba(124, 45, 18, 0.3);
+    position: relative;
+    z-index: 30;
+}
+
+/* Optional: Add a subtle texture to the header background */
+.kashmiri-header-bg {
+    background-image: radial-gradient(#7f1d1d 0.5px, transparent 0.5px);
+    background-size: 10px 10px;
+    opacity: 0.05;
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+}
