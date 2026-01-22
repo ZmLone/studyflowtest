@@ -181,7 +181,30 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
             initLocalMode();
         };
 
-        
+        // --- DARK MODE LOGIC ---
+        window.toggleTheme = function() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('theme-text').textContent = 'Light Mode';
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('theme-text').textContent = 'Dark Mode';
+            }
+        };
+
+        // Initialize Theme (Default to Dark)
+        if (localStorage.theme === 'light') {
+            document.documentElement.classList.remove('dark');
+            document.getElementById('theme-text').textContent = 'Light Mode';
+        } else {
+            // Default path
+            document.documentElement.classList.add('dark');
+            document.getElementById('theme-text').textContent = 'Dark Mode';
+        }
+
         // --- DATA ---
 const mainSchedule = [
    // --- CURRENT ACTIVE TARGET: AIATS-4 (JAN 18) ---
@@ -1015,7 +1038,7 @@ window.updateProfileUI = function(user) {
         const avatarText = document.getElementById(`${prefix}-user-avatar-text`);
         const nameEl = document.getElementById(`${prefix}-user-name`);
         const statusEl = document.getElementById(`${prefix}-sync-status`);
-        const btn = document.getElementById(`${prefix}-auth-btn`); // Might be missing in new UI
+        const btn = document.getElementById(`${prefix}-auth-btn`);
 
         if(!card) return;
 
@@ -1023,23 +1046,20 @@ window.updateProfileUI = function(user) {
             card.className = `flex items-center gap-3 px-3 py-3 rounded-2xl border transition-all cursor-pointer ${currentStyle.cardBorder}`;
         }
         
-        if(avatarBg) avatarBg.className = `flex items-center justify-center font-bold shadow-sm transition-colors ${prefix === 'mobile' ? 'w-10 h-10 rounded-full text-sm' : 'w-10 h-10 rounded-full'} ${currentStyle.avatarBg}`;
-        if(avatarText) avatarText.textContent = isGuest ? "?" : initial;
-        if(nameEl) nameEl.textContent = name;
+        avatarBg.className = `flex items-center justify-center font-bold shadow-sm transition-colors ${prefix === 'mobile' ? 'w-10 h-10 rounded-full text-sm' : 'w-9 h-9 rounded-xl text-xs'} ${currentStyle.avatarBg}`;
+        avatarText.textContent = isGuest ? "?" : initial;
+        nameEl.textContent = name;
         
-        if(statusEl) statusEl.innerHTML = isGuest 
-            ? `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> <span class="text-slate-500 dark:text-slate-400">Local</span>`
+        statusEl.innerHTML = isGuest 
+            ? `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> <span class="text-slate-500 dark:text-slate-400">Local Only</span>`
             : `<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> <span class="text-green-600 dark:text-green-400">Synced</span>`;
 
-        // SAFE CHECK: Only update button if it exists in the HTML
-        if (btn) {
-            btn.innerHTML = `<i data-lucide="${currentStyle.icon}" class="${prefix === 'mobile' ? 'w-5 h-5' : 'w-4 h-4'}"></i>`;
-            
-            if(isGuest) {
-                btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-all`;
-            } else {
-                btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all`;
-            }
+        btn.innerHTML = `<i data-lucide="${currentStyle.icon}" class="${prefix === 'mobile' ? 'w-5 h-5' : 'w-4 h-4'}"></i>`;
+        
+        if(isGuest) {
+            btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-all`;
+        } else {
+            btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all`;
         }
     };
 
@@ -1942,12 +1962,11 @@ window.fetchLeaderboard = async function() {
         document.getElementById('leaderboard-list').innerHTML = `<div class="p-8 text-center text-red-400">Failed to load rankings.<br>Check Firestore rules.</div>`;
     }
 };
-
 window.renderLeaderboardList = function() {
     const list = document.getElementById('leaderboard-list');
     if(!list) return;
 
-    // 1. Live Recalculate Stats
+    // 1. Live Recalculate
     const myStats = calculateUserStats();
     
     // 2. Update Profile Card (Top Section)
@@ -1962,16 +1981,9 @@ window.renderLeaderboardList = function() {
     let sortedData = [...leaderboardCache];
 
     // --- LEAGUE FILTER ---
-    const currentExamName = state.nextExam ? state.nextExam.name : "Exam";
+    const currentExamName = state.nextExam.name;
     const headerTitle = document.querySelector('#view-leaderboard h1');
-    if(headerTitle) {
-         headerTitle.innerHTML = `
-            <i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> 
-            Leaderboard 
-            <span class="hidden md:inline-block text-xs bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full ml-2 align-middle font-medium border border-slate-200 dark:border-white/5">
-                ${currentExamName} Season
-            </span>`;
-    }
+    if(headerTitle) headerTitle.innerHTML = `<i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Leaderboard <span class="hidden md:inline-block text-xs bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded ml-2 align-middle">${currentExamName} Season</span>`;
 
     // Filter strictly by current exam
     sortedData = sortedData.filter(u => u.currentExam === currentExamName);
@@ -1984,20 +1996,16 @@ window.renderLeaderboardList = function() {
     const myRankIndex = sortedData.findIndex(u => u.id === myId);
     if(myRankEl) myRankEl.textContent = myRankIndex > -1 ? `#${myRankIndex + 1}` : '-';
 
-    // Empty State
     if(sortedData.length === 0) {
-        list.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500 opacity-60">
-            <div class="p-4 bg-slate-100 dark:bg-white/5 rounded-full mb-4">
-                <i data-lucide="flag" class="w-8 h-8"></i>
-            </div>
-            <p class="text-sm font-medium">New Season Started! Be the first to score.</p>
+        list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-slate-400 opacity-60">
+            <i data-lucide="flag" class="w-12 h-12 mb-3"></i>
+            <p>New Season Started! Be the first to score.</p>
         </div>`;
         if(window.lucide) lucide.createIcons({ root: list });
         return;
     }
 
-    // --- RENDER LIST ---
+    // --- NEW MODERN CARD DESIGN ---
     list.innerHTML = sortedData.map((user, index) => {
         const isMe = user.id === myId;
         
@@ -2008,43 +2016,37 @@ window.renderLeaderboardList = function() {
         const testCnt = stats.testCount || 0;
         const overall = stats.overallPct || Math.round((mainPct * 0.7) + (blPct * 0.3));
 
-        // 1. Rank Badge Logic (Gold/Silver/Bronze/Text)
-        let rankBadge = `<span class="font-bold text-slate-400 text-sm w-8 text-center">#${index + 1}</span>`;
+        // Rank Styling
+        let rankBadge = `<span class="font-bold text-slate-500 text-sm">#${index + 1}</span>`;
+        let cardBorder = isMe ? "border-brand-500 ring-1 ring-brand-500" : "border-slate-200 dark:border-slate-800";
+        let cardBg = isMe ? "bg-brand-50/50 dark:bg-brand-900/10" : "bg-white dark:bg-slate-900";
         
-        // 2. Card Styling Logic
-        let cardBorder = isMe 
-            ? "border-brand-500 ring-1 ring-brand-500 bg-brand-50/50 dark:bg-brand-900/10" 
-            : "border-transparent bg-white dark:bg-[#151e2e] hover:border-slate-200 dark:hover:border-white/10 shadow-sm";
-
         if (index === 0) {
-            // Gold
-            rankBadge = `<div class="w-8 h-8 rounded-full bg-gradient-to-b from-yellow-300 to-yellow-500 text-yellow-900 flex items-center justify-center font-bold text-sm shadow-md shadow-yellow-500/20"><i data-lucide="crown" class="w-4 h-4"></i></div>`;
-            if(!isMe) cardBorder = "border-yellow-400/30 bg-gradient-to-r from-yellow-50/50 to-white dark:from-yellow-900/10 dark:to-[#151e2e]";
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-yellow-400 text-yellow-900 flex items-center justify-center font-bold text-sm shadow-sm"><i data-lucide="crown" class="w-4 h-4"></i></div>`;
+            cardBorder = "border-yellow-400/50";
         } else if (index === 1) {
-            // Silver
-            rankBadge = `<div class="w-8 h-8 rounded-full bg-gradient-to-b from-slate-200 to-slate-400 text-slate-800 flex items-center justify-center font-bold text-sm shadow-sm">2</div>`;
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-sm shadow-sm">2</div>`;
         } else if (index === 2) {
-            // Bronze
-            rankBadge = `<div class="w-8 h-8 rounded-full bg-gradient-to-b from-orange-200 to-orange-400 text-orange-900 flex items-center justify-center font-bold text-sm shadow-sm">3</div>`;
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-orange-300 text-orange-800 flex items-center justify-center font-bold text-sm shadow-sm">3</div>`;
         }
 
         const userName = user.displayName || (user.email ? user.email.split('@')[0] : 'Anonymous');
         const firstLetter = userName.charAt(0).toUpperCase();
 
         return `
-            <div class="relative flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-2xl border ${cardBorder} transition-all hover:scale-[1.005] group">
+            <div class="relative flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl border ${cardBorder} ${cardBg} mb-3 transition-all hover:scale-[1.01] hover:shadow-md group">
                 
                 <div class="flex items-center gap-4 flex-1">
                     <div class="shrink-0 w-8 flex justify-center">${rankBadge}</div>
                     
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-white/10 dark:to-white/5 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 shadow-inner">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 shadow-inner">
                             ${firstLetter}
                         </div>
                         <div>
                             <p class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                ${escapeHtml(userName)}
-                                ${isMe ? '<span class="bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">You</span>' : ''}
+                                ${userName}
+                                ${isMe ? '<span class="bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">You</span>' : ''}
                             </p>
                             <p class="text-[10px] text-slate-500 font-medium">League: ${user.currentExam || 'Unknown'}</p>
                         </div>
@@ -2053,20 +2055,20 @@ window.renderLeaderboardList = function() {
 
                 <div class="w-full md:w-48 flex flex-col justify-center">
                     <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase mb-1">
-                        <span>Progress</span>
+                        <span>Overall Progress</span>
                         <span class="${index < 3 ? 'text-brand-600 dark:text-brand-400' : ''}">${overall}%</span>
                     </div>
-                    <div class="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                    <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div class="h-full bg-gradient-to-r from-brand-500 to-indigo-500 rounded-full" style="width: ${overall}%"></div>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 justify-between md:justify-end w-full md:w-auto mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-white/5">
-                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-white/5 last:border-0">
+                <div class="flex items-center gap-2 justify-between md:justify-end w-full md:w-auto mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800/50">
+                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-slate-800 last:border-0">
                         <span class="text-[10px] uppercase font-bold text-slate-400">Exam</span>
                         <span class="text-sm font-bold text-brand-600 dark:text-brand-400">${mainPct}%</span>
                     </div>
-                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-white/5 last:border-0">
+                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-slate-800 last:border-0">
                         <span class="text-[10px] uppercase font-bold text-slate-400">Backlog</span>
                         <span class="text-sm font-bold text-orange-500">${blPct}%</span>
                     </div>
@@ -2749,7 +2751,6 @@ function renderAll() {
             
             // Re-scan icons if library is loaded
             if(window.lucide) lucide.createIcons();
-if(window.attachScrollAnimations) window.attachScrollAnimations();
         }
 // FIX: Make all these functions global so HTML buttons can see them
 window.renderAll = renderAll;
@@ -2905,66 +2906,70 @@ const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
             if(footerLabel) footerLabel.textContent = selectedSubject === 'General' ? 'Daily Goal' : `${selectedSubject} Goal`;
         }
 
-
-function createTaskElementHTML(t, isSubTask = false) {
-    // Linear-style List Item: Clean, minimal, focus on typography and spacing
-    let wrapperClass = "group flex items-center justify-between p-3.5 rounded-xl transition-all duration-200 border border-transparent ";
-    
-    // Subtler Hover States
-    if (t.type === 'main') {
-        wrapperClass += "bg-white dark:bg-[#151e2e] border-slate-100 dark:border-white/5 hover:border-brand-300 dark:hover:border-brand-500/30 hover:shadow-md hover:shadow-brand-500/5 mb-2";
-    } else if (t.type === 'backlog') {
-        wrapperClass += "bg-white dark:bg-[#151e2e] border-slate-100 dark:border-white/5 hover:border-orange-300 dark:hover:border-orange-500/30 hover:shadow-md hover:shadow-orange-500/5 mb-2";
-    } else {
-        wrapperClass += "bg-white dark:bg-[#151e2e] border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 mb-2";
-    }
-
-    if(isSubTask) {
-        wrapperClass = "flex items-center justify-between p-2 pl-4 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors mb-1 border-l-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600";
-    }
-
-    if (t.completed) {
-        wrapperClass += " opacity-50 grayscale bg-transparent border-transparent dark:bg-transparent shadow-none";
-    }
-
-    // Refined Tags
-    let typeColorClass = t.type === 'main' 
-        ? 'text-brand-600 bg-brand-50 dark:bg-brand-500/20 dark:text-brand-300' 
-        : (t.type === 'backlog' ? 'text-orange-600 bg-orange-50 dark:bg-orange-500/20 dark:text-orange-300' : 'text-slate-500 bg-slate-100 dark:bg-white/10 dark:text-slate-300');
-    
-    let subjectColor = getSubjectColor(t.subject).replace('bg-', 'bg-opacity-50 bg-'); 
-
-    let displayText = t.text;
-    if(isSubTask && t.chapter) {
-            const prefix = `Study: ${t.chapter} - `;
-            if(displayText.startsWith(prefix)) displayText = displayText.substring(prefix.length);
-    }
-    const safeText = escapeHtml(displayText);
-
-    return `
-        <div class="${wrapperClass}">
-            <div class="flex items-center gap-4 overflow-hidden cursor-pointer flex-1" onclick="toggleTask('${t.id}')">
-                <div class="w-5 h-5 rounded-[6px] border-2 flex-shrink-0 flex items-center justify-center transition-all duration-300 ${t.completed ? 'bg-brand-500 border-brand-500' : 'border-slate-300 dark:border-slate-600 hover:border-brand-400 dark:hover:border-brand-400 group-hover:scale-105'}">
-                    <i data-lucide="check" class="w-3.5 h-3.5 text-white transform ${t.completed ? 'scale-100' : 'scale-0'} transition-transform duration-200"></i>
-                </div>
-                
-                <div class="flex flex-col min-w-0">
-                    <span class="truncate text-[14px] font-medium ${t.completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-200'}">${safeText}</span>
-                    
-                    ${!isSubTask ? `
-                    <div class="flex items-center gap-2 mt-1">
-                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${subjectColor}">${t.subject}</span>
-                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${typeColorClass}">${t.type === 'main' ? 'Exam' : (t.type === 'backlog' ? 'Backlog' : 'Task')}</span>
-                    </div>` : ''}
-                </div>
-            </div>
+ function createTaskElementHTML(t, isSubTask = false) {
+            // Updated Styles for "Pill" look
+            let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
             
-            <button onclick="deleteTask('${t.id}')" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 p-2 rounded-lg transition-all transform hover:scale-110" aria-label="Delete">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-        </div>
-    `;
-}
+            if (t.type === 'main') {
+                wrapperClass += "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-md dark:hover:shadow-none hover:shadow-brand-500/5";
+            } else if (t.type === 'backlog') {
+                wrapperClass += "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md hover:shadow-orange-500/5";
+            } else {
+                wrapperClass += "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm";
+            }
+
+            // Subtasks (inside groups) get a slightly different look
+            if(isSubTask) {
+                wrapperClass = "flex items-center justify-between p-2.5 pl-4 rounded-xl border border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all mb-1";
+            }
+
+            // Completed State
+            if (t.completed) {
+                wrapperClass += " opacity-60 grayscale";
+            }
+
+            // Tags
+            let typeColorClass = t.type === 'main' 
+                ? 'text-brand-600 bg-brand-50 dark:bg-brand-900/20 dark:text-brand-300' 
+                : (t.type === 'backlog' ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-300' : 'text-slate-500 bg-slate-100 dark:bg-slate-800');
+            
+            let subjectColor = getSubjectColor(t.subject).replace('bg-', 'bg-opacity-50 bg-'); // Make lighter
+
+            let displayText = t.text;
+            if(isSubTask && t.chapter) {
+                 const prefix = `Study: ${t.chapter} - `;
+                 if(displayText.startsWith(prefix)) displayText = displayText.substring(prefix.length);
+            }
+
+            // Safe HTML escape to match your security standards
+            const safeText = escapeHtml(displayText);
+
+            return `
+                <div class="${wrapperClass}">
+                    ${t.completed ? '<div class="absolute inset-0 bg-slate-100/50 dark:bg-black/50 z-0 pointer-events-none"></div>' : ''}
+                    
+                    <div class="flex items-center gap-4 overflow-hidden cursor-pointer flex-1 relative z-10" onclick="toggleTask('${t.id}')">
+                        <div class="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-300 ${t.completed ? 'bg-green-500 border-green-500 scale-110' : 'border-slate-300 dark:border-slate-600 hover:border-brand-400'}">
+                            <i data-lucide="check" class="w-3.5 h-3.5 text-white transform ${t.completed ? 'scale-100' : 'scale-0'} transition-transform duration-200"></i>
+                        </div>
+                        
+                        <div class="flex flex-col min-w-0">
+                            <span class="truncate text-sm font-semibold ${t.completed ? 'text-slate-400 line-through decoration-2 decoration-slate-300' : 'text-slate-800 dark:text-slate-200'}">${safeText}</span>
+                            
+                            ${!isSubTask ? `
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${subjectColor}">${t.subject}</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColorClass}">${t.type === 'main' ? 'Exam Prep' : (t.type === 'backlog' ? 'Backlog' : 'Task')}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                    
+                    <button onclick="deleteTask('${t.id}')" class="relative z-10 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-all" aria-label="Delete Task">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+        }       
 
 function renderTasks() {
             const list = document.getElementById('overview-task-list');
@@ -3150,7 +3155,6 @@ function renderTasks() {
         }
 
 // Optimized Render Syllabus with Search & Fragments
-
 window.renderSyllabus = function(type, searchQuery = '') {
     const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
     if(!container) return;
@@ -3161,8 +3165,11 @@ window.renderSyllabus = function(type, searchQuery = '') {
     // 2. Prepare Data & Helpers
     const rawData = type === 'main' ? state.nextExam.syllabus : backlogPlan.syllabus;
     
-    // Track History vs Today's Plan
+    // BUG FIX: Distinguish between "Done Ever" and "Added Today"
+    // 'allCompleted' is for history (Green Strikethrough)
     const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
+    
+    // 'todaysTasks' is for the "Add" button state (Plus vs Check icon)
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = new Set((state.tasks[k] || []).map(t => t.text));
 
@@ -3193,43 +3200,37 @@ window.renderSyllabus = function(type, searchQuery = '') {
         const allDailyTests = item.dailyTests || [];
         const allDailyTestsCompleted = allDailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
         
-        // --- PREMIUM UI UPDATE START ---
-        
-        // 1. Refined Container Styles (Glass/Rounded)
         const chapterCardClass = allDailyTestsCompleted 
-            ? "bg-green-50/40 dark:bg-green-900/10 border border-green-200/50 dark:border-green-800/30 rounded-[24px] overflow-hidden mb-4 transition-all duration-300"
-            : "bg-white dark:bg-[#151e2e] border border-slate-200/60 dark:border-white/5 rounded-[24px] overflow-hidden mb-4 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 group";
+            ? "bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-transition mb-4"
+            : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-transition mb-4";
         
-        // 2. Header Styles (Clean/Minimal)
         const chapterHeaderClass = allDailyTestsCompleted
-            ? "px-6 py-5 flex justify-between items-center cursor-pointer select-none opacity-90"
-            : "px-6 py-5 flex justify-between items-center cursor-pointer select-none hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors";
+            ? "bg-green-100 dark:bg-green-900/20 px-4 py-3 border-b border-green-200 dark:border-green-800 flex justify-between items-center cursor-pointer select-none"
+            : "bg-slate-50 dark:bg-slate-800 px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center cursor-pointer select-none";
 
         const card = document.createElement('div');
         card.className = chapterCardClass;
         
         const safeTopic = escapeHtml(item.topic);
         const displayTopic = queryRegex 
-            ? safeTopic.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-500/30 text-slate-900 dark:text-white px-0.5 rounded">$1</span>')
+            ? safeTopic.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-900/50 text-slate-900 dark:text-white">$1</span>')
             : safeTopic;
 
         let html = `
             <div class="${chapterHeaderClass}" onclick="toggleChapter('${chapterId}')">
                 <div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest ${allDailyTestsCompleted ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'} mb-1 block">${item.subject}</span>
-                    <div class="flex items-center gap-3">
-                        <h4 class="text-lg font-bold text-slate-900 dark:text-white tracking-tight">${displayTopic}</h4> 
-                        ${allDailyTestsCompleted ? '<div class="bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400 p-1 rounded-full"><i data-lucide="check" class="w-3 h-3"></i></div>' : ''}
+                    <span class="text-[10px] font-bold uppercase tracking-wider ${allDailyTestsCompleted ? 'text-green-700 dark:text-green-300' : 'text-slate-400 dark:text-slate-500'}">${item.subject}</span>
+                    <div class="flex items-center gap-2">
+                        <h4 class="font-bold text-slate-800 dark:text-white">${displayTopic}</h4> 
+                        ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-full border border-slate-100 dark:border-white/10 flex items-center justify-center bg-white dark:bg-white/5 text-slate-400 group-hover:border-slate-300 dark:group-hover:border-white/20 transition-all">
-                    <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
-                </div>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
             </div>
         `;
 
         if (isChapterExpanded) {
-            html += `<div class="px-6 pb-6 pt-0 space-y-3 animate-enter">`;
+            html += `<div class="p-4 grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">`;
             
             const testsToRender = lowerQuery ? matchingTests : item.dailyTests;
 
@@ -3243,78 +3244,75 @@ window.renderSyllabus = function(type, searchQuery = '') {
                 const isReady = total > 0 && doneCount === total;
                 const isAttempted = state.dailyTestsAttempted[dt.name];
 
-                // 3. Test Card Styling (Apple-style Lists)
-                let cardStyle = "border border-slate-100 dark:border-white/5 rounded-2xl bg-slate-50/50 dark:bg-black/20 hover:border-slate-200 dark:hover:border-white/10 transition-all overflow-hidden";
+                let cardStyle = "border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-800 hover:border-brand-100 dark:hover:border-brand-900 transition-colors relative";
                 let cardContentStyle = ""; 
                 
                 if (isAttempted) {
-                    // Success State
-                    cardStyle = "border-0 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/20 transform scale-[0.99]";
+                    cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 transition-colors relative shadow-md text-white";
                     cardContentStyle = "text-white"; 
                 }
 
                 const showCheckbox = isReady || isAttempted;
                 const safeTestName = escapeHtml(dt.name);
                 const displayName = queryRegex 
-                    ? safeTestName.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-500/30 px-0.5 rounded text-inherit">$1</span>') 
+                    ? safeTestName.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') 
                     : safeTestName;
 
                 html += `
-                    <div class="${cardStyle}">
-                        <div class="p-4 flex justify-between items-center cursor-pointer select-none" onclick="toggleDailyTest('${testId}')">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/80' : 'text-slate-400'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
-                                <div class="flex items-center gap-3" onclick="event.stopPropagation()">
-                                   ${showCheckbox ? 
-                                    `<div class="relative flex items-center justify-center w-5 h-5">
-                                        <input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${safeQuote(dt.name)}')" class="peer appearance-none w-5 h-5 border-2 border-slate-300 dark:border-white/20 rounded-md checked:bg-white checked:border-white cursor-pointer transition-all">
-                                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 absolute opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></i>
-                                    </div>` : ''}        
+                    <div class="${cardStyle} overflow-hidden">
+                        <div class="p-3 flex justify-between items-center cursor-pointer" onclick="toggleDailyTest('${testId}')">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
+                                <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                               ${showCheckbox ? 
+    `<input type="checkbox" 
+        ${isAttempted ? 'checked' : ''} 
+        onchange="toggleTestAttempt('${safeQuote(dt.name)}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer"
+    >` : ''
+}        
 
-                                    <span class="text-sm font-bold ${isAttempted ? 'text-white' : 'text-slate-700 dark:text-slate-200'}">${displayName}</span>
+                                    <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm select-text cursor-text">${displayName}</span>
                                 </div>
                             </div>
-                            
-                            ${isAttempted ? 
-                                `<span class="text-[10px] font-bold text-emerald-700 bg-white px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><i data-lucide="award" class="w-3 h-3"></i> Complete</span>` 
+                                ${isAttempted ? 
+                                `<span class="text-[10px] font-bold text-green-700 bg-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm"><i data-lucide="award" class="w-3 h-3"></i> Done</span>` 
                             : isReady ? 
-                                `<span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-500/20 px-2.5 py-1 rounded-full flex items-center gap-1 animate-pulse"><i data-lucide="unlock" class="w-3 h-3"></i> Unlocked</span>` 
+                                `<span class="text-[10px] font-bold text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse"><i data-lucide="check-circle" class="w-3 h-3"></i> Ready</span>` 
                             :
-                                `<span class="text-[10px] font-bold ${isAttempted ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'} bg-white/50 dark:bg-white/5 px-2 py-0.5 rounded-md">${doneCount}/${total}</span>`
+                                `<span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'}">${doneCount}/${total}</span>`
                             }
                         </div>
-
                         ${isTestExpanded ? `
-                            <div class="px-4 pb-4 pt-0 animate-enter">
-                                <div class="h-px w-full ${isAttempted ? 'bg-white/20' : 'bg-slate-200/50 dark:bg-white/5'} mb-3 ml-7"></div>
-                                <div class="space-y-1 ml-7 ${cardContentStyle}">
+                            <div class="px-3 pb-3 pt-0 border-t ${isAttempted ? 'border-white/20' : 'border-slate-50 dark:border-slate-700'} animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div class="space-y-1 mt-2 ${cardContentStyle}">
                                     ${dt.subs.map(sub => {
                                         const taskName = `Study: ${item.topic} - ${sub}`;
+                                        
+                                        // HERE IS THE FIX: Check todaysTasks for "Added" status
                                         const isAdded = todaysTasks.has(taskName);
                                         const isDone = allCompleted.has(taskName);
+                                        
                                         const safeSub = escapeHtml(sub);
                                         const displaySub = queryRegex 
-                                            ? safeSub.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-500/30 px-0.5 rounded text-inherit">$1</span>') 
+                                            ? safeSub.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') 
                                             : safeSub;
 
-                                        let textClass = "text-slate-600 dark:text-slate-400 font-medium";
+                                        let textClass = "text-slate-500 dark:text-slate-400";
                                         if (isAttempted) textClass = "text-white/90";
-                                        if (isDone) textClass = isAttempted ? "line-through opacity-60 text-white/60" : "line-through opacity-50 text-slate-400";
+                                        if (isDone) textClass = isAttempted ? "line-through opacity-70 text-white/70" : "line-through opacity-50 decoration-slate-400 dark:decoration-slate-500";
                                         
-                                        let btnClass = "text-brand-500 hover:text-brand-700 dark:hover:text-brand-300 bg-brand-50 dark:bg-brand-500/10 hover:bg-brand-100 dark:hover:bg-brand-500/20 rounded-lg";
-                                        if (isAttempted) btnClass = "text-white/80 hover:text-white hover:bg-white/20 rounded-lg";
+                                        let btnClass = "text-brand-400 hover:text-brand-600 dark:hover:text-brand-300";
+                                        if (isAttempted) btnClass = "text-white/80 hover:text-white";
                                         
                                         return `
-                                            <div class="flex items-center justify-between group/item py-1.5 px-2 rounded-lg hover:bg-slate-100/50 dark:hover:bg-white/5 transition-colors">
-                                                <div class="flex items-center gap-2 overflow-hidden">
-                                                    <div class="w-1.5 h-1.5 rounded-full ${isDone ? (isAttempted ? 'bg-white/40' : 'bg-slate-300 dark:bg-slate-600') : (isAttempted ? 'bg-white' : 'bg-brand-400')}"></div>
-                                                    <span class="text-[13px] truncate ${textClass}" title="${safeSub}">${displaySub}</span>
-                                                </div>
+                                            <div class="flex items-center justify-between group pl-6 py-0.5">
+                                                <span class="text-[11px] truncate w-3/4 ${textClass}" title="${safeSub}">• ${displaySub}</span>
                                                 ${!isDone ? 
-                                                    `<button onclick="addSyllabusTask('${safeQuote(item.topic)} - ${safeQuote(sub)}', '${type}', '${item.subject}', '${safeQuote(item.topic)}')" class="${btnClass} p-1.5 transition-all active:scale-95" title="${isAdded ? 'Already planned' : 'Add to Today'}" aria-label="Add">
-                                                        <i data-lucide="${isAdded ? 'copy-check' : 'plus'}" class="w-4 h-4"></i>
+                                                    `
+<button onclick="addSyllabusTask('${safeQuote(item.topic)} - ${safeQuote(sub)}', '${type}', '${item.subject}', '${safeQuote(item.topic)}')" class="${btnClass} transition-colors p-1" title="${isAdded ? 'Already in Agenda' : 'Add to Selected Date'}" aria-label="Add to plan">
+                                                        <i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i>
                                                     </button>` : 
-                                                    `<i data-lucide="check" class="w-4 h-4 mr-1.5 ${isAttempted ? 'text-white' : 'text-emerald-500 dark:text-emerald-400'}"></i>`
+                                                    `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500 dark:text-green-400'}"></i>`
                                                 }
                                             </div>
                                         `;
@@ -3334,11 +3332,7 @@ window.renderSyllabus = function(type, searchQuery = '') {
     });
 
     if (!hasResults && lowerQuery) {
-        container.innerHTML = `
-            <div class="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500">
-                <i data-lucide="search-x" class="w-10 h-10 mb-3 opacity-50"></i>
-                <p class="text-sm">No topics found matching "${escapeHtml(searchQuery)}"</p>
-            </div>`;
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 dark:text-slate-500">No topics found matching "${escapeHtml(searchQuery)}"</div>`;
     } else {
         container.appendChild(fragment); 
     }
@@ -3402,75 +3396,4 @@ window.closeModal = function() {
 setTimeout(() => {
         modal.classList.add('hidden');
     }, 300); 
-};
-
-// LIQUID SCROLL PHYSICS
-let lastScrollTop = 0;
-const scrollContainer = document.getElementById('scroll-container');
-
-if(scrollContainer) {
-    scrollContainer.addEventListener('scroll', () => {
-        const st = scrollContainer.scrollTop;
-        const cards = document.querySelectorAll('.liquid-card');
-        
-        // Determine direction
-        if (st > lastScrollTop) {
-            // Scrolling Down -> Tilt Down
-            cards.forEach(card => {
-                card.style.transform = 'perspective(1000px) rotateX(2deg) scale(0.98)';
-            });
-        } else {
-            // Scrolling Up -> Tilt Up
-            cards.forEach(card => {
-                card.style.transform = 'perspective(1000px) rotateX(-2deg) scale(0.98)';
-            });
-        }
-        
-        // Reset after stopping
-        clearTimeout(scrollContainer.scrollTimeout);
-        scrollContainer.scrollTimeout = setTimeout(() => {
-            cards.forEach(card => {
-                card.style.transform = 'perspective(1000px) rotateX(0deg) scale(1)';
-            });
-        }, 150);
-
-        lastScrollTop = st <= 0 ? 0 : st;
-    }, false);
-}
-
-/* =========================================
-   SCROLL ANIMATION UTILITY
-   ========================================= */
-
-const observerOptions = {
-    root: null,
-    rootMargin: '0px',
-    threshold: 0.1
-};
-
-const observer = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            // Add the CSS animation class defined in style.css
-            entry.target.classList.add('animate-enter');
-            // Force opacity to 1 to ensure visibility after animation
-            entry.target.style.opacity = 1; 
-            observer.unobserve(entry.target);
-        }
-    });
-}, observerOptions);
-
-// Call this function whenever you render new content (like lists or cards)
-window.attachScrollAnimations = function() {
-    // Select premium UI elements to animate
-    // .bento-card = Dashboard cards
-    // .group = List items (Tasks, Syllabus chapters)
-    const elementsToAnimate = document.querySelectorAll('.bento-card, .group');
-    
-    elementsToAnimate.forEach(el => {
-        // Only observe if it hasn't been animated yet
-        if (!el.classList.contains('animate-enter')) {
-            observer.observe(el);
-        }
-    });
 };
