@@ -3398,7 +3398,7 @@ setTimeout(() => {
     }, 300); 
 };
 
-// --- FINAL CONTINUOUS BLIZZARD ENGINE ---
+// --- FINAL "INFINITE BLIZZARD" ENGINE (Consistent Density) ---
 let snowActive = false;
 let snowFrameId = null;
 let snowLedges = []; 
@@ -3436,11 +3436,12 @@ function startSnow() {
     canvas.width = width;
     canvas.height = height;
 
-    // CONSTANT DENSITY: Always keep exactly this many flakes
-    const maxFlakes = 450; 
-    const flakes = [];
+    // 1. CONSTANT AIRBORNE PARTICLES
+    const maxFalling = 450; // These are ALWAYS in the air
+    const fallingFlakes = [];
+    let landedFlakes = []; // These are separate, sitting on buttons
 
-    // 1. SCAN LEDGES (Surfaces for accumulation)
+    // 2. SCAN SURFACES
     function updateSurfaces() {
         snowLedges = [];
         const elements = document.querySelectorAll('header, button, .rounded-xl, .rounded-2xl, .rounded-3xl');
@@ -3458,75 +3459,69 @@ function startSnow() {
     updateSurfaces();
     window.addEventListener('scroll', () => { if(snowActive) updateSurfaces(); }, { passive: true });
 
-    // 2. INITIAL SPAWN (Fill the screen immediately)
-    for(let i = 0; i < maxFlakes; i++) {
-        flakes.push(createFlake(width, height, true));
+    // 3. INITIAL SPAWN
+    for(let i = 0; i < maxFalling; i++) {
+        fallingFlakes.push(createFlake(width, height, true));
     }
 
-    // 3. RENDER LOOP
+    // 4. MAIN RENDER LOOP
     let globalTime = 0;
     
     function draw() {
         ctx.clearRect(0, 0, width, height);
         globalTime += 0.01;
-        
         const isDark = document.documentElement.classList.contains('dark');
-        
-        // Wind varies over time
         const windSpeed = Math.sin(globalTime * 0.5) * 0.5 + 0.2; 
 
-        flakes.forEach(f => {
-            // DRAW
+        // A. DRAW LANDED FLAKES (The pile-up)
+        // We filter out melted ones in real-time
+        landedFlakes = landedFlakes.filter(f => {
+            f.meltTime--;
+            if(f.meltTime <= 0) return false; // Remove if melted
+
             ctx.beginPath();
-            const gradient = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
-            
-            // Opacity based on depth (Z)
-            const baseAlpha = f.z * (f.landed ? 0.8 : 0.9); 
-            
-            if (isDark) {
-                gradient.addColorStop(0, `rgba(255, 255, 255, ${baseAlpha})`);
-                gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-            } else {
-                // Slate-400 for light mode
-                gradient.addColorStop(0, `rgba(148, 163, 184, ${baseAlpha})`);
-                gradient.addColorStop(1, "rgba(148, 163, 184, 0)");
-            }
-            
-            ctx.fillStyle = gradient;
-            ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+            const alpha = f.z * (f.meltTime < 60 ? f.meltTime / 60 : 0.8); // Fade out
+            drawFlakeColor(ctx, f, alpha, isDark);
+            ctx.fill();
+            return true;
+        });
+
+        // B. DRAW & UPDATE FALLING FLAKES (The blizzard)
+        fallingFlakes.forEach(f => {
+            // Draw
+            ctx.beginPath();
+            drawFlakeColor(ctx, f, f.z, isDark);
             ctx.fill();
 
-            // PHYSICS UPDATE
-            if (f.landed) {
-                f.meltTime--;
-                // If melted, RECYCLE IMMEDIATELY
-                if(f.meltTime <= 0) resetFlake(f, width, height);
-                return;
-            }
-
-            // Move based on Depth (Z)
+            // Move
             f.y += f.speed; 
             f.x += windSpeed * f.z + Math.sin(globalTime + f.swayOffset) * (0.5 * f.z);
 
-            // COLLISION (Accumulation)
-            if (f.y < height && f.y > 0 && f.z > 0.6) {
+            // COLLISION CHECK (Clone Logic)
+            if (f.y < height && f.y > 0 && f.z > 0.5) {
                 for (let ledge of snowLedges) {
-                    if (Math.abs(f.y - ledge.top) < 4 && f.x > ledge.left && f.x < ledge.right) {
-                        if(Math.random() > 0.6) { // High stick chance
-                            f.landed = true;
-                            f.y = ledge.top;
-                            f.meltTime = 200 + Math.random() * 300;
+                    if (Math.abs(f.y - ledge.top) < 5 && f.x > ledge.left && f.x < ledge.right) {
+                        // High chance to stick
+                        if(Math.random() > 0.4) {
+                            // 1. CLONE into landed array
+                            landedFlakes.push({
+                                x: f.x,
+                                y: ledge.top,
+                                r: f.r,
+                                z: f.z,
+                                meltTime: 200 + Math.random() * 300 // Stay for 3-8s
+                            });
+                            
+                            // 2. RESET original instantly (Conserves density)
+                            resetFlake(f, width, height);
                         }
                         break;
                     }
                 }
             }
 
-            // LOOPING (The "Infinite" Logic)
-            // Instead of deleting, we teleport to top
+            // Loop if off screen
             if(f.y > height + 10) resetFlake(f, width, height);
-            
-            // Horizontal Wrap
             if(f.x > width + 10) f.x = -10;
             if(f.x < -10) f.x = width + 10;
         });
@@ -3551,34 +3546,39 @@ function stopSnow() {
     if(snowFrameId) cancelAnimationFrame(snowFrameId);
 }
 
-// Helper: Create Flake
+// Helpers
 function createFlake(w, h, preWarm = false) {
-    const z = Math.random(); // Depth: 0 (Far) to 1 (Near)
+    const z = Math.random(); 
     return {
         x: Math.random() * w,
-        // Pre-warm: Spawn anywhere. Normal: Spawn above top.
         y: preWarm ? Math.random() * h : -20 - (Math.random() * 100), 
-        
         z: z,
-        r: (z * 3) + 1, // Size: 1px to 4px
-        speed: (z * 2) + 0.8, // Speed: 0.8 to 2.8
-        swayOffset: Math.random() * Math.PI * 2,
-        
-        landed: false,
-        meltTime: 0
+        r: (z * 3) + 1, 
+        speed: (z * 2) + 0.8,
+        swayOffset: Math.random() * Math.PI * 2
     };
 }
 
-// Helper: Recycle a flake to the top
 function resetFlake(f, w, h) {
     const z = Math.random();
     f.x = Math.random() * w;
-    f.y = -20 - (Math.random() * 100); // Random height above screen for "cloud" effect
+    f.y = -20 - (Math.random() * 100); 
     f.z = z;
     f.r = (z * 3) + 1;
     f.speed = (z * 2) + 0.8;
-    f.landed = false;
-    f.meltTime = 0;
+}
+
+function drawFlakeColor(ctx, f, alpha, isDark) {
+    const gradient = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+    if (isDark) {
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+    } else {
+        gradient.addColorStop(0, `rgba(148, 163, 184, ${alpha})`);
+        gradient.addColorStop(1, "rgba(148, 163, 184, 0)");
+    }
+    ctx.fillStyle = gradient;
+    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
 }
 
 // AUTO-START
