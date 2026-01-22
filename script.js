@@ -2449,19 +2449,35 @@ window.renderPlanner = function() {
                         <i data-lucide="clock" class="w-3 h-3"></i> Plan All
                     </button>
                 </div>
+   // NEW CODE (Paste this instead)
+<div id="group-body-${safeId}" class="hidden bg-white dark:bg-slate-900">
+    <div class="p-1 space-y-0.5">
+        ${groupTasks.map(t => {
+            // 1. DETERMINE COLOR BASED ON PRIORITY
+            let borderClass = 'border-l-4 border-l-slate-300 pl-3'; // Default Gray
+            
+            if (t.priority === 'high') {
+                borderClass = 'border-l-4 border-l-red-500 bg-red-50/30 dark:bg-red-900/10 pl-3';
+            } else if (t.priority === 'medium') {
+                borderClass = 'border-l-4 border-l-yellow-500 bg-yellow-50/30 dark:bg-yellow-900/10 pl-3';
+            } else if (t.priority === 'low') {
+                borderClass = 'border-l-4 border-l-green-500 bg-green-50/30 dark:bg-green-900/10 pl-3';
+            }
+
+            // 2. RETURN THE COLORED CARD
+            return `
+            <div class="flex items-center justify-between p-2 mb-1 rounded-r-lg ${borderClass} hover:bg-slate-50 dark:hover:bg-slate-800/50 group transition-all">
+                <span class="text-xs font-medium text-slate-700 dark:text-slate-300 truncate pr-2">
+                    ${t.text.replace(chapName + ' - ', '')}
+                </span>
+                <button onclick="openScheduler('${t.id}', '${t.text}')" class="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all" title="Plan specific topic">
+                    <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+                </button>
+            </div>`;
+        }).join('')}
+    </div>
+</div>             
                 
-                <div id="group-body-${safeId}" class="hidden bg-white dark:bg-slate-900">
-                    <div class="p-1 space-y-0.5">
-                        ${groupTasks.map(t => `
-                            <div class="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg group transition-colors pl-8">
-                                <span class="text-xs font-medium text-slate-600 dark:text-slate-300 truncate pr-2">${t.text.replace(chapName + ' - ', '')}</span>
-                                <button onclick="openScheduler('${t.id}', '${t.text}')" class="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all" title="Plan specific topic">
-                                    <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
             `;
             poolList.appendChild(el);
         });
@@ -2551,20 +2567,31 @@ window.renderPlanner = function() {
 
     if(window.lucide) lucide.createIcons({ root: document.getElementById('view-planner') });
 };
-
-// 3. Quick Add Task
+// 3. Quick Add Task (With Priority Support)
 window.addPlannerTask = function() {
     const textInput = document.getElementById('planner-new-text');
     if(textInput && textInput.value.trim()) {
+        
+        // 1. Get Selected Priority
+        const priorityEls = document.getElementsByName('task-priority');
+        let priority = 'medium'; // Default
+        if(priorityEls.length > 0) {
+            for(let el of priorityEls) {
+                if(el.checked) priority = el.value;
+            }
+        }
+
         const key = formatDateKey(state.selectedDate);
         if (!state.tasks[key]) state.tasks[key] = [];
         
+        // 2. Add Task with Priority Data
         state.tasks[key].push({
-        id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),    
+            id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),    
             text: textInput.value.trim(),
             type: 'manual', 
             subject: 'General', 
-            timeLabel: "", // Empty = Unscheduled
+            priority: priority, // NEW FIELD
+            timeLabel: "", 
             completed: false 
         });
         
