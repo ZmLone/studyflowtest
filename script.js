@@ -3398,11 +3398,11 @@ setTimeout(() => {
     }, 300); 
 };
 
-// --- HIGH-PERFORMANCE "CACHED" SNOW ENGINE ---
+// --- BALANCED HIGH-PERFORMANCE SNOW ENGINE ---
 let snowActive = false;
 let snowFrameId = null;
 let snowLedges = []; 
-let flakeImage = null; // Stores the pre-rendered snowflake
+let flakeImage = null; // Stores the pre-rendered snowflake image
 
 // UI Toggles
 window.toggleSnow = function() {
@@ -3424,7 +3424,7 @@ function updateSnowUI() {
     });
 }
 
-// --- 1. PERFORMANCE MAGIC: CREATE FLAKE SPRITE ---
+// 1. PHYSICS: PRE-RENDER FLAKE (Zero Lag)
 function preRenderFlake() {
     const canvas = document.createElement('canvas');
     canvas.width = 20;
@@ -3433,9 +3433,9 @@ function preRenderFlake() {
 
     // Draw a soft, white, fluffy circle ONCE
     const grad = ctx.createRadialGradient(10, 10, 0, 10, 10, 10);
-    grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)');
-    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)'); // Center
+    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.3)'); // Mid
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0)'); // Edge
     
     ctx.fillStyle = grad;
     ctx.beginPath();
@@ -3445,12 +3445,12 @@ function preRenderFlake() {
     return canvas;
 }
 
-// --- 2. PHYSICS ENGINE ---
+// 2. MAIN ENGINE
 function startSnow() {
     const canvas = document.getElementById('snow-canvas');
     if(!canvas) return;
     
-    // Create the sprite once
+    // Create the sprite once (Optimization)
     if(!flakeImage) flakeImage = preRenderFlake();
 
     canvas.classList.remove('hidden');
@@ -3461,11 +3461,11 @@ function startSnow() {
     canvas.width = width;
     canvas.height = height;
 
-    const maxFalling = 450; 
+    const maxFalling = 400; // Density
     const fallingFlakes = [];
     let landedFlakes = []; 
 
-    // LEDGE SCANNER
+    // LEDGE SCANNER (Accumulation surfaces)
     function updateSurfaces() {
         snowLedges = [];
         const elements = document.querySelectorAll('header, button, .rounded-xl, .rounded-2xl, .rounded-3xl');
@@ -3481,33 +3481,30 @@ function startSnow() {
         });
     }
     updateSurfaces();
-    // Optimization: Only scan on scroll
     window.addEventListener('scroll', () => { if(snowActive) updateSurfaces(); }, { passive: true });
 
-    // INITIAL SPAWN
+    // SPAWN PARTICLES (Everywhere on screen)
     for(let i = 0; i < maxFalling; i++) {
         fallingFlakes.push(createFlake(width, height, true));
     }
 
-    // MAIN RENDER LOOP
+    // ANIMATION LOOP
     let globalTime = 0;
     
     function draw() {
-        // Clear screen
         ctx.clearRect(0, 0, width, height);
         globalTime += 0.01;
         
-        // Balanced Wind (Swings Left AND Right)
-        const windSpeed = Math.sin(globalTime * 0.3) * 0.5; 
+        // BALANCED WIND: Oscillates evenly between Left (-0.3) and Right (+0.3)
+        const windSpeed = Math.sin(globalTime * 0.2) * 0.3; 
 
-        // A. DRAW LANDED FLAKES (Optimized)
+        // A. DRAW LANDED FLAKES
         landedFlakes = landedFlakes.filter(f => {
             f.meltTime--;
             if(f.meltTime <= 0) return false;
 
             // Simple opacity fade
             ctx.globalAlpha = f.meltTime < 60 ? f.meltTime / 60 : 0.8;
-            // Draw Cached Image (Fast!)
             ctx.drawImage(flakeImage, f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
             return true;
         });
@@ -3515,16 +3512,16 @@ function startSnow() {
         // B. DRAW FALLING FLAKES
         fallingFlakes.forEach(f => {
             // Depth-based Opacity
-            ctx.globalAlpha = f.z;
+            ctx.globalAlpha = f.z; // Higher Z = Closer = Brighter
             
-            // Draw Cached Image (Fast!)
+            // Draw Cached Image
             ctx.drawImage(flakeImage, f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
 
             // Move
             f.y += f.speed; 
-            f.x += windSpeed * f.z + Math.sin(globalTime + f.swayOffset) * (0.3 * f.z);
+            f.x += windSpeed * f.z + Math.sin(globalTime + f.swayOffset) * (0.2 * f.z);
 
-            // COLLISION (Stick Logic)
+            // COLLISION (Accumulation)
             if (f.y < height && f.y > 0 && f.z > 0.5) {
                 for (let ledge of snowLedges) {
                     if (Math.abs(f.y - ledge.top) < 5 && f.x > ledge.left && f.x < ledge.right) {
@@ -3535,6 +3532,7 @@ function startSnow() {
                                 r: f.r,
                                 meltTime: 200 + Math.random() * 200
                             });
+                            // Reset immediately to keep density high
                             resetFlake(f, width, height);
                         }
                         break;
@@ -3542,12 +3540,12 @@ function startSnow() {
                 }
             }
 
-            // Loop / Wrap (The "Everywhere" Fix)
+            // LOOP & WRAP (Ensures snow is everywhere)
             if(f.y > height + 10) resetFlake(f, width, height);
             
-            // If it goes off RIGHT, bring to LEFT
+            // Horizontal Wrap: If it goes off Right, bring to Left
             if(f.x > width + 20) f.x = -20;
-            // If it goes off LEFT, bring to RIGHT
+            // If it goes off Left, bring to Right
             if(f.x < -20) f.x = width + 20;
         });
 
@@ -3572,22 +3570,23 @@ function stopSnow() {
     if(snowFrameId) cancelAnimationFrame(snowFrameId);
 }
 
-// Helpers
+// Helper: Create a Flake
 function createFlake(w, h, preWarm = false) {
     const z = Math.random(); 
     return {
         x: Math.random() * w,
         y: preWarm ? Math.random() * h : -20 - (Math.random() * 100), 
         z: z, // Depth 0-1
-        r: (z * 4) + 2, // Size: 2px to 6px (Big & Fluffy)
+        r: (z * 4) + 2, // Size: 2px to 6px
         speed: (z * 2) + 1, // Speed
         swayOffset: Math.random() * Math.PI * 2
     };
 }
 
+// Helper: Reset Flake to Top
 function resetFlake(f, w, h) {
     const z = Math.random();
-    f.x = Math.random() * w;
+    f.x = Math.random() * w; // Random X ensures coverage
     f.y = -20 - (Math.random() * 100); 
     f.z = z;
     f.r = (z * 4) + 2;
