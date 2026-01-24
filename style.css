@@ -1,75 +1,70 @@
-/* Smooth Theme Transition */
-        html { transition: background-color 0.3s, color 0.3s; }
-        
-        /* Optimization: Prevent FOUC (Flash of Unstyled Content) */
-        body { visibility: hidden; opacity: 0; transition: opacity 0.3s ease-in; }
-        body.loaded { visibility: visible; opacity: 1; }
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap');
 
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-        .dark .custom-scroll::-webkit-scrollbar-thumb { background-color: #334155; }
-        
-        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); }
-        .dark .glass { background: rgba(15, 23, 42, 0.9); }
-        
-        .card-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        /* Mobile Menu Transition */
-        #mobile-menu-overlay { transition: opacity 0.3s ease; }
-        #mobile-sidebar { transition: transform 0.3s ease; }
-        .menu-open #mobile-menu-overlay { opacity: 1; pointer-events: auto; }
-        .menu-open #mobile-sidebar { transform: translateX(0); }
-        .menu-closed #mobile-menu-overlay { opacity: 0; pointer-events: none; }
-        .menu-closed #mobile-sidebar { transform: translateX(-100%); }
+/* --- 1. THE LIVE UNIVERSE --- */
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: #000;
+    color: white;
+    overflow: hidden; /* No double scrolls */
+}
 
-        /* Loader */
-        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #0ea5e9; width: 20px; height: 20px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+/* The Flowing Aurora Background */
+.live-bg {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: -1;
+    background: linear-gradient(125deg, #0f172a, #1e1b4b, #312e81, #0f172a);
+    background-size: 400% 400%;
+    animation: flow 20s ease infinite;
+}
 
-/* Custom Animation Utilities to replace missing Plugin */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes slideDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
-@keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-.animate-in { animation-duration: 0.3s; animation-fill-mode: forwards; }
-.fade-in { animation-name: fadeIn; }
-.slide-in-from-bottom-4 { animation-name: slideUp; }
-.zoom-in { animation-name: zoomIn; }
-
-/* Toast Exit Animations */
-.animate-out { animation-duration: 0.3s; animation-fill-mode: forwards; }
-.fade-out { animation-name: fadeIn; animation-direction: reverse; }
-.slide-out-to-bottom-4 { animation-name: slideDown; }
-/* --- 1. THE FLOWING BACKGROUND --- */
 @keyframes flow {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
 
-.live-flow-bg {
-    /* A deep, rich gradient (Deep Blue -> Purple -> Slate) */
-    background: linear-gradient(-45deg, #020617, #0f172a, #1e1b4b, #172554);
-    background-size: 400% 400%;
-    animation: flow 15s ease infinite;
-    color: white; /* Force text white for contrast */
+/* Noise overlay for texture */
+.noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: -1;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* --- 2. DE-JUMBLE: GLASS CARDS --- */
-/* This overrides your existing solid cards to make them translucent */
-.dark .bg-slate-900, 
-.dark .bg-slate-800 {
-    background-color: rgba(15, 23, 42, 0.4) !important; /* See-through */
-    backdrop-filter: blur(16px); /* Frosted glass effect */
-    border: 1px solid rgba(255, 255, 255, 0.08) !important; /* Subtle border */
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); /* Soft shadow */
+/* --- 2. GLASSMORPHISM SYSTEM --- */
+.glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
 }
 
-/* Remove harsh borders that make it look jumbled */
-.dark .border-slate-800, 
-.dark .border-slate-700 {
-    border-color: rgba(255, 255, 255, 0.05) !important;
+.glass-card {
+    background: rgba(20, 20, 25, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    transition: transform 0.2s, border-color 0.2s;
 }
+
+.glass-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* --- 3. UI COMPONENTS --- */
+.nav-pill {
+    transition: all 0.2s;
+    border-radius: 16px;
+    color: #94a3b8;
+}
+.nav-pill:hover { background: rgba(255,255,255,0.05); color: white; }
+.nav-pill.active {
+    background: white;
+    color: black;
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+}
+
+/* Custom Scrollbar */
+.custom-scroll::-webkit-scrollbar { width: 0px; } /* Hidden scrollbar for clean look */
