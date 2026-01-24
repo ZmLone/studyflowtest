@@ -43,3 +43,33 @@
 .animate-out { animation-duration: 0.3s; animation-fill-mode: forwards; }
 .fade-out { animation-name: fadeIn; animation-direction: reverse; }
 .slide-out-to-bottom-4 { animation-name: slideDown; }
+/* --- 1. THE FLOWING BACKGROUND --- */
+@keyframes flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.live-flow-bg {
+    /* A deep, rich gradient (Deep Blue -> Purple -> Slate) */
+    background: linear-gradient(-45deg, #020617, #0f172a, #1e1b4b, #172554);
+    background-size: 400% 400%;
+    animation: flow 15s ease infinite;
+    color: white; /* Force text white for contrast */
+}
+
+/* --- 2. DE-JUMBLE: GLASS CARDS --- */
+/* This overrides your existing solid cards to make them translucent */
+.dark .bg-slate-900, 
+.dark .bg-slate-800 {
+    background-color: rgba(15, 23, 42, 0.4) !important; /* See-through */
+    backdrop-filter: blur(16px); /* Frosted glass effect */
+    border: 1px solid rgba(255, 255, 255, 0.08) !important; /* Subtle border */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); /* Soft shadow */
+}
+
+/* Remove harsh borders that make it look jumbled */
+.dark .border-slate-800, 
+.dark .border-slate-700 {
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
