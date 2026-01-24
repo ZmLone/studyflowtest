@@ -2930,6 +2930,17 @@ const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
             // --- END OF NEW CODE FOR MOBILE ---
             
             const footerLabel = document.getElementById('footer-goal-label');
+// --- CONNECT THE RANK CARD ---
+    // This finds your rank from the leaderboard section and copies it to the dashboard
+    const rankEl = document.getElementById('dashboard-rank');
+    const myRankEl = document.getElementById('lb-my-rank');
+    
+    // If both elements exist, copy the text (e.g., "#5")
+    if (rankEl && myRankEl) {
+        rankEl.textContent = myRankEl.textContent;
+    }
+
+
             if(footerLabel) footerLabel.textContent = selectedSubject === 'General' ? 'Daily Goal' : `${selectedSubject} Goal`;
         }
 
