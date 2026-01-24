@@ -43,5 +43,31 @@
 .animate-out { animation-duration: 0.3s; animation-fill-mode: forwards; }
 .fade-out { animation-name: fadeIn; animation-direction: reverse; }
 .slide-out-to-bottom-4 { animation-name: slideDown; }
+/* Add to style.css */
 
+/* 1. Grainy Texture Overlay */
+.bg-noise {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.03; /* Very subtle */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* 2. Aurora Gradient Animation */
+@keyframes aurora {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.aurora-bg {
+    background: linear-gradient(-45deg, #0f172a, #1e1b4b, #0f172a, #172554);
+    background-size: 400% 400%;
+    animation: aurora 15s ease infinite;
+}
 
