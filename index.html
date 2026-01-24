@@ -1,371 +1,534 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth dark">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StudyFlow - Master Your Prep</title>
-    
-    <!-- Performance Optimization: Preconnect & DNS Prefetch -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
-    <link rel="dns-prefetch" href="https://unpkg.com">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="https://www.gstatic.com">
-
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Defer non-critical scripts to unblock rendering -->
- <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>   
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>   
     <script>
         tailwind.config = {
-            darkMode: 'class', // Enable manual dark mode toggle
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
                     colors: {
-                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e', 950: '#082f49' },
-                        backlog: { 50: '#fff7ed', 100: '#ffedd5', 500: '#f97316', 600: '#ea580c' },
-                        // Custom dark mode palette adjustments
-                        dark: {
-                            bg: '#020617', // Slate 950
-                            card: '#0f172a', // Slate 900
-                            border: '#1e293b' // Slate 800
-                        }
+                        brand: { 50: '#f0f9ff', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' },
+                        // Custom dark overrides are handled in CSS now
                     }
                 }
             }
         }
     </script>
-    <script>
-        // Inline script to prevent FOUC (Flash of Unstyled Content) and default to DARK
-        if (localStorage.theme === 'light') {
-            document.documentElement.classList.remove('dark');
-        } else {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="h-screen w-screen overflow-hidden text-slate-100" id="app-body">
-    
+<body class="h-screen flex overflow-hidden text-slate-100 selection:bg-brand-500/30" id="app-body">
+
     <div class="live-bg"></div>
-    <div class="noise"></div>
+    <div class="noise-overlay"></div>
 
-    <div class="flex h-full w-full p-0 md:p-6 gap-6">
-
-        <nav class="hidden md:flex flex-col w-24 h-full glass rounded-[32px] items-center py-8 z-50">
-            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-black mb-12 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-                <i data-lucide="layers" class="w-6 h-6"></i>
-            </div>
-
-            <div class="flex-1 flex flex-col gap-6 w-full px-4">
-                <button onclick="switchView('overview')" id="nav-overview" class="nav-pill active aspect-square flex items-center justify-center rounded-2xl" title="Overview">
-                    <i data-lucide="layout-grid" class="w-6 h-6"></i>
-                </button>
-                <button onclick="switchView('target')" id="nav-target" class="nav-pill aspect-square flex items-center justify-center rounded-2xl" title="Target">
-                    <i data-lucide="crosshair" class="w-6 h-6"></i>
-                </button>
-                <button onclick="switchView('backlog')" id="nav-backlog" class="nav-pill aspect-square flex items-center justify-center rounded-2xl" title="Backlog">
-                    <i data-lucide="history" class="w-6 h-6"></i>
-                </button>
-                <button onclick="switchView('leaderboard')" id="nav-leaderboard" class="nav-pill aspect-square flex items-center justify-center rounded-2xl" title="Leaderboard">
-                    <i data-lucide="trophy" class="w-6 h-6"></i>
-                </button>
-                <button onclick="switchView('planner')" id="nav-planner" class="nav-pill aspect-square flex items-center justify-center rounded-2xl" title="Planner">
-                    <i data-lucide="calendar" class="w-6 h-6"></i>
-                </button>
-                <button onclick="switchView('namaz')" id="nav-namaz" class="nav-pill aspect-square flex items-center justify-center rounded-2xl" title="Spiritual">
-                    <i data-lucide="moon" class="w-6 h-6"></i>
-                </button>
-            </div>
-
-            <button onclick="openProfileModal()" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
-                <i data-lucide="user" class="w-5 h-5"></i>
-            </button>
-        </nav>
-
-        <main class="flex-1 relative h-full rounded-[0px] md:rounded-[32px] overflow-hidden glass shadow-2xl">
-            
-            <header class="absolute top-0 left-0 right-0 h-20 flex items-center justify-between px-8 z-20 bg-gradient-to-b from-black/50 to-transparent">
-                <div class="flex items-center gap-3">
-                    <h1 class="text-2xl font-black tracking-tight text-white flex items-center gap-2">
-                        StudyFlow <span class="text-xs bg-white/10 px-2 py-1 rounded-full text-slate-300 font-medium tracking-wide">PRO</span>
-                    </h1>
+    <div id="global-error" class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-8">
+        <div class="max-w-md text-center bg-slate-900 p-6 rounded-xl border border-red-500/50">
+            <h2 class="text-xl font-bold text-red-500 mb-2">Something went wrong</h2>
+            <p id="global-error-msg" class="text-sm text-slate-300 mb-4">Please refresh.</p>
+            <button onclick="location.reload()" class="px-4 py-2 bg-white/10 rounded-lg text-sm font-bold hover:bg-white/20">Reload</button>
+        </div>
+    </div>
+    
+    <div id="auth-modal" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center hidden transition-opacity duration-300">
+        <div class="bg-slate-900/90 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 w-full max-w-[400px] mx-4 relative border border-white/10">
+            <div class="mb-8 text-center flex flex-col items-center">
+                <div class="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg shadow-brand-500/20">
+                    <i data-lucide="layers" class="w-8 h-8"></i>
                 </div>
-                <div class="flex items-center gap-4">
-                    <div class="hidden md:flex flex-col items-end">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest" id="overview-date">...</span>
-                        <span class="text-sm font-bold text-white" id="agenda-date-display">Today</span>
+                <h2 class="text-3xl font-bold tracking-tight text-white">StudyFlow</h2>
+                <p class="text-slate-400 text-sm mt-2">Sign in to sync your progress</p>
+            </div>
+            <form id="auth-form" class="space-y-4">
+                <input type="email" id="auth-email" required class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-4 text-white placeholder:text-slate-500 focus:border-brand-500 outline-none" placeholder="Email address">
+                <input type="password" id="auth-pass" required class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-4 text-white placeholder:text-slate-500 focus:border-brand-500 outline-none" placeholder="Password">
+                <div id="auth-error" class="hidden text-red-400 text-xs font-bold p-2 bg-red-900/20 rounded-lg">Error</div>
+                <button type="button" onclick="handleAuth('login')" class="w-full py-3.5 bg-white text-black font-bold rounded-xl hover:scale-[1.02] transition-transform">
+                    <span id="auth-btn-text">Sign In</span>
+                    <div id="auth-loader" class="loader hidden"></div>
+                </button>
+                <div class="text-center pt-2">
+                    <button type="button" onclick="handleAuth('signup')" class="text-brand-400 text-sm font-semibold hover:text-brand-300">Create new account</button>
+                </div>
+            </form>
+            <div class="mt-6 pt-6 border-t border-white/10 text-center">
+                <button onclick="startDemoMode()" class="text-xs font-medium text-slate-500 hover:text-white transition-colors">Use offline mode (Local only)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/80 z-40 hidden" onclick="toggleMobileMenu()"></div>
+    <div id="mobile-sidebar" class="fixed inset-y-0 left-0 w-72 bg-slate-900/95 border-r border-white/10 z-50 flex flex-col shadow-2xl transform -translate-x-full transition-transform duration-300 md:hidden backdrop-blur-xl">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-8">
+                <span class="font-bold text-xl tracking-tight text-white flex items-center gap-2"><i data-lucide="layers" class="text-brand-500"></i> StudyFlow</span>
+                <button onclick="toggleMobileMenu()" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <div class="space-y-2">
+                <button onclick="switchView('overview')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-slate-300 font-medium flex gap-3"><i data-lucide="layout-grid"></i> Overview</button>
+                <button onclick="switchView('target')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-slate-300 font-medium flex gap-3"><i data-lucide="crosshair"></i> Next Target</button>
+                <button onclick="switchView('backlog')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-slate-300 font-medium flex gap-3"><i data-lucide="history"></i> Backlog</button>
+                <button onclick="switchView('mistakes')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-slate-300 font-medium flex gap-3"><i data-lucide="book"></i> Mistakes</button>
+                <button onclick="switchView('leaderboard')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-slate-300 font-medium flex gap-3"><i data-lucide="trophy"></i> Leaderboard</button>
+                <button onclick="switchView('planner')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-slate-300 font-medium flex gap-3"><i data-lucide="calendar-range"></i> Planner</button>
+                <button onclick="switchView('namaz')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-slate-300 font-medium flex gap-3"><i data-lucide="moon"></i> Spiritual</button>
+            </div>
+            <div id="mobile-sidebar-progress-text" class="hidden"></div>
+            <div id="mobile-sidebar-progress-bar" class="hidden"></div>
+            <div id="mobile-user-card" class="hidden"></div>
+            <div id="mobile-user-avatar-bg" class="hidden"></div>
+            <div id="mobile-user-avatar-text" class="hidden"></div>
+            <div id="mobile-user-name" class="hidden"></div>
+            <div id="mobile-sync-status" class="hidden"></div>
+            <button id="mobile-auth-btn" class="hidden"></button>
+        </div>
+    </div>
+
+    <nav class="hidden md:flex w-72 flex-col flex-shrink-0 z-20 h-screen border-r border-white/5 bg-slate-900/50 backdrop-blur-xl">
+        <div class="p-6 pb-2">
+            <div class="flex items-center gap-3 text-brand-400 mb-8">
+                <div class="p-2 bg-white/5 rounded-xl border border-white/10">
+                    <i data-lucide="layers" class="w-6 h-6 text-brand-500"></i>
+                </div>
+                <span class="font-bold text-xl tracking-tight text-white">StudyFlow</span>
+            </div>
+
+            <div class="space-y-1">
+                <button onclick="switchView('overview')" id="nav-overview" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i> Overview
+                </button>
+                <button onclick="switchView('target')" id="nav-target" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="crosshair" class="w-5 h-5 text-blue-400"></i> Next Target
+                </button>
+                <button onclick="switchView('backlog')" id="nav-backlog" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="history" class="w-5 h-5 text-orange-400"></i> Backlog Plan
+                </button>
+                <button onclick="switchView('mistakes')" id="nav-mistakes" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="book" class="w-5 h-5 text-rose-400"></i> Mistake Notebook
+                </button>
+                <button onclick="switchView('leaderboard')" id="nav-leaderboard" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="medal" class="w-5 h-5 text-amber-400"></i> Leaderboard
+                </button>
+                <button onclick="switchView('planner')" id="nav-planner" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="calendar-range" class="w-5 h-5 text-indigo-400"></i> Day Planner
+                </button>
+                <button onclick="switchView('namaz')" id="nav-namaz" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <i data-lucide="moon-star" class="w-5 h-5 text-emerald-400"></i> Spiritual
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-auto p-6 border-t border-white/5 space-y-4">
+            <button onclick="openProfileModal()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-all group">
+                <i data-lucide="user-circle" class="w-5 h-5 group-hover:text-brand-400"></i> Profile
+            </button>
+            
+            <div id="desktop-user-card" onclick="handleProfileClick()" class="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10 cursor-pointer hover:border-brand-500/50 transition-all">
+                <div id="desktop-user-avatar-bg" class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold bg-slate-700 text-white">
+                    <span id="desktop-user-avatar-text">?</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-white truncate" id="desktop-user-name">Guest</p>
+                    <p class="text-[9px] font-bold text-slate-400" id="desktop-sync-status">Not Synced</p>
+                </div>
+                <button id="desktop-auth-btn" onclick="handleAuthAction(event)" class="text-slate-400 hover:text-white"><i data-lucide="log-in" class="w-4 h-4"></i></button>
+            </div>
+            
+            <div class="bg-white/5 rounded-2xl p-4 border border-white/10">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase" id="footer-goal-label">Daily Goal</span>
+                    <span class="text-xs font-bold text-brand-400" id="sidebar-progress-text">0%</span>
+                </div>
+                <div class="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                    <div id="sidebar-progress-bar" class="h-full w-0 transition-all duration-500 bg-brand-500"></div>
+                </div>
+            </div>
+             <button onclick="toggleTheme()" class="hidden" id="theme-text"></button>
+        </div>
+    </nav>  
+
+    <main class="flex-1 flex flex-col relative overflow-hidden transition-colors duration-300">
+        
+        <div class="md:hidden h-16 bg-slate-900/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-4 shrink-0">
+            <span class="font-bold text-lg text-white">StudyFlow</span>
+            <button onclick="toggleMobileMenu()" class="p-2 bg-white/10 rounded-lg text-white"><i data-lucide="menu" class="w-5 h-5"></i></button>
+        </div>
+
+        <div id="view-overview" class="flex-1 flex flex-col overflow-hidden relative">
+            <header class="px-6 py-5 bg-slate-900/50 backdrop-blur-md border-b border-white/5 flex justify-between items-center shrink-0 z-20 sticky top-0">
+                <div>
+                    <h1 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 text-brand-500"></i> Dashboard
+                    </h1>
+                    <p class="text-xs font-medium text-slate-400 mt-0.5" id="overview-date">...</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1 bg-black/40 p-1 rounded-full border border-white/10">
+                        <button onclick="changeDay(-1)" class="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full text-slate-300"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                        <button onclick="goToToday()" class="px-3 h-8 flex items-center justify-center hover:bg-white/10 rounded-full text-xs font-bold text-white">Today</button>
+                        <button onclick="changeDay(1)" class="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full text-slate-300"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                     </div>
-                    <button onclick="openPrayerModal()" class="glass px-4 py-2 rounded-full flex items-center gap-2 hover:bg-white/10 transition-all">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span class="text-xs font-bold" id="header-prayer-count">0/5</span>
+                    <button onclick="openPrayerModal()" class="flex items-center gap-2 px-3 py-1.5 bg-emerald-900/30 text-emerald-400 rounded-full font-bold text-xs border border-emerald-500/20">
+                        <i data-lucide="moon-star" class="w-3.5 h-3.5"></i>
+                        <span id="header-prayer-count">0/5</span>
                     </button>
                 </div>
             </header>
 
-            <div class="absolute inset-0 top-20 overflow-y-auto custom-scroll p-4 md:p-8 pb-32 md:pb-8">
-                
-                <div id="view-overview" class="max-w-6xl mx-auto space-y-8 animate-in fade-in zoom-in duration-300">
-                    
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8 relative z-10">
+                <div class="max-w-5xl mx-auto space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-2 glass-card p-8 relative overflow-hidden group">
-                            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] group-hover:bg-blue-500/30 transition-all"></div>
-                            
-                            <div class="relative z-10">
-                                <span class="inline-block px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-bold uppercase tracking-wider mb-4">Current Mission</span>
-                                <h2 class="text-4xl md:text-5xl font-black text-white mb-2" id="card-main-name">Loading...</h2>
-                                <div class="flex items-end gap-2 mb-8">
-                                    <span class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300" id="card-main-days">--</span>
-                                    <span class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-widest">Days Remaining</span>
-                                </div>
-                                
-                                <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                                    <div id="card-main-bar" class="h-full bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.5)] w-0 transition-all duration-1000"></div>
-                                </div>
-                                <div class="flex justify-between mt-2 text-xs font-medium text-slate-400">
-                                    <span>Progress</span>
-                                    <span id="card-main-text" class="text-white">0%</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div onclick="switchView('backlog')" class="glass-card p-6 flex flex-col justify-between cursor-pointer hover:bg-white/5 relative overflow-hidden">
-                            <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-[60px]"></div>
-                            <div>
+                        <div class="md:col-span-2 bg-gradient-to-br from-brand-900/50 to-slate-900 border border-brand-500/20 rounded-3xl p-6 text-white relative overflow-hidden group">
+                            <div class="absolute -right-10 -top-10 text-brand-500/10 group-hover:text-brand-500/20 transition-colors rotate-12"><i data-lucide="target" class="w-48 h-48"></i></div>
+                            <div class="relative z-10 flex flex-col h-full justify-between">
                                 <div class="flex justify-between items-start">
-                                    <div class="p-3 bg-orange-500/20 rounded-2xl text-orange-400"><i data-lucide="history" class="w-6 h-6"></i></div>
-                                    <i data-lucide="arrow-up-right" class="w-5 h-5 text-slate-500"></i>
+                                    <div>
+                                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-[10px] font-bold uppercase tracking-wider mb-3 text-brand-300">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse"></span> Primary Goal
+                                        </div>
+                                        <h3 class="text-3xl font-black tracking-tight text-white" id="card-main-name">...</h3>
+                                        <p class="text-sm text-brand-200/70 font-medium" id="card-main-date-info">...</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="block text-5xl font-black tracking-tighter text-white" id="card-main-days">--</span>
+                                        <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Days Left</span>
+                                    </div>
                                 </div>
-                                <div class="mt-6">
-                                    <span class="text-4xl font-black text-white" id="backlog-days-large">--</span>
-                                    <p class="text-xs font-bold text-slate-400 uppercase mt-1">Recovery Days</p>
+                                <div class="mt-8">
+                                    <div class="flex justify-between text-xs font-bold text-brand-200 mb-2 uppercase tracking-wider">
+                                        <span>Syllabus Covered</span>
+                                        <span id="card-main-text">0%</span>
+                                    </div>
+                                    <div class="h-3 w-full bg-black/30 rounded-full overflow-hidden border border-white/5">
+                                        <div class="h-full bg-brand-500 shadow-[0_0_15px_rgba(14,165,233,0.5)] w-0 transition-all duration-1000 ease-out" id="card-main-bar"></div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="w-full bg-white/5 h-1.5 rounded-full mt-4 overflow-hidden">
-                                <div id="card-backlog-bar" class="h-full bg-orange-500 w-0 transition-all"></div>
+                        </div>
+
+                        <div class="bg-slate-800/50 rounded-3xl p-6 border border-white/10 relative overflow-hidden flex flex-col justify-between">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-orange-400 font-bold text-[10px] uppercase tracking-wider mb-1">Critical Focus</p>
+                                    <h3 class="text-lg font-bold text-white leading-tight">Backlog Plan</h3>
+                                </div>
+                                <div class="p-2 bg-orange-500/20 rounded-xl text-orange-400"><i data-lucide="history" class="w-5 h-5"></i></div>
+                            </div>
+                            <div class="text-center py-2">
+                                <span class="text-4xl font-black text-white" id="backlog-days-large">--</span>
+                                <p class="text-xs text-slate-500 font-bold uppercase mt-1">Days to Catch Up</p>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase">
+                                    <span>Recovery</span>
+                                    <span id="card-backlog-text">0%</span>
+                                </div>
+                                <div class="h-2 w-full bg-black/30 rounded-full overflow-hidden">
+                                    <div class="h-full bg-orange-500 w-0 transition-all duration-1000" id="card-backlog-bar"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
+                    <div id="ai-strategy-container" class="hidden mb-6"></div>
+                    
                     <div>
-                        <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                            <i data-lucide="list-todo" class="w-5 h-5 text-purple-400"></i> Today's Focus
-                        </h3>
-                        <div id="ai-strategy-container" class="hidden mb-6"></div>
-                        
-                        <div id="overview-task-list" class="space-y-3 min-h-[200px]">
+                        <div class="flex items-end justify-between mb-4 px-1">
+                            <div>
+                                <h2 class="text-xl font-bold text-white">Today's Mission</h2>
+                                <p class="text-sm text-slate-400 font-medium" id="agenda-date-display">...</p>
                             </div>
+                        </div>
+                        <div id="overview-task-list" class="space-y-3 pb-32 min-h-[200px]"></div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="sticky bottom-4 z-30">
-                         <form id="add-task-form" class="glass p-2 rounded-[24px] flex items-center gap-2 shadow-2xl backdrop-blur-xl">
-                            <div class="pl-4"><i data-lucide="plus" class="text-slate-400"></i></div>
-                            <input type="text" id="new-task-input" placeholder="Add a new task..." 
-                                class="bg-transparent border-none text-white placeholder-slate-500 focus:ring-0 w-full py-3 outline-none">
-                            
-                            <select id="new-task-type" class="bg-white/10 border-none text-xs font-bold text-white rounded-xl px-3 py-2 outline-none cursor-pointer">
-                                <option value="main" class="text-black">Exam</option>
-                                <option value="backlog" class="text-black">Backlog</option>
+            <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent z-30">
+                <div class="max-w-3xl mx-auto">
+                    <form id="add-task-form" class="flex gap-2 items-center bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/10 ring-1 ring-white/5 transition-all focus-within:bg-white/15 focus-within:border-brand-500/50">
+                        <div class="pl-3 text-slate-400"><i data-lucide="plus-circle" class="w-5 h-5"></i></div>
+                        <input type="text" id="new-task-input" placeholder="Add a new task..." class="flex-1 bg-transparent border-none text-sm font-medium text-white placeholder:text-slate-500 focus:ring-0 px-2 py-3 outline-none">
+                        <div class="flex gap-2 pr-1">
+                            <select id="new-task-type" class="bg-black/40 border-none text-[10px] font-bold text-slate-300 rounded-lg px-2 py-2 outline-none cursor-pointer hover:bg-black/60 uppercase tracking-wider">
+                                <option value="main">Exam</option>
+                                <option value="backlog">Backlog</option>
                             </select>
+                            <select id="new-task-subject" class="bg-black/40 border-none text-[10px] font-bold text-slate-300 rounded-lg px-2 py-2 outline-none cursor-pointer hover:bg-black/60 uppercase tracking-wider" onchange="updateFooterProgress()">
+                                <option value="General">General</option>
+                                <option value="Physics">Phy</option>
+                                <option value="Chemistry">Chem</option>
+                                <option value="Botany">Bot</option>
+                                <option value="Zoology">Zoo</option>
+                            </select>
+                            <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white p-2.5 rounded-xl font-bold transition-all shadow-lg shadow-brand-500/20"><i data-lucide="arrow-up" class="w-5 h-5"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>       
 
-                            <select id="new-task-subject" class="bg-white/10 border-none text-xs font-bold text-white rounded-xl px-3 py-2 outline-none cursor-pointer" onchange="updateFooterProgress()">
-                                <option value="General" class="text-black">General</option>
-                                <option value="Physics" class="text-black">Phy</option>
-                                <option value="Chemistry" class="text-black">Chem</option>
-                                <option value="Botany" class="text-black">Bot</option>
-                                <option value="Zoology" class="text-black">Zoo</option>
-                            </select>
-                            
-                            <button type="submit" class="bg-white text-black p-3 rounded-xl hover:scale-105 transition-transform">
-                                <i data-lucide="arrow-up" class="w-5 h-5"></i>
-                            </button>
+        <div id="view-target" class="hidden flex-1 flex flex-col overflow-hidden">
+            <header class="px-8 py-6 border-b border-white/10 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-slate-900/50">
+                <div>
+                    <h2 class="text-2xl font-bold text-white" id="syllabus-title">Syllabus</h2>
+                </div>
+                <div class="flex-1 max-w-md w-full relative">
+                    <input type="text" onkeyup="handleSearch(this.value, 'main')" placeholder="Search topics..." class="w-full bg-black/30 border border-white/10 text-sm text-white rounded-xl py-2.5 px-4 outline-none focus:border-brand-500">
+                </div>
+                <div class="text-right hidden md:block">
+                    <div class="text-lg font-bold text-white" id="syllabus-date">...</div>
+                    <div class="text-xs font-bold text-brand-400 mt-1" id="syllabus-days-left">...</div>
+                </div>
+            </header>
+            <div id="main-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4"></div>
+        </div>
+
+        <div id="view-backlog" class="hidden flex-1 flex flex-col overflow-hidden">
+            <header class="px-8 py-6 border-b border-white/10 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-slate-900/50">
+                <div><h2 class="text-2xl font-bold text-white">Backlog Recovery</h2></div>
+                <div class="flex-1 max-w-md w-full relative">
+                    <input type="text" onkeyup="handleSearch(this.value, 'backlog')" placeholder="Search backlog..." class="w-full bg-black/30 border border-white/10 text-sm text-white rounded-xl py-2.5 px-4 outline-none focus:border-orange-500">
+                </div>
+                <div class="text-right hidden md:block">
+                    <div class="text-xs font-bold text-orange-400 mt-1" id="backlog-days-left">...</div>
+                </div>
+            </header>
+            <div id="backlog-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4"></div>
+        </div>
+
+        <div id="view-mistakes" class="hidden flex-1 flex flex-col overflow-hidden relative">
+            <div id="notebook-shelf" class="flex-1 p-8 overflow-y-auto custom-scroll flex flex-col items-center justify-center">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-white mb-2">Mistake Notebooks</h2>
+                    <p class="text-slate-400">Select a subject to open.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full">
+                    <div onclick="openNotebook('Physics')" class="group relative cursor-pointer transform transition-all hover:-translate-y-2">
+                        <div class="relative bg-gradient-to-br from-blue-700 to-blue-900 h-64 rounded-r-2xl border-l-8 border-blue-900 shadow-xl flex flex-col items-center justify-center border border-white/5">
+                            <i data-lucide="atom" class="w-16 h-16 text-white/80 mb-4"></i>
+                            <h3 class="text-2xl font-bold text-white">PHYSICS</h3>
+                            <div class="mt-4 px-3 py-1 bg-white/10 rounded-full text-xs font-bold text-white" id="count-physics">0 Errors</div>
+                        </div>
+                    </div>
+                    <div onclick="openNotebook('Chemistry')" class="group relative cursor-pointer transform transition-all hover:-translate-y-2">
+                        <div class="relative bg-gradient-to-br from-orange-600 to-orange-800 h-64 rounded-r-2xl border-l-8 border-orange-900 shadow-xl flex flex-col items-center justify-center border border-white/5">
+                            <i data-lucide="flask-conical" class="w-16 h-16 text-white/80 mb-4"></i>
+                            <h3 class="text-2xl font-bold text-white">CHEMISTRY</h3>
+                            <div class="mt-4 px-3 py-1 bg-white/10 rounded-full text-xs font-bold text-white" id="count-chemistry">0 Errors</div>
+                        </div>
+                    </div>
+                    <div onclick="openNotebook('Biology')" class="group relative cursor-pointer transform transition-all hover:-translate-y-2">
+                        <div class="relative bg-gradient-to-br from-emerald-600 to-emerald-800 h-64 rounded-r-2xl border-l-8 border-emerald-900 shadow-xl flex flex-col items-center justify-center border border-white/5">
+                            <i data-lucide="dna" class="w-16 h-16 text-white/80 mb-4"></i>
+                            <h3 class="text-2xl font-bold text-white">BIOLOGY</h3>
+                            <div class="mt-4 px-3 py-1 bg-white/10 rounded-full text-xs font-bold text-white" id="count-biology">0 Errors</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="notebook-content" class="hidden flex-1 flex flex-col h-full bg-slate-900/50">
+                <div id="notebook-header-bg" class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button onclick="closeNotebook()" class="p-2 hover:bg-white/10 rounded-full text-slate-300"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-xl font-bold text-white" id="notebook-title">Notebook</h2>
+                    </div>
+                    <button onclick="document.getElementById('add-mistake-modal').classList.remove('hidden')" class="px-4 py-2 bg-white text-black rounded-lg text-sm font-bold">Log Mistake</button>
+                </div>
+                <div id="notebook-entries" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scroll"></div>
+            </div>
+            
+            <div id="add-mistake-modal" class="hidden absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div class="bg-slate-900 rounded-2xl w-full max-w-lg border border-white/10 flex flex-col max-h-[90vh]">
+                    <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-white">Log New Error</h3>
+                        <button onclick="document.getElementById('add-mistake-modal').classList.add('hidden')" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="p-6 overflow-y-auto custom-scroll space-y-4">
+                        <form id="mistake-form" class="space-y-4">
+                            <input type="hidden" id="mistake-image-base64">
+                            <input type="text" id="mistake-subject-display" disabled class="w-full bg-black/30 text-slate-400 rounded-xl px-4 py-2 border border-white/10">
+                            <div class="grid grid-cols-2 gap-4">
+                                <select id="mistake-type" class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-white">
+                                    <option value="Conceptual">Conceptual</option>
+                                    <option value="Silly">Silly/Calculation</option>
+                                    <option value="Memory">Fact/Formula</option>
+                                </select>
+                                <input type="text" id="mistake-chapter" placeholder="Chapter" class="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-white">
+                            </div>
+                            <textarea id="mistake-desc" rows="3" class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2 text-white" placeholder="Question / Issue"></textarea>
+                            <textarea id="mistake-answer" rows="3" class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-2 text-white" placeholder="Solution / Explanation"></textarea>
+                            <div class="border-2 border-dashed border-white/10 rounded-xl p-4 text-center hover:border-brand-500 cursor-pointer relative" id="drop-zone">
+                                <input type="file" id="mistake-file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleImageUpload(this)">
+                                <div id="upload-placeholder" class="text-slate-500 text-xs">Click to upload image</div>
+                                <div id="image-preview-container" class="hidden relative"><img id="image-preview" src="" class="max-h-32 mx-auto rounded"><button type="button" onclick="clearImage()" class="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full"><i data-lucide="x" class="w-3 h-3"></i></button></div>
+                            </div>
+                            <button type="submit" class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl">Save</button>
                         </form>
                     </div>
-
                 </div>
-                <div id="view-target" class="hidden animate-in fade-in zoom-in duration-300">
-                    <h2 class="text-3xl font-bold mb-6 text-white" id="syllabus-title">Syllabus</h2>
-                    <input type="text" onkeyup="handleSearch(this.value, 'main')" placeholder="Search..." class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white mb-6 outline-none focus:border-blue-500 transition-colors">
-                    <div id="main-syllabus-container" class="space-y-4"></div>
-                    <div id="syllabus-date" class="hidden"></div>
-                    <div id="syllabus-days-left" class="hidden"></div>
-                </div>
-
-                <div id="view-backlog" class="hidden animate-in fade-in zoom-in duration-300">
-                    <h2 class="text-3xl font-bold mb-6 text-white">Backlog Recovery</h2>
-                    <input type="text" onkeyup="handleSearch(this.value, 'backlog')" placeholder="Search backlog..." class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white mb-6 outline-none focus:border-orange-500 transition-colors">
-                    <div id="backlog-syllabus-container" class="space-y-4"></div>
-                    <div id="backlog-days-left" class="hidden"></div>
-                </div>
-
-                <div id="view-leaderboard" class="hidden animate-in fade-in zoom-in duration-300">
-                    <h2 class="text-3xl font-bold mb-6 text-white">Leaderboard</h2>
-                     <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-                        <button onclick="switchRankTab('overall')" id="tab-overall" class="px-4 py-2 bg-white text-black rounded-xl text-xs font-bold">Overall</button>
-                        <button onclick="switchRankTab('exam')" id="tab-exam" class="px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-bold">Exam %</button>
-                        <button onclick="switchRankTab('backlog')" id="tab-backlog" class="px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-bold">Backlog</button>
-                        <button onclick="switchRankTab('tests')" id="tab-tests" class="px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-bold">Tests</button>
-                    </div>
-                    
-                    <div class="glass-card p-6 mb-6 flex items-center justify-between bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/30">
-                        <div>
-                            <p class="text-xs font-bold text-yellow-200 uppercase tracking-widest">Your Rank</p>
-                            <h3 class="text-2xl font-bold text-white" id="lb-user-name">Loading...</h3>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-4xl font-black text-yellow-400" id="lb-my-rank">#--</div>
-                        </div>
-                         <div id="lb-my-exam" class="hidden"></div>
-                         <div id="lb-my-backlog" class="hidden"></div>
-                         <div id="lb-my-tests" class="hidden"></div>
-                    </div>
-                    
-                    <div id="leaderboard-list" class="space-y-2"></div>
-                </div>
-                
-                 <div id="view-planner" class="hidden animate-in fade-in zoom-in duration-300">
-                     <h2 class="text-3xl font-bold mb-6 text-white">Day Planner</h2>
-                     <div class="flex bg-white/10 rounded-xl p-1 w-fit mb-6">
-                        <button onclick="setPlannerTab('unscheduled')" id="tab-unscheduled" class="px-4 py-2 rounded-lg text-xs font-bold text-white bg-white/20">To Plan</button>
-                        <button onclick="setPlannerTab('scheduled')" id="tab-scheduled" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400">Schedule</button>
-                    </div>
-                     <div id="planner-section-unscheduled">
-                         <div id="planner-pool-list" class="space-y-4"></div>
-                         <div class="mt-8">
-                             <input type="text" id="planner-new-text" class="hidden"> <button onclick="document.getElementById('add-task-form').scrollIntoView()" class="w-full py-3 bg-white/10 rounded-xl text-sm font-bold border border-white/10 border-dashed">Use Overview to Add Tasks</button>
-                         </div>
-                     </div>
-                     <div id="planner-section-scheduled" class="hidden">
-                         <div id="planner-schedule-list" class="space-y-4"></div>
-                         <div id="planner-completed-container" class="hidden mt-8">
-                            <h4 class="text-xs font-bold text-slate-500 uppercase mb-4">Completed</h4>
-                            <div id="planner-completed-list" class="space-y-2 opacity-50"></div>
-                         </div>
-                     </div>
-                 </div>
-
-                 <div id="view-namaz" class="hidden animate-in fade-in zoom-in duration-300">
-                    <h2 class="text-3xl font-bold mb-6 text-white">Spiritual</h2>
-                    <div class="glass-card p-8 mb-6 text-center">
-                        <span class="block text-5xl font-black text-white mb-2" id="ramadan-days-left">--</span>
-                        <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest">Days until Ramadan</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="glass-card p-4">
-                            <div class="text-xs font-bold text-slate-400 uppercase">Strongest</div>
-                            <div class="text-xl font-bold text-white" id="insight-best">...</div>
-                        </div>
-                        <div class="glass-card p-4">
-                            <div class="text-xs font-bold text-slate-400 uppercase">Needs Focus</div>
-                            <div class="text-xl font-bold text-white" id="insight-worst">...</div>
-                        </div>
-                    </div>
-                    <p class="mt-8 text-center text-lg font-serif italic text-slate-300" id="daily-hadith-text">...</p>
-                    <p class="text-center text-xs font-bold text-slate-500 mt-2" id="daily-hadith-source">...</p>
-                 </div>
-                 
-                 <div id="view-mistakes" class="hidden animate-in fade-in zoom-in duration-300">
-                     <div id="notebook-shelf" class="text-center py-20">
-                         <h2 class="text-3xl font-bold text-white mb-8">Mistake Notebooks</h2>
-                         <div class="grid grid-cols-1 gap-4">
-                             <div onclick="openNotebook('Physics')" class="glass-card p-6 cursor-pointer hover:bg-blue-500/20 border-l-4 border-l-blue-500 text-left">
-                                 <h3 class="text-xl font-bold">Physics</h3>
-                                 <div id="count-physics" class="text-xs text-slate-400">0 Errors</div>
-                             </div>
-                             <div onclick="openNotebook('Chemistry')" class="glass-card p-6 cursor-pointer hover:bg-orange-500/20 border-l-4 border-l-orange-500 text-left">
-                                 <h3 class="text-xl font-bold">Chemistry</h3>
-                                 <div id="count-chemistry" class="text-xs text-slate-400">0 Errors</div>
-                             </div>
-                             <div onclick="openNotebook('Biology')" class="glass-card p-6 cursor-pointer hover:bg-green-500/20 border-l-4 border-l-green-500 text-left">
-                                 <h3 class="text-xl font-bold">Biology</h3>
-                                 <div id="count-biology" class="text-xs text-slate-400">0 Errors</div>
-                             </div>
-                         </div>
-                     </div>
-                     <div id="notebook-content" class="hidden h-full flex flex-col">
-                         <div class="flex items-center gap-4 mb-6">
-                             <button onclick="closeNotebook()" class="p-2 bg-white/10 rounded-full"><i data-lucide="arrow-left"></i></button>
-                             <h2 class="text-2xl font-bold" id="notebook-title">Notebook</h2>
-                         </div>
-                         <button onclick="document.getElementById('add-mistake-modal').classList.remove('hidden')" class="w-full py-3 bg-white text-black font-bold rounded-xl mb-4">Log New Mistake</button>
-                         <div id="notebook-entries" class="space-y-4"></div>
-                         <input type="hidden" id="mistake-subject-display">
-                     </div>
-                 </div>
-
             </div>
-        </main>
-    </div>
+            <div id="image-viewer-modal" class="hidden fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4" onclick="this.classList.add('hidden')"><img id="full-size-image" src="" class="max-w-full max-h-full rounded-lg"></div>
+        </div>
 
-    <nav class="md:hidden fixed bottom-6 left-6 right-6 h-16 glass rounded-full flex items-center justify-around px-2 z-50 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
-        <button onclick="switchView('overview')" class="p-3 text-white hover:text-blue-400 transition-colors"><i data-lucide="layout-grid" class="w-6 h-6"></i></button>
-        <button onclick="switchView('target')" class="p-3 text-slate-400 hover:text-blue-400 transition-colors"><i data-lucide="crosshair" class="w-6 h-6"></i></button>
-        
-        <button onclick="document.getElementById('new-task-input').focus()" class="relative -top-6 bg-white text-black w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-white/20">
-            <i data-lucide="plus" class="w-8 h-8"></i>
-        </button>
+        <div id="view-namaz" class="hidden flex-1 flex flex-col overflow-hidden">
+            <header class="px-8 py-6 bg-slate-900/50 border-b border-white/10">
+                <h1 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="moon-star" class="text-emerald-500"></i> Spiritual Growth</h1>
+            </header>
+            <div class="flex-1 overflow-y-auto custom-scroll p-8 space-y-6">
+                <div class="bg-gradient-to-r from-emerald-900 to-teal-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+                    <div class="relative z-10 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-3xl font-bold">Ramadan 2026</h2>
+                            <p class="text-emerald-200/80">Countdown to the holy month</p>
+                        </div>
+                        <div class="text-center bg-black/20 p-4 rounded-2xl border border-white/10">
+                            <span class="block text-4xl font-black" id="ramadan-days-left">--</span>
+                            <span class="text-[10px] uppercase font-bold text-emerald-200">Days Left</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-800/50 rounded-2xl p-6 border border-white/10"><p class="text-xs font-bold text-slate-400 uppercase">Strongest</p><h3 class="text-xl font-bold text-white" id="insight-best">...</h3></div>
+                    <div class="bg-slate-800/50 rounded-2xl p-6 border border-white/10"><p class="text-xs font-bold text-slate-400 uppercase">Needs Focus</p><h3 class="text-xl font-bold text-white" id="insight-worst">...</h3></div>
+                </div>
+                <div class="bg-amber-900/20 rounded-3xl p-8 border border-amber-500/20 text-center">
+                    <p class="text-lg font-serif italic text-amber-100" id="daily-hadith-text">Loading Hadith...</p>
+                    <div class="mt-4 inline-block px-3 py-1 bg-amber-900/40 rounded-lg text-xs font-bold text-amber-400" id="daily-hadith-source">...</div>
+                </div>
+            </div>
+        </div>
 
-        <button onclick="switchView('planner')" class="p-3 text-slate-400 hover:text-blue-400 transition-colors"><i data-lucide="calendar" class="w-6 h-6"></i></button>
-        <button onclick="toggleMobileMenu()" class="p-3 text-slate-400 hover:text-blue-400 transition-colors"><i data-lucide="menu" class="w-6 h-6"></i></button>
-    </nav>
-    
-    <div id="mobile-sidebar" class="fixed inset-y-0 right-0 w-64 bg-slate-900 border-l border-white/10 transform translate-x-full transition-transform duration-300 z-[60] p-6">
-         <div class="flex justify-between items-center mb-8">
-             <h3 class="font-bold text-white text-lg">Menu</h3>
-             <button onclick="toggleMobileMenu(true)" class="text-slate-400"><i data-lucide="x"></i></button>
-         </div>
-         <div class="space-y-2">
-             <button onclick="switchView('leaderboard')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-white font-medium">Leaderboard</button>
-             <button onclick="switchView('namaz')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-white font-medium">Spiritual</button>
-             <button onclick="switchView('mistakes')" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-white font-medium">Mistake Notebook</button>
-             <div class="h-px bg-white/10 my-2"></div>
-             <button onclick="openProfileModal()" class="w-full text-left p-3 rounded-xl hover:bg-white/10 text-white font-medium">Edit Profile</button>
-         </div>
-         <div class="hidden">
-             <div id="mobile-sidebar-progress-text"></div>
-             <div id="mobile-sidebar-progress-bar"></div>
-             <div id="sidebar-progress-text"></div>
-             <div id="sidebar-progress-bar"></div>
-             <div id="desktop-sync-status"></div>
-         </div>
-    </div>
-    <div id="mobile-menu-overlay" onclick="toggleMobileMenu(true)" class="fixed inset-0 bg-black/50 z-[55] hidden"></div>
+        <div id="view-planner" class="hidden flex-1 flex flex-col overflow-hidden">
+            <header class="px-5 py-4 border-b border-white/10 bg-slate-900/50 sticky top-0 z-20">
+                <div class="flex justify-between items-center max-w-2xl mx-auto w-full">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="calendar-range" class="text-indigo-500"></i> Planner</h2>
+                    <div class="flex bg-slate-800 rounded-lg p-1">
+                        <button onclick="setPlannerTab('unscheduled')" id="tab-unscheduled" class="px-3 py-1.5 rounded-md text-xs font-bold text-indigo-300 bg-slate-700">To Plan</button>
+                        <button onclick="setPlannerTab('scheduled')" id="tab-scheduled" class="px-3 py-1.5 rounded-md text-xs font-bold text-slate-400">Schedule</button>
+                    </div>
+                </div>
+            </header>
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 pb-24">
+                <div class="max-w-2xl mx-auto space-y-6">
+                    <div id="planner-section-unscheduled">
+                        <div id="planner-pool-list" class="space-y-4"></div>
+                        <div class="mt-8 pt-6 border-t border-white/10">
+                            <h3 class="font-bold text-sm text-slate-300 mb-3">Quick Add</h3>
+                            <form onsubmit="event.preventDefault(); addPlannerTask();" class="flex gap-2">
+                                <input type="text" id="planner-new-text" placeholder="Add custom task..." class="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white outline-none">
+                                <button type="submit" class="bg-slate-700 hover:bg-slate-600 text-white px-4 rounded-xl font-bold"><i data-lucide="plus"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="planner-section-scheduled" class="hidden">
+                        <div id="planner-schedule-list" class="space-y-4"></div>
+                        <div id="planner-completed-container" class="mt-8 hidden">
+                            <div class="flex items-center gap-4 mb-4"><div class="h-px flex-1 bg-white/10"></div><span class="text-xs font-bold text-slate-500 uppercase">Completed</span><div class="h-px flex-1 bg-white/10"></div></div>
+                            <div id="planner-completed-list" class="space-y-2 opacity-60"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <div id="auth-modal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center">
-        <div class="glass-card p-8 w-full max-w-sm text-center">
-            <h2 class="text-2xl font-bold mb-4 text-white">StudyFlow</h2>
-             <form id="auth-form" class="space-y-4">
-                <input type="email" id="auth-email" placeholder="Email" class="w-full bg-white/10 border-none rounded-xl p-3 text-white">
-                <input type="password" id="auth-pass" placeholder="Password" class="w-full bg-white/10 border-none rounded-xl p-3 text-white">
-                <button type="button" onclick="handleAuth('login')" class="w-full bg-white text-black font-bold py-3 rounded-xl">Sign In</button>
+        <div id="view-leaderboard" class="hidden flex-1 flex flex-col overflow-hidden">
+            <header class="px-8 py-6 bg-slate-900/50 border-b border-white/10 flex flex-col md:flex-row justify-between md:items-center gap-4">
+                <div><h1 class="text-2xl font-bold text-white flex items-center gap-2"><i data-lucide="trophy" class="text-yellow-500"></i> Leaderboard</h1></div>
+                <div class="flex p-1 bg-slate-800 rounded-xl border border-white/10">
+                    <button onclick="switchRankTab('overall')" id="tab-overall" class="px-4 py-2 rounded-lg text-xs font-bold text-white bg-slate-700">Overall</button>
+                    <button onclick="switchRankTab('exam')" id="tab-exam" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400">Exam %</button>
+                    <button onclick="switchRankTab('backlog')" id="tab-backlog" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400">Backlog %</button>
+                    <button onclick="switchRankTab('tests')" id="tab-tests" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400">Tests</button>
+                </div>
+            </header>
+            <div class="flex-1 overflow-y-auto custom-scroll p-8">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl mb-8 flex items-center justify-between border border-white/10">
+                        <div>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Your Performance</p>
+                            <h3 class="text-2xl font-bold" id="lb-user-name">Guest</h3>
+                            <div class="flex gap-4 mt-2 text-sm font-medium text-slate-300">
+                                <span>Exam: <span id="lb-my-exam" class="text-white">0%</span></span>
+                                <span>Backlog: <span id="lb-my-backlog" class="text-white">0%</span></span>
+                                <span>Tests: <span id="lb-my-tests" class="text-white">0</span></span>
+                            </div>
+                        </div>
+                        <div class="text-right"><p class="text-3xl font-black text-yellow-400" id="lb-my-rank">#--</p><p class="text-xs font-bold text-slate-400 uppercase">Rank</p></div>
+                    </div>
+                    <div class="bg-slate-900/50 rounded-2xl border border-white/10 overflow-hidden">
+                        <div class="grid grid-cols-12 gap-4 p-4 border-b border-white/10 bg-slate-800/50 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            <div class="col-span-2 text-center">Rank</div><div class="col-span-6">Student</div><div class="col-span-4 text-right" id="lb-header-score">Score</div>
+                        </div>
+                        <div id="leaderboard-list" class="divide-y divide-white/5"><div class="p-8 text-center text-slate-500">Loading...</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="profile-modal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl border border-white/10 p-6">
+            <h3 class="text-xl font-bold text-white mb-2">Edit Profile</h3>
+            <form onsubmit="event.preventDefault(); saveProfileName();">
+                <input type="text" id="profile-name-input" class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white mb-4">
+                <div class="flex gap-3">
+                    <button type="button" onclick="document.getElementById('profile-modal').classList.add('hidden')" class="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl">Cancel</button>
+                    <button type="submit" class="flex-1 py-3 bg-brand-600 text-white font-bold rounded-xl">Save</button>
+                </div>
             </form>
-            <button onclick="startDemoMode()" class="mt-4 text-xs text-slate-400 hover:text-white underline">Offline Mode</button>
         </div>
     </div>
     
-    <div id="profile-modal" class="hidden fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-         <div class="glass-card p-6 w-full max-w-sm">
-             <h3 class="text-xl font-bold text-white mb-4">Edit Profile</h3>
-             <input type="text" id="profile-name-input" class="w-full bg-white/10 border-none rounded-xl p-3 text-white mb-4">
-             <button onclick="saveProfileName()" class="w-full bg-white text-black font-bold py-3 rounded-xl">Save</button>
-             <button onclick="document.getElementById('profile-modal').classList.add('hidden')" class="w-full mt-2 text-slate-400 text-sm">Cancel</button>
-         </div>
+    <div id="prayer-modal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-3xl w-full max-w-sm shadow-2xl border border-white/10 p-6 relative">
+            <button onclick="document.getElementById('prayer-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+            <div class="text-center mb-6">
+                <h3 class="text-lg font-bold text-white">Daily Prayers</h3>
+                <p class="text-xs text-slate-400 font-medium" id="modal-prayer-date">...</p>
+            </div>
+            <div class="grid grid-cols-1 gap-2" id="modal-prayer-list"></div>
+        </div>
+    </div>
+    
+    <div id="scheduler-modal" class="hidden fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 w-full md:w-[400px] rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-white/10 flex justify-between items-center bg-slate-800/50">
+                <div><h3 class="font-bold text-lg text-white">Plan Session</h3><p class="text-xs text-slate-400" id="scheduler-subtitle">...</p></div>
+                <button onclick="closeScheduler()" class="text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 space-y-6">
+                <input type="hidden" id="scheduler-task-id"><input type="hidden" id="scheduler-is-chapter"><input type="hidden" id="scheduler-chapter-name">
+                <input type="time" id="scheduler-start" class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white text-lg font-bold">
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="setDuration(0.5)" class="p-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/10">0.5h</button>
+                    <button onclick="setDuration(1)" class="p-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/10">1h</button>
+                    <button onclick="setDuration(2)" class="p-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/10">2h</button>
+                    <button onclick="setDuration(3)" class="p-2 rounded-lg border border-white/10 text-slate-300 hover:bg-white/10">3h</button>
+                </div>
+                <input type="number" id="scheduler-duration" placeholder="Custom Hours" class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white font-bold">
+                <button onclick="confirmSchedule()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-lg">Set Schedule</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="customModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="modalBackdrop"></div>
+        <div class="relative bg-slate-900 rounded-2xl shadow-2xl w-[90%] max-w-sm p-6 border border-white/10" id="modalCard">
+            <div id="modalIconBg" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 bg-slate-800"><i id="modalIcon" data-lucide="info" class="h-8 w-8 text-white"></i></div>
+            <div class="text-center"><h3 id="modalTitle" class="text-xl font-bold text-white mb-2">...</h3><p id="modalMessage" class="text-slate-400 mb-6 text-sm">...</p></div>
+            <button onclick="closeModal()" id="modalBtn" class="w-full py-3 px-4 bg-brand-600 text-white font-semibold rounded-xl">Got it</button>
+        </div>
     </div>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script type="module" src="script.js"></script>
-    <script>
-        // Init Icons
-        lucide.createIcons();
-    </script>
+    <script type="module" src="script.js"></script> 
 </body>
-
-
 </html>
