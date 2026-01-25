@@ -2779,7 +2779,7 @@ if(elements.days) {
     elements.days.textContent = diff;
     
     // URGENCY FOR MAIN EXAM
-    if (diff <= 3) {
+    if (diff <= 5) {
         // Pulse + Yellow tint to warn user on Blue background
         elements.days.className = "block text-5xl font-black tracking-tighter text-yellow-300 animate-pulse";
     } else {
@@ -3635,6 +3635,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSnowUI();
     }
 });
+
 
 
 
