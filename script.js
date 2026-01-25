@@ -389,9 +389,9 @@ const mainSchedule = [
                subject: "Chemistry",
                topic: "p-Block Elements (Group 15-18)",
                dailyTests: [
-                   {name:"DT-10 (Chem-XII)", subs:["Nitrogen Family (Grp 15)", "Ammonia & Nitric Acid"]},
-                   {name:"DT-11 (Chem-XII)", subs:["Oxygen Family (Grp 16)", "Sulphuric Acid"]},
-                   {name:"DT-12 (Chem-XII)", subs:["Halogens (Grp 17)", "Noble Gases (Grp 18)"]}
+                   {name:"DT-10 (Chem-XII)", subs:["Nitrogen Family (Grp 15)", "Oxides of Nitrogen", "Phosphorus Allotropic Forms", "Oxides of Phosphorus"]},
+                   {name:"DT-11 (Chem-XII)", subs:["Oxygen Family (Grp 16)", "Oxides of Oxygen", "Sulphur Allotropic Forms" , "Oxoacids of Sulphur", "Oxides of Nitrogen"]},
+                   {name:"DT-12 (Chem-XII)", subs:["Halogens (Grp 17)", "Oxoacids of Halogens", "Noble Gases (Grp 18)"]}
                ]
            },
            {
@@ -838,8 +838,8 @@ const mainSchedule = [
 
 const backlogPlan = {
    name: "Backlog & Revision", // Renamed to reflect mixed content
-   date: new Date('2026-02-01T00:00:00'), // Your Target Date (Feb 1)
-   syllabus: [
+   date: new Date('2026-02-03T00:00:00'), // Updated to Feb 3, 2026
+    syllabus: [
        // =========================================
        // PART 1: AIATS-5 PENDING (Chem/Bio Only)
        // =========================================
@@ -932,24 +932,15 @@ const backlogPlan = {
        // PART 2: CLASS 11 REVISION (New Section)
        // =========================================
 
-       { 
-           subject: "Physics", 
-           topic: "Wave Motion (Class 11)", 
-           dailyTests: [
-               {name:"DT-49 (Phy-XI)", subs:["Transverse Waves", "Longitudinal Waves"]},
-               {name:"DT-50 (Phy-XI)", subs:["Speed of Travelling Wave"]},
-               {name:"DT-51 (Phy-XI)", subs:["Superposition Principle", "Reflection of Waves", "Beats"]}
-           ] 
-       },
-       { 
+              { 
            subject: "Chemistry", 
            topic: "GOC: General Organic Chem", 
            dailyTests: [
                {name:"DT-23 (Chem-XI)", subs:["IUPAC Nomenclature"]},
-               {name:"DT-24 (Chem-XI)", subs:["Isomerism", "Nucleophiles & Electrophiles"]},
+               {name:"DT-24 (Chem-XI)", subs:["Nucleophiles & Electrophiles"]},
                {name:"DT-25 (Chem-XI)", subs:["Inductive Effect", "Resonance", "Hyperconjugation"]},
-               {name:"DT-26 (Chem-XI)", subs:["Carbocation", "Carbanion", "Free Radicals"]},
-               {name:"DT-27 (Chem-XI)", subs:["Purification Methods", "Qualitative Analysis"]}
+               {name:"DT-26 (Chem-XI)", subs:["Carbocation", "Carbanion", "Free Radicals"]}
+              
            ] 
        }
    ]
@@ -2789,7 +2780,17 @@ function renderStats() {
             if(elements.sylDate) elements.sylDate.textContent = formattedDate;
             if(elements.sylDays) elements.sylDays.textContent = `${diff} Days Left`;
 const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
-            
+// NEW LOGIC BLOCK:
+if(elements.blDateDisplay && typeof backlogPlan !== 'undefined') {
+    elements.blDateDisplay.textContent = backlogPlan.date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+    });
+}
+
+
+    
             // FIX: Subtract 1 day to exclude the deadline day itself
             let rawBlDiff = Math.ceil((blDate - today)/(1000*60*60*24));
             const blDiff = rawBlDiff > 0 ? rawBlDiff - 1 : rawBlDiff;
@@ -3612,3 +3613,4 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSnowUI();
     }
 });
+
