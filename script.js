@@ -2778,15 +2778,19 @@ function renderStats() {
 if(elements.days) {
     elements.days.textContent = diff;
     
-    // URGENCY FOR MAIN EXAM
+    // URGENCY FOR MAIN EXAM (Starts at 5 days)
     if (diff <= 5) {
-        // Pulse + Yellow tint to warn user on Blue background
-        elements.days.className = "block text-5xl font-black tracking-tighter text-yellow-300 animate-pulse";
+        // Neon Pink + Pulse (Beautiful contrast on Blue)
+        elements.days.className = "block text-5xl font-black tracking-tighter text-fuchsia-300 animate-pulse";
     } else {
         // Reset to default white
         elements.days.className = "block text-5xl font-black tracking-tighter";
     }
-}            if(elements.sylTitle) elements.sylTitle.textContent = state.nextExam.name + " Syllabus";
+}
+    
+    
+    
+    if(elements.sylTitle) elements.sylTitle.textContent = state.nextExam.name + " Syllabus";
             if(elements.sylDate) elements.sylDate.textContent = formattedDate;
             if(elements.sylDays) elements.sylDays.textContent = `${diff} Days Left`;
 const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
@@ -3635,6 +3639,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSnowUI();
     }
 });
+
 
 
 
