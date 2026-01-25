@@ -97,3 +97,38 @@
 .neon-text {
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
+/* --- FORCE AI BRAIN TO BE ART --- */
+#ai-strategy-container > div {
+    /* Glass Effect */
+    background: rgba(255, 255, 255, 0.03) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    
+    /* Neon Cyan Border */
+    border: 1px solid rgba(56, 189, 248, 0.3) !important; 
+    border-radius: 2rem !important;
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.1) !important;
+    
+    /* Text Colors */
+    color: white !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Force text colors inside the generated card */
+#ai-strategy-container h3 { color: white !important; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+#ai-strategy-container p { color: rgba(165, 243, 252, 0.8) !important; } 
+#ai-strategy-container .text-slate-600 { color: rgba(255,255,255,0.6) !important; }
+
+/* The Glowing Orb Background */
+#ai-strategy-container > div::before {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 200px; height: 200px;
+    background: rgba(6, 182, 212, 0.4); /* Cyan Glow */
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -1;
+    animation: floatOrb 8s infinite ease-in-out;
+}
