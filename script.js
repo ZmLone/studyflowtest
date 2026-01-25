@@ -3397,3 +3397,218 @@ setTimeout(() => {
         modal.classList.add('hidden');
     }, 300); 
 };
+
+// --- FINAL "BALANCED REALISM" SNOW ENGINE ---
+let snowActive = false;
+let snowFrameId = null;
+let snowLedges = []; 
+let flakeImage = null; // Stores the pre-rendered snowflake image
+
+// UI Toggles
+window.toggleSnow = function() {
+    snowActive = !snowActive;
+    localStorage.setItem('studyflow_snow', snowActive);
+    updateSnowUI();
+    if(snowActive) startSnow();
+    else stopSnow();
+};
+
+function updateSnowUI() {
+    const transform = snowActive ? 'translateX(16px)' : 'translateX(0)';
+    ['snow-dot-pc', 'snow-dot-mobile'].forEach(id => {
+        const dot = document.getElementById(id);
+        if(dot) {
+            dot.style.transform = transform;
+            dot.parentElement.className = `relative w-8 h-4 rounded-full transition-colors ${snowActive ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700'}`;
+        }
+    });
+}
+
+// 1. PERFORMANCE: PRE-RENDER FLAKE (Zero Lag)
+function preRenderFlake() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 20;
+    canvas.height = 20;
+    const ctx = canvas.getContext('2d');
+
+    // Draw a soft, white, fluffy circle ONCE
+    const grad = ctx.createRadialGradient(10, 10, 0, 10, 10, 10);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)'); // Center core
+    grad.addColorStop(0.4, 'rgba(255, 255, 255, 0.3)'); // Fluffy mid
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0)'); // Fade out
+    
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(10, 10, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    return canvas;
+}
+
+// 2. MAIN ENGINE
+function startSnow() {
+    const canvas = document.getElementById('snow-canvas');
+    if(!canvas) return;
+    
+    // Create the sprite once
+    if(!flakeImage) flakeImage = preRenderFlake();
+
+    canvas.classList.remove('hidden');
+    const ctx = canvas.getContext('2d');
+    
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    const maxFalling = 400; // Constant density
+    const fallingFlakes = [];
+    let landedFlakes = []; 
+
+    // LEDGE SCANNER
+    function updateSurfaces() {
+        snowLedges = [];
+        // We select ALL containers to ensure bottom cards get recognized
+        const elements = document.querySelectorAll('header, button, .rounded-xl, .rounded-2xl, .rounded-3xl, nav');
+        elements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            // Only add if visible on screen
+            if(rect.bottom > 0 && rect.top < height && rect.width > 0) {
+                snowLedges.push({
+                    top: rect.top + 3, // Slight overlap
+                    left: rect.left,
+                    right: rect.right
+                });
+            }
+        });
+    }
+    updateSurfaces();
+    window.addEventListener('scroll', () => { if(snowActive) updateSurfaces(); }, { passive: true });
+
+    // SPAWN PARTICLES (Everywhere on screen immediately)
+    for(let i = 0; i < maxFalling; i++) {
+        fallingFlakes.push(createFlake(width, height, true));
+    }
+
+    // ANIMATION LOOP
+    let globalTime = 0;
+    
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        globalTime += 0.01;
+        
+        // WIND PHYSICS: Sine wave + Random Gusts
+        const baseWind = Math.sin(globalTime * 0.2) * 0.5; // Gentle sway
+        const gust = Math.sin(globalTime * 1.5) * 0.2; // Fast random gusts
+        const windSpeed = baseWind + gust; 
+
+        // A. DRAW LANDED FLAKES
+        landedFlakes = landedFlakes.filter(f => {
+            f.meltTime--;
+            if(f.meltTime <= 0) return false;
+
+            // Fade out as it melts
+            ctx.globalAlpha = f.meltTime < 60 ? f.meltTime / 60 : 0.8;
+            ctx.drawImage(flakeImage, f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
+            return true;
+        });
+
+        // B. DRAW FALLING FLAKES
+        fallingFlakes.forEach(f => {
+            // Depth-based Opacity (Far flakes = dim)
+            ctx.globalAlpha = f.z * 0.9;
+            
+            // Draw Cached Image
+            ctx.drawImage(flakeImage, f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
+
+            // Move
+            f.y += f.speed; 
+            // Sway logic: Wind affects lighter/closer flakes differently
+            f.x += windSpeed * f.z + Math.sin(globalTime * 2 + f.swayOffset) * (0.3 * f.z);
+
+            // COLLISION (Accumulation)
+            // Only check collision for flakes that are "close" (Z > 0.6)
+            if (f.y < height && f.y > 0 && f.z > 0.6) {
+                for (let ledge of snowLedges) {
+                    if (Math.abs(f.y - ledge.top) < 6 && f.x > ledge.left && f.x < ledge.right) {
+                        
+                        // FIX: Reduced chance from 30% -> 2% per frame
+                        // This allows snow to fall past the header and hit bottom cards
+                        if(Math.random() > 0.98) { 
+                            landedFlakes.push({
+                                x: f.x,
+                                y: ledge.top,
+                                r: f.r * (0.8 + Math.random() * 0.4), // Varied pile size
+                                meltTime: 200 + Math.random() * 200 // 3-6 seconds
+                            });
+                            // Teleport to top immediately to maintain air density
+                            resetFlake(f, width, height);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // LOOP & WRAP
+            if(f.y > height + 10) resetFlake(f, width, height);
+            
+            // Screen Wrapping (Ensures sides stay populated)
+            if(f.x > width + 20) f.x = -20;
+            if(f.x < -20) f.x = width + 20;
+        });
+
+        snowFrameId = requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        updateSurfaces();
+    });
+
+    draw();
+}
+
+function stopSnow() {
+    const canvas = document.getElementById('snow-canvas');
+    if(canvas) canvas.classList.add('hidden');
+    if(snowFrameId) cancelAnimationFrame(snowFrameId);
+}
+
+// Helper: Create a Flake
+function createFlake(w, h, preWarm = false) {
+    const z = Math.random(); 
+    return {
+        x: Math.random() * w,
+        y: preWarm ? Math.random() * h : -20 - (Math.random() * 100), 
+        z: z, // Depth 0-1
+        r: (z * 3) + 2, // Size: 2px to 5px
+        speed: (z * 1.5) + 1, // Speed: 1px to 2.5px
+        swayOffset: Math.random() * Math.PI * 2
+    };
+}
+
+// Helper: Reset Flake to Top
+function resetFlake(f, w, h) {
+    const z = Math.random();
+    f.x = Math.random() * w; 
+    f.y = -20 - (Math.random() * 100); 
+    f.z = z;
+    f.r = (z * 3) + 2;
+    f.speed = (z * 1.5) + 1;
+}
+
+// AUTO-START
+document.addEventListener('DOMContentLoaded', () => {
+    const storedVal = localStorage.getItem('studyflow_snow');
+    if(storedVal === null || storedVal === 'true') {
+        snowActive = true;
+        updateSnowUI();
+        startSnow();
+    } else {
+        snowActive = false;
+        updateSnowUI();
+    }
+});
