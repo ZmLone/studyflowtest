@@ -2116,7 +2116,7 @@ window.renderLeaderboardList = function() {
 
 let currentAiSuggestions = { main: [], backlog: [] };
 
-// --- INTELLIGENT PACING ENGINE v2.0 (Life-Critical Edition) ---
+// --- INTELLIGENT GAP-FILLING SMART MIX ---
 window.checkStudyPace = function() {
     const container = document.getElementById('ai-strategy-container');
     if (!container) return;
@@ -2129,50 +2129,22 @@ window.checkStudyPace = function() {
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = state.tasks[k] || [];
 
-    // ==========================================
-    // 1. DYNAMIC WEIGHTING ENGINE (The "Memory")
-    // ==========================================
-    // We scan your mistake notebook to find "High Risk" chapters.
-    const mistakeMap = {};
-    (state.mistakes || []).forEach(m => {
-        if (!m.resolved) {
-            // Create a unique key for Subject+Chapter
-            const key = `${m.subject}|${m.chapter}`.toLowerCase();
-            mistakeMap[key] = (mistakeMap[key] || 0) + 1;
-        }
-    });
-
-    // Function to calculate the "True Cost" of a topic
-    function getSmartWeight(subject, topic) {
-        let weight = 1;
-        
-        // A. Base Difficulty (Standard Load)
-        if (subject === 'Physics') weight = 4;
-        else if (subject === 'Chemistry') {
+    // HELPER: Calculate Weight of any Subject/Topic
+    function getWeight(subject, topic) {
+        if (subject === 'Physics') return 4;
+        if (subject === 'Chemistry') {
             const t = (topic || '').toLowerCase();
-            // Heavy Chemistry gets higher base weight
-            if (t.match(/organic|hydro|halo|alcohol|aldehyde|amine|thermo|equilibrium|electro|kinetics/)) {
-                weight = 3;
-            } else {
-                weight = 2; // Inorganic/Lighter Chem
+            if (t.includes('organic') || t.includes('hydro') || t.includes('halo') || 
+                t.includes('alcohol') || t.includes('aldehyde') || t.includes('amine') || 
+                t.includes('thermo') || t.includes('equilibrium') || t.includes('electro')) {
+                return 3;
             }
+            return 2;
         }
-        
-        // B. Dynamic Risk Assessment (The "Life Saving" Logic)
-        // If you have errors in this chapter, IT MATTERS MORE.
-        // Formula: +1 point for every 2 unresolved errors.
-        const mistakeKey = `${subject}|${topic}`.toLowerCase();
-        if (mistakeMap[mistakeKey]) {
-            const riskBonus = Math.ceil(mistakeMap[mistakeKey] / 2);
-            weight += riskBonus;
-        }
-
-        return weight;
+        return 1; // Botany/Zoology
     }
 
-    // ==========================================
-    // 2. THE GENERATOR (The "Brain")
-    // ==========================================
+    // --- ENGINE: The "Gap Filler" Algorithm ---
     function generateSmartMix(trackName, syllabusData, deadlineDate, colorTheme) {
         if (!deadlineDate) return null;
 
@@ -2181,35 +2153,18 @@ window.checkStudyPace = function() {
         if (trackName === 'main') rawDays = rawDays > 0 ? rawDays - 1 : 0;
         const daysLeft = Math.max(1, rawDays);
 
+        // 1. CALCULATE TOTAL REMAINING WORK (Backlog + Future)
         let allPending = [];
         let totalRemainingPoints = 0;
 
-        // --- CONTEXT AWARENESS: What are you doing today? ---
-        let manualPoints = 0;
-        const manualSubjectCounts = {}; // Counts tasks per subject to detect fatigue
-
-        todaysTasks.forEach(t => {
-            if (t.type === trackName) {
-                let subject = t.subject;
-                let topic = t.chapter || (t.text.includes(' - ') ? t.text.split(' - ')[0].replace('Study: ', '') : '');
-                
-                // Calculate weight of what you already planned
-                const w = getSmartWeight(subject, topic);
-                manualPoints += w;
-                
-                // Track subject fatigue (e.g., "Physics: 3 tasks")
-                manualSubjectCounts[subject] = (manualSubjectCounts[subject] || 0) + 1;
-            }
-        });
-
-        // --- SCANNER: Find what's left ---
         syllabusData.forEach(chapter => {
             chapter.dailyTests.forEach(dt => {
-                // If test is NOT fully attempted/done
+                // Only include if NOT done 
                 if (!state.dailyTestsAttempted[dt.name]) {
-                    const pts = getSmartWeight(chapter.subject, chapter.topic);
+                    const pts = getWeight(chapter.subject, chapter.topic);
                     
-                    // Check if specific sub-task is already planned today
+                    // CHECK: Is this specific sub-task ALREADY in today's planner?
+                    // We check if ANY sub-topic of this test is planned
                     const isAlreadyPlanned = dt.subs.some(sub => 
                         todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`)
                     );
@@ -2227,36 +2182,36 @@ window.checkStudyPace = function() {
             });
         });
 
-        if (allPending.length === 0) return null;
+        if (allPending.length === 0) return null; // Nothing left!
 
-        // --- GAP CALCULATION ---
-        // We use a tighter buffer (1.10) to ensure you finish BEFORE the deadline
-        const bufferMultiplier = daysLeft < 7 ? 1.2 : 1.1; 
-        const dailyTarget = Math.ceil((totalRemainingPoints / daysLeft) * bufferMultiplier);
-        let neededPoints = dailyTarget - manualPoints;
-
-        // If you've already done enough, don't nag.
-        if (neededPoints <= 0) return null; 
-
-        // ==========================================
-        // 3. ANTI-FATIGUE PROTOCOL (Variety Logic)
-        // ==========================================
-        // We sort pending tasks not just by points, but by "Freshness".
-        
-        allPending.sort((a, b) => {
-            let scoreA = a.points;
-            let scoreB = b.points;
-
-            // FATIGUE PENALTY:
-            // If you already have 2+ tasks of Subject X today, reduce priority of new X tasks by 40%.
-            // This effectively pushes other subjects to the top of the recommendation.
-            if ((manualSubjectCounts[a.subject] || 0) >= 2) scoreA *= 0.6;
-            if ((manualSubjectCounts[b.subject] || 0) >= 2) scoreB *= 0.6;
-
-            return scoreB - scoreA; // Highest score wins
+        // 2. CALCULATE "ALREADY PLANNED" SCORE
+        // This is the "Intelligence" part. We sum up points of tasks you manually added.
+        let manualPoints = 0;
+        todaysTasks.forEach(t => {
+            // Only count tasks that match this track (Main vs Backlog)
+            if (t.type === trackName) {
+                // Try to infer weight from the text or subject
+                let subject = t.subject;
+                let topic = t.chapter || '';
+                if (!topic && t.text.includes(' - ')) topic = t.text.split(' - ')[0].replace('Study: ', '');
+                
+                manualPoints += getWeight(subject, topic);
+            }
         });
 
-        // --- SELECTION: Fill the Gap ---
+        // 3. CALCULATE THE GAP (Target - Manual)
+        const bufferMultiplier = daysLeft < 5 ? 1.25 : 1.15;
+        const rawDailyTarget = Math.ceil((totalRemainingPoints / daysLeft) * bufferMultiplier);
+        
+        // The Magic: Subtract what you've already done/planned
+        let neededPoints = rawDailyTarget - manualPoints;
+
+        // If you've already planned MORE than the target, don't suggest anything!
+        if (neededPoints <= 0) return null; 
+
+        // 4. FILL THE GAP (Greedy Sort)
+        allPending.sort((a, b) => b.points - a.points); // Hardest first
+
         let selectedBatch = [];
         let currentPoints = 0;
 
@@ -2266,27 +2221,23 @@ window.checkStudyPace = function() {
             currentPoints += task.points;
         }
 
-        // Store for "Accept" button
+        // Save for the button
         currentAiSuggestions[trackName] = selectedBatch;
 
-        // Generate Preview Text
+        // 5. GENERATE PREVIEW
         const previewMap = selectedBatch.reduce((acc, item) => {
             let n = item.subject.substring(0,3); 
-            
-            // Mark risky chapters in UI
-            const mKey = `${item.subject}|${item.topic}`.toLowerCase();
-            if(mistakeMap[mKey]) n += ' <span class="text-red-500 font-bold">(!)</span>'; 
-            
+            if(item.subject === 'Chemistry') n = item.points >= 3 ? 'Org/Phys' : 'Inorg';
             acc[n] = (acc[n] || 0) + 1;
             return acc;
         }, {});
 
         return {
-            name: trackName === 'main' ? 'Adaptive Plan' : 'Backlog Recovery',
+            name: trackName === 'main' ? 'Smart Gap Fill' : 'Backlog Gap Fill',
             days: daysLeft,
             dailyCount: selectedBatch.length,
             points: currentPoints,
-            manualPoints: manualPoints,
+            manualPoints: manualPoints, // Pass this to show off intelligence
             color: colorTheme,
             trackId: trackName,
             preview: previewMap
@@ -2304,8 +2255,9 @@ window.checkStudyPace = function() {
         const btnBg = isV ? 'bg-violet-600 hover:bg-violet-700' : 'bg-orange-600 hover:bg-orange-700';
         const mixText = Object.entries(stats.preview).map(([k,v]) => `${k}: ${v}`).join(', ');
 
+        // Smart Message: "You planned X, we suggest Y more"
         const smartMessage = stats.manualPoints > 0 
-            ? `<span class="text-[10px] font-bold opacity-70 block mt-1">(Included ${stats.manualPoints} manual pts. Adding ${stats.points} to balance load.)</span>` 
+            ? `<span class="text-[10px] font-bold opacity-70 block mt-1">(You planned ${stats.manualPoints} pts manually. Adding ${stats.points} more.)</span>` 
             : '';
 
         return `
