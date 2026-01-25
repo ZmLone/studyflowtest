@@ -128,7 +128,25 @@
     overflow: hidden;
     position: relative;
 }
+/* Add to style.css */
+.animate-gradient-slow {
+    background-size: 200% 200%;
+    animation: gradientFlow 10s ease infinite;
+}
 
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Ensure Smart Mix matches the theme */
+#ai-strategy-container > div {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white !important;
+}
 
 /* --- FORCE AI BRAIN TO BE ART --- */
 #ai-strategy-container > div {
@@ -164,4 +182,5 @@
 #ai-strategy-container h3 { color: white !important; text-shadow: 0 0 10px rgba(255,255,255,0.5); z-index: 10; position: relative; }
 #ai-strategy-container p { color: rgba(204, 251, 241, 0.9) !important; z-index: 10; position: relative; } 
 #ai-strategy-container .text-slate-600 { color: rgba(255,255,255,0.7) !important; z-index: 10; position: relative; }
+
 
