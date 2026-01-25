@@ -2793,7 +2793,7 @@ if(elements.blDateDisplay && typeof backlogPlan !== 'undefined') {
     
             // FIX: Subtract 1 day to exclude the deadline day itself
             let rawBlDiff = Math.ceil((blDate - today)/(1000*60*60*24));
-            const blDiff = rawBlDiff > 0 ? rawBlDiff - 1 : rawBlDiff;
+            const blDiff = rawBlDiff > 0 ? rawBlDiff  : rawBlDiff;
 
             if(elements.blDays) elements.blDays.textContent = `${blDiff} Days Left`;
             if(elements.blLarge) elements.blLarge.textContent = blDiff;
@@ -3613,4 +3613,5 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSnowUI();
     }
 });
+
 
