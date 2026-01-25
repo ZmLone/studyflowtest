@@ -3639,6 +3639,21 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSnowUI();
     }
 });
+// --- INTERACTIVE AURORA EFFECT ---
+document.addEventListener('mousemove', (e) => {
+    updateAurora(e.clientX, e.clientY);
+});
+
+document.addEventListener('touchmove', (e) => {
+    const touch = e.touches[0];
+    updateAurora(touch.clientX, touch.clientY);
+});
+
+function updateAurora(x, y) {
+    const root = document.documentElement;
+    root.style.setProperty('--mouse-x', `${x}px`);
+    root.style.setProperty('--mouse-y', `${y}px`);
+}
 
 
 
