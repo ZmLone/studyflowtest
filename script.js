@@ -2795,8 +2795,19 @@ if(elements.blDateDisplay && typeof backlogPlan !== 'undefined') {
             let rawBlDiff = Math.ceil((blDate - today)/(1000*60*60*24));
             const blDiff = rawBlDiff > 0 ? rawBlDiff  : rawBlDiff;
 
-            if(elements.blDays) elements.blDays.textContent = `${blDiff} Days Left`;
-            if(elements.blLarge) elements.blLarge.textContent = blDiff;
+// 2. REPLACE the old 'blDays' line with this new block:
+if(elements.blDays) {
+    elements.blDays.textContent = `${blDiff} Days Left`;
+    
+    // Dynamic Urgency Color Logic
+    if (blDiff <= 3) {
+        // Red + Pulse (Critical)
+        elements.blDays.className = "text-xs font-bold text-red-600 dark:text-red-400 mt-1 animate-pulse";
+    } else {
+        // Orange (Normal)
+        elements.blDays.className = "text-xs font-bold text-orange-600 dark:text-orange-400 mt-1";
+    }
+}            if(elements.blLarge) elements.blLarge.textContent = blDiff;
            
             // Global Progress Calculation
             const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
@@ -3613,5 +3624,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSnowUI();
     }
 });
+
 
 
