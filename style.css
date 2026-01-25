@@ -45,58 +45,91 @@
 
 .slide-out-to-bottom-4 { animation-name: slideDown; }
 
-/* --- THE AURORA THEME --- */
+/* --- LIQUID ART ENGINE --- */
 
-/* 1. The Living Background */
+/* 1. Global Flowing Background */
 #view-overview {
-    /* Deep Void Base */
-    background-color: #050505; 
-    /* The Reactive Glow (Follows Finger) */
+    background-color: #000;
+    /* This gradient follows your finger via JS variables */
     background-image: 
         radial-gradient(
-            circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-            rgba(99, 102, 241, 0.15) 0%, 
-            transparent 50%
+            600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+            rgba(29, 78, 216, 0.4), 
+            transparent 40%
         ),
-        radial-gradient(at 0% 0%, rgba(255, 0, 128, 0.1) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(0, 255, 255, 0.1) 0px, transparent 50%);
-    background-attachment: fixed;
-    transition: background 0.1s ease;
+        radial-gradient(
+            800px circle at calc(var(--mouse-x, 50%) + 100px) calc(var(--mouse-y, 50%) - 100px), 
+            rgba(236, 72, 153, 0.3), 
+            transparent 40%
+        );
+    transition: opacity 0.3s;
 }
 
-/* 2. The Artistic "Glass" Cards */
-.art-card {
-    background: rgba(255, 255, 255, 0.03); /* Extremely subtle glass */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    overflow: hidden; /* Keeps the glowing orbs inside */
-    position: relative;
-    z-index: 1;
-}
-
-/* 3. The "Soul" (Floating Orbs inside cards) */
-.orb {
+/* 2. The "Art" Container inside cards */
+.liquid-art {
     position: absolute;
-    border-radius: 50%;
-    filter: blur(60px);
-    z-index: -1;
-    animation: floatOrb 10s infinite ease-in-out;
-    opacity: 0.6;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.6; /* Bright but allows text to be seen */
+    filter: blur(40px);
+    mix-blend-mode: screen; /* THIS makes it bright! */
+    transition: transform 0.2s ease-out;
 }
 
-/* Orb Animations */
-@keyframes floatOrb {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(30px, -50px) scale(1.2); }
-    66% { transform: translate(-20px, 20px) scale(0.8); }
+/* 3. Unique Art Styles for Each Card */
+
+/* Violet Galaxy (Main Exam) */
+.art-galaxy {
+    background: conic-gradient(from 0deg at 50% 50%, #4c1d95, #c026d3, #2563eb, #4c1d95);
+    animation: spinArt 20s linear infinite;
 }
 
-/* 4. Neon Text Glow */
-.neon-text {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+/* Magma Core (Backlog) */
+.art-magma {
+    background: radial-gradient(circle at 50% 50%, #facc15, #ef4444, #7f1d1d);
+    background-size: 200% 200%;
+    animation: pulseArt 5s ease-in-out infinite alternate;
 }
+
+/* Ocean Flow (Tasks) */
+.art-ocean {
+    background: linear-gradient(45deg, #0891b2, #06b6d4, #3b82f6);
+    background-size: 200% 200%;
+    animation: flowArt 8s ease infinite;
+}
+
+/* AI Brain (Smart Mix) */
+.art-brain {
+    background: conic-gradient(from 180deg at 50% 50%, #000000, #0d9488, #2dd4bf, #000000);
+    animation: spinArt 15s linear infinite reverse;
+}
+
+/* 4. Animations */
+@keyframes spinArt { 
+    from { transform: rotate(0deg) scale(1.5); } 
+    to { transform: rotate(360deg) scale(1.5); } 
+}
+@keyframes pulseArt { 
+    0% { transform: scale(1.2); } 
+    100% { transform: scale(1.8); } 
+}
+@keyframes flowArt { 
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* 5. Glass Polish (The card shell) */
+.art-card {
+    background: rgba(255, 255, 255, 0.01); /* Ultra clear glass */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(30px); /* Heavy Blur */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    overflow: hidden;
+    position: relative;
+}
+
+
 /* --- FORCE AI BRAIN TO BE ART --- */
 #ai-strategy-container > div {
     /* Glass Effect */
@@ -131,3 +164,4 @@
 #ai-strategy-container h3 { color: white !important; text-shadow: 0 0 10px rgba(255,255,255,0.5); z-index: 10; position: relative; }
 #ai-strategy-container p { color: rgba(204, 251, 241, 0.9) !important; z-index: 10; position: relative; } 
 #ai-strategy-container .text-slate-600 { color: rgba(255,255,255,0.7) !important; z-index: 10; position: relative; }
+
