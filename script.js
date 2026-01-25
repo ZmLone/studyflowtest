@@ -2775,8 +2775,18 @@ function renderStats() {
 
             if(elements.name) elements.name.textContent = state.nextExam.name;
             if(elements.date) elements.date.textContent = `Exam Date: ${formattedDate}`;
-            if(elements.days) elements.days.textContent = diff; // Allow negatives to show passed
-            if(elements.sylTitle) elements.sylTitle.textContent = state.nextExam.name + " Syllabus";
+if(elements.days) {
+    elements.days.textContent = diff;
+    
+    // URGENCY FOR MAIN EXAM
+    if (diff <= 3) {
+        // Pulse + Yellow tint to warn user on Blue background
+        elements.days.className = "block text-5xl font-black tracking-tighter text-yellow-300 animate-pulse";
+    } else {
+        // Reset to default white
+        elements.days.className = "block text-5xl font-black tracking-tighter";
+    }
+}            if(elements.sylTitle) elements.sylTitle.textContent = state.nextExam.name + " Syllabus";
             if(elements.sylDate) elements.sylDate.textContent = formattedDate;
             if(elements.sylDays) elements.sylDays.textContent = `${diff} Days Left`;
 const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
@@ -3625,6 +3635,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSnowUI();
     }
 });
+
 
 
 
