@@ -2285,7 +2285,7 @@ window.renderLeaderboardList = function() {
         renderHeader(); 
     };
 
-// --- NEW: UNIFIED SMART MIX (LOAD BALANCER) ---
+// --- NEW: GRANULAR SMART MIX (LOAD BALANCER) ---
 let currentUnifiedSuggestion = [];
 
 window.checkStudyPace = function() {
@@ -2300,55 +2300,56 @@ window.checkStudyPace = function() {
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = state.tasks[k] || [];
 
+    // 0. BUILD GLOBAL HISTORY (To prevent repeat suggestions)
+    const allCompleted = new Set();
+    Object.values(state.tasks).flat().forEach(t => {
+        if (t.completed) allCompleted.add(t.text);
+    });
+
     // 1. HELPER: Weight Calculator
     function getWeight(subject, topic) {
-        if (subject === 'Physics') return 4; // High Priority
+        if (subject === 'Physics') return 4; 
         if (subject === 'Chemistry') {
             const t = (topic || '').toLowerCase();
-            // Organic & Physical get higher weight
             if (t.includes('organic') || t.includes('hydro') || t.includes('halo') || 
                 t.includes('alcohol') || t.includes('aldehyde') || t.includes('amine') || 
                 t.includes('thermo') || t.includes('equilibrium') || t.includes('electro')) {
                 return 3;
             }
-            return 2; // Inorganic
+            return 2; 
         }
-        return 1; // Biology (Volume-based)
+        return 1; 
     }
 
-    // 2. HELPER: Calculate Work Debt for a Track
+    // 2. HELPER: Calculate Work Debt (Granular)
     function calculateTrackMetrics(syllabus, deadlineDate, trackType) {
         if (!syllabus || !deadlineDate) return { pending: [], rate: 0, days: 1 };
 
-        // A. Adjust Deadline Logic
+        // A. Deadline Logic
         let effectiveDeadline = new Date(deadlineDate);
         if (trackType === 'main') {
-            // Main Exam: Finish 1 day EARLY (Buffer)
-            effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
+            effectiveDeadline.setDate(effectiveDeadline.getDate() - 1); // 1 Day Buffer
         } else {
-            // Backlog: Finish ON deadline (Phase Logic)
             const planStart = backlogPlan.startDate || new Date();
             const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
             let currentPhase = 1;
             if(diff > 15) currentPhase = 2;
             if(diff > 30) currentPhase = 3;
             if(diff > 45) currentPhase = 4;
-            
-            // Set deadline to end of current phase
             effectiveDeadline = new Date(planStart);
             effectiveDeadline.setDate(planStart.getDate() + (currentPhase * 15));
         }
 
         // B. Days Remaining
         let daysLeft = Math.ceil((effectiveDeadline - today) / (1000 * 60 * 60 * 24));
-        if (daysLeft < 1) daysLeft = 1; // Avoid division by zero
+        if (daysLeft < 1) daysLeft = 1; 
 
-        // C. Gather Pending Tasks (Phase Filtered for Backlog)
+        // C. Gather Pending Tasks (Filtered by History)
         let totalPoints = 0;
         let pendingTasks = [];
 
         syllabus.forEach(chapter => {
-            // Backlog Phase Filter
+            // Phase Filter for Backlog
             if (trackType === 'backlog') {
                 const planStart = backlogPlan.startDate || new Date();
                 const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
@@ -2356,36 +2357,48 @@ window.checkStudyPace = function() {
                 if(diff > 15) phase = 2;
                 if(diff > 30) phase = 3;
                 if(diff > 45) phase = 4;
-                
                 if (chapter.phase && chapter.phase !== phase) return;
             }
 
             chapter.dailyTests.forEach(dt => {
-                if (!state.dailyTestsAttempted[dt.name]) {
-                    // Check if already planned manually today
-                    const isPlanned = dt.subs.some(sub => 
-                        todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`)
-                    );
+                // If the WHOLE test is marked done, skip it
+                if (state.dailyTestsAttempted[dt.name]) return;
 
-                    if (!isPlanned) {
-                        const w = getWeight(chapter.subject, chapter.topic);
-                        pendingTasks.push({
-                            name: dt.name,
-                            subject: chapter.subject,
-                            topic: chapter.topic,
-                            points: w,
-                            track: trackType,
-                            subs: dt.subs
-                        });
-                        totalPoints += w;
-                    }
+                // FILTER: Only keep sub-topics that are NOT in allCompleted
+                const remainingSubs = dt.subs.filter(sub => {
+                    const taskName = `Study: ${chapter.topic} - ${sub}`;
+                    return !allCompleted.has(taskName);
+                });
+
+                if (remainingSubs.length === 0) return; // All subs done
+
+                // Check if already planned manually TODAY
+                const isPlannedToday = remainingSubs.some(sub => 
+                    todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`)
+                );
+
+                if (!isPlannedToday) {
+                    const w = getWeight(chapter.subject, chapter.topic);
+                    
+                    // Scale points based on how much is left (e.g. 50% left = 50% points)
+                    const ratio = remainingSubs.length / dt.subs.length;
+                    const adjustedPoints = w * ratio;
+
+                    pendingTasks.push({
+                        name: dt.name,
+                        subject: chapter.subject,
+                        topic: chapter.topic,
+                        points: adjustedPoints, // Use adjusted points
+                        rawPoints: w,
+                        track: trackType,
+                        subs: remainingSubs // Only pass the REMAINING subs
+                    });
+                    totalPoints += adjustedPoints;
                 }
             });
         });
 
-        // D. Required Daily Rate
         const dailyRate = totalPoints / daysLeft;
-        
         return { pending: pendingTasks, rate: dailyRate, days: daysLeft };
     }
 
@@ -2398,31 +2411,30 @@ window.checkStudyPace = function() {
         { pending: [], rate: 0 };
 
     // 4. Calculate Combined Burden
-    const totalDailyRate = Math.ceil(mainMetrics.rate + backlogMetrics.rate);
+    // Add a small multiplier (1.1) to ensure we stay slightly ahead of schedule
+    const totalDailyRate = Math.ceil((mainMetrics.rate + backlogMetrics.rate) * 1.1);
     
-    // 5. Calculate "Already Done" Points (Manual Additions)
+    // 5. Calculate "Already Planned Today" Points
     let manualPoints = 0;
     todaysTasks.forEach(t => {
-        // Approximate points for manual tasks based on subject
-        manualPoints += getWeight(t.subject, t.chapter);
+        // We approximate the points for manual tasks
+        if(!t.completed) manualPoints += getWeight(t.subject, t.chapter);
     });
 
-    // 6. The "Gap" (How much more is needed?)
+    // 6. The "Gap"
     const deficit = totalDailyRate - manualPoints;
 
-    // If user has already planned enough, don't show the card
     if (deficit <= 0 || (mainMetrics.pending.length === 0 && backlogMetrics.pending.length === 0)) return;
 
     // 7. GENERATE BALANCED SUGGESTIONS
-    // We split the deficit proportionally based on the needs of each track
     const mainShare = mainMetrics.rate / (mainMetrics.rate + backlogMetrics.rate || 1);
     
-    let pointsForMain = Math.round(deficit * mainShare);
+    let pointsForMain = deficit * mainShare;
     let pointsForBacklog = deficit - pointsForMain;
 
-    // Fetch highest value tasks first
-    mainMetrics.pending.sort((a,b) => b.points - a.points);
-    backlogMetrics.pending.sort((a,b) => b.points - a.points);
+    // Sort by value (High impact tasks first)
+    mainMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
+    backlogMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
 
     let suggestions = [];
     let currentFill = 0;
@@ -2444,9 +2456,9 @@ window.checkStudyPace = function() {
 
     currentUnifiedSuggestion = suggestions;
 
-    // 8. RENDER THE UNIFIED CARD
+    // 8. RENDER THE CARD
     if (suggestions.length > 0) {
-        const totalPoints = suggestions.reduce((sum, t) => sum + t.points, 0);
+        const totalPointsDisplay = Math.round(suggestions.reduce((sum, t) => sum + t.points, 0));
         const mainCount = suggestions.filter(t => t.track === 'main').length;
         const backlogCount = suggestions.filter(t => t.track === 'backlog').length;
 
@@ -2460,31 +2472,31 @@ window.checkStudyPace = function() {
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 tracking-wide flex items-center gap-1">
-                            <i data-lucide="brain-circuit" class="w-3 h-3"></i> Balanced Mix
+                            <i data-lucide="brain-circuit" class="w-3 h-3"></i> Smart Balance
                         </span>
-                        <span class="text-xs font-medium text-slate-500">Based on your velocity</span>
+                        <span class="text-xs font-medium text-slate-500">History Aware</span>
                     </div>
                     
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                        Today's Optimal Load: <span class="text-indigo-600 dark:text-indigo-400">${totalPoints} Points</span>
+                        Suggested Load: <span class="text-indigo-600 dark:text-indigo-400">${totalPointsDisplay} Points</span>
                     </h3>
                     
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Calculated to finish <strong class="text-slate-700 dark:text-slate-300">Main 1 day early</strong> & <strong class="text-slate-700 dark:text-slate-300">Backlog on time</strong>.
+                        Finish <strong class="text-slate-700 dark:text-slate-300">AIATS-5 by Feb 7</strong> & <strong class="text-slate-700 dark:text-slate-300">Backlog Phase</strong> on time.
                     </p>
 
                     <div class="flex items-center gap-3 mt-3">
                         <div class="flex items-center gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-2 py-1 rounded-lg border border-brand-100 dark:border-brand-900/50">
-                            <i data-lucide="zap" class="w-3 h-3"></i> ${mainCount} Exam Topics
+                            <i data-lucide="zap" class="w-3 h-3"></i> ${mainCount} Main Tasks
                         </div>
                         <div class="flex items-center gap-1.5 text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg border border-orange-100 dark:border-orange-900/50">
-                            <i data-lucide="history" class="w-3 h-3"></i> ${backlogCount} Backlog Topics
+                            <i data-lucide="history" class="w-3 h-3"></i> ${backlogCount} Backlog Tasks
                         </div>
                     </div>
                 </div>
 
                 <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Accept Daily Mix
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add to Today
                 </button>
             </div>
         </div>`;
