@@ -1808,66 +1808,47 @@ function renderDailyHadith() {
             saveData();
         };
 
- 
-
-window.switchView = function(view) {
+ window.switchView = function(view) {
     state.activeView = view;
-
-    // 1. Run View-Specific Logic
-    if(view === 'leaderboard') { fetchLeaderboard(); switchRankTab('overall'); }
-    if(view === 'namaz') renderNamazView();
-    if(view === 'planner') renderPlanner();
-    if(view === 'mistakes') closeNotebook(); 
-
-    // 2. Define Colors
-    const activeBgStyles = {
-        overview: 'bg-indigo-500 shadow-indigo-500/50',
-        target: 'bg-blue-500 shadow-blue-500/50',
-        backlog: 'bg-orange-500 shadow-orange-500/50',
-        planner: 'bg-violet-500 shadow-violet-500/50',
-        mistakes: 'bg-rose-500 shadow-rose-500/50',
-        leaderboard: 'bg-yellow-500 shadow-yellow-500/50',
-        namaz: 'bg-emerald-500 shadow-emerald-500/50',
-    };
-
-    // 3. Update Dock UI
-    const views = ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'];
+    toggleMobileMenu(true); 
     
-    views.forEach(v => {
-        const viewEl = document.getElementById(`view-${v}`);
-        if(viewEl) {
-            if(v === view) viewEl.classList.remove('hidden');
-            else viewEl.classList.add('hidden');
-        }
+    // Handle specific view logic
+    if(view === 'leaderboard') {
+        fetchLeaderboard();
+        switchRankTab('overall'); 
+    }
+    if(view === 'namaz') {
+        renderNamazView();
+    }
+    // NEW: Handle Planner View
+    if(view === 'planner') {
+        renderPlanner();
+    }
+    // Reset Notebook if leaving mistakes view
+    if(view === 'mistakes') {
+        closeNotebook(); 
+    }
 
-        const btn = document.getElementById(`dock-${v}`);
+    // Updated list to include 'planner'
+    ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'].forEach(v => {
+        const btn = document.getElementById(`nav-${v}`);
         if(btn) {
-            const iconBg = btn.querySelector('.dock-icon-bg');
-            const icon = iconBg ? iconBg.querySelector('i, svg') : null; // Safe selector
-            const dot = btn.querySelector('.dock-dot');
-
-            if(v === view) {
-                btn.classList.add('-translate-y-3'); 
-                if(iconBg) iconBg.className = `p-3 rounded-2xl transition-all duration-300 shadow-lg scale-110 text-white dock-icon-bg ${activeBgStyles[v]}`;
-                if(icon) {
-                    icon.classList.remove('text-slate-500', 'dark:text-slate-400');
-                    icon.classList.add('text-white');
-                }
-                if(dot) dot.classList.remove('opacity-0');
-            } else {
-                btn.classList.remove('-translate-y-3');
-                if(iconBg) iconBg.className = `p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors shadow-sm dock-icon-bg`;
-                if(icon) {
-                    icon.classList.remove('text-white');
-                    icon.classList.add('text-slate-500', 'dark:text-slate-400');
-                }
-                if(dot) dot.classList.add('opacity-0');
-            }
+            if(v === view) btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 shadow-sm";
+            else btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all";
         }
+        const viewEl = document.getElementById(`view-${v}`);
+        if(viewEl) viewEl.classList.add('hidden');
     });
 
+    const activeEl = document.getElementById(`view-${view}`);
+    if(activeEl) activeEl.classList.remove('hidden');
+    
+    // Only render standard views if NOT leaderboard or planner (Planner handles its own render)
     if(view !== 'leaderboard' && view !== 'planner') renderAll();
 };
+
+
+
         window.toggleMobileMenu = function(forceClose = false) {
             const body = document.getElementById('app-body');
             if (forceClose) { body.classList.remove('menu-open'); body.classList.add('menu-closed'); } 
@@ -2304,10 +2285,8 @@ window.renderLeaderboardList = function() {
         renderHeader(); 
     };
 
-
-// --- NEW: VIBRANT BALANCED MIX CARD ---
+// --- NEW: UNIFIED SMART MIX (LOAD BALANCER) ---
 let currentUnifiedSuggestion = [];
-
 
 window.checkStudyPace = function() {
     const container = document.getElementById('ai-strategy-container');
@@ -2320,46 +2299,56 @@ window.checkStudyPace = function() {
     today.setHours(0,0,0,0);
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = state.tasks[k] || [];
-    
-    // HISTORY CHECK
-    const allCompleted = new Set();
-    Object.values(state.tasks).flat().forEach(t => { if (t.completed) allCompleted.add(t.text); });
 
+    // 1. HELPER: Weight Calculator
     function getWeight(subject, topic) {
-        if (subject === 'Physics') return 4; 
+        if (subject === 'Physics') return 4; // High Priority
         if (subject === 'Chemistry') {
             const t = (topic || '').toLowerCase();
+            // Organic & Physical get higher weight
             if (t.includes('organic') || t.includes('hydro') || t.includes('halo') || 
                 t.includes('alcohol') || t.includes('aldehyde') || t.includes('amine') || 
-                t.includes('thermo') || t.includes('equilibrium') || t.includes('electro')) return 3;
-            return 2; 
+                t.includes('thermo') || t.includes('equilibrium') || t.includes('electro')) {
+                return 3;
+            }
+            return 2; // Inorganic
         }
-        return 1; 
+        return 1; // Biology (Volume-based)
     }
 
+    // 2. HELPER: Calculate Work Debt for a Track
     function calculateTrackMetrics(syllabus, deadlineDate, trackType) {
         if (!syllabus || !deadlineDate) return { pending: [], rate: 0, days: 1 };
-        
+
+        // A. Adjust Deadline Logic
         let effectiveDeadline = new Date(deadlineDate);
-        if (trackType === 'main') effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
-        else {
+        if (trackType === 'main') {
+            // Main Exam: Finish 1 day EARLY (Buffer)
+            effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
+        } else {
+            // Backlog: Finish ON deadline (Phase Logic)
             const planStart = backlogPlan.startDate || new Date();
             const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
             let currentPhase = 1;
             if(diff > 15) currentPhase = 2;
             if(diff > 30) currentPhase = 3;
             if(diff > 45) currentPhase = 4;
+            
+            // Set deadline to end of current phase
             effectiveDeadline = new Date(planStart);
             effectiveDeadline.setDate(planStart.getDate() + (currentPhase * 15));
         }
 
+        // B. Days Remaining
         let daysLeft = Math.ceil((effectiveDeadline - today) / (1000 * 60 * 60 * 24));
-        if (daysLeft < 1) daysLeft = 1; 
+        if (daysLeft < 1) daysLeft = 1; // Avoid division by zero
 
+        // C. Gather Pending Tasks (Phase Filtered for Backlog)
         let totalPoints = 0;
         let pendingTasks = [];
 
         syllabus.forEach(chapter => {
+            // Backlog Phase Filter
             if (trackType === 'backlog') {
                 const planStart = backlogPlan.startDate || new Date();
                 const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
@@ -2367,79 +2356,85 @@ window.checkStudyPace = function() {
                 if(diff > 15) phase = 2;
                 if(diff > 30) phase = 3;
                 if(diff > 45) phase = 4;
+                
                 if (chapter.phase && chapter.phase !== phase) return;
             }
 
             chapter.dailyTests.forEach(dt => {
-                const remainingSubs = dt.subs.filter(sub => !allCompleted.has(`Study: ${chapter.topic} - ${sub}`));
-                if (remainingSubs.length === 0) return;
+                if (!state.dailyTestsAttempted[dt.name]) {
+                    // Check if already planned manually today
+                    const isPlanned = dt.subs.some(sub => 
+                        todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`)
+                    );
 
-                const isPlannedToday = remainingSubs.some(sub => todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`));
-
-                if (!isPlannedToday) {
-                    const w = getWeight(chapter.subject, chapter.topic);
-                    const ratio = remainingSubs.length / dt.subs.length;
-                    const adjustedPoints = w * ratio;
-
-                    pendingTasks.push({
-                        name: dt.name,
-                        subject: chapter.subject,
-                        topic: chapter.topic,
-                        points: adjustedPoints,
-                        rawPoints: w,
-                        track: trackType,
-                        subs: remainingSubs
-                    });
-                    totalPoints += adjustedPoints;
+                    if (!isPlanned) {
+                        const w = getWeight(chapter.subject, chapter.topic);
+                        pendingTasks.push({
+                            name: dt.name,
+                            subject: chapter.subject,
+                            topic: chapter.topic,
+                            points: w,
+                            track: trackType,
+                            subs: dt.subs
+                        });
+                        totalPoints += w;
+                    }
                 }
             });
         });
 
-        return { pending: pendingTasks, rate: totalPoints / daysLeft, days: daysLeft };
+        // D. Required Daily Rate
+        const dailyRate = totalPoints / daysLeft;
+        
+        return { pending: pendingTasks, rate: dailyRate, days: daysLeft };
     }
 
+    // --- MAIN LOGIC ---
+    
+    // 3. Analyze Both Tracks
     const mainMetrics = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
     const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
-        calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : { pending: [], rate: 0 };
+        calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : 
+        { pending: [], rate: 0 };
 
-    // FIX 1: INCREASED AGGRESSION (1.1 -> 1.25)
-    // This raises the "Minimum Daily Target" so even small deletions trigger the AI.
-    const totalDailyRate = Math.ceil((mainMetrics.rate + backlogMetrics.rate) * 1.25);
+    // 4. Calculate Combined Burden
+    const totalDailyRate = Math.ceil(mainMetrics.rate + backlogMetrics.rate);
     
-    // FIX 2: COUNT ALL PLANNED TASKS (Correctly handles deletes)
+    // 5. Calculate "Already Done" Points (Manual Additions)
     let manualPoints = 0;
-    todaysTasks.forEach(t => { 
-        manualPoints += getWeight(t.subject, t.chapter); 
+    todaysTasks.forEach(t => {
+        // Approximate points for manual tasks based on subject
+        manualPoints += getWeight(t.subject, t.chapter);
     });
 
+    // 6. The "Gap" (How much more is needed?)
     const deficit = totalDailyRate - manualPoints;
-    
-    // Only return if we have truly met the (now higher) target
+
+    // If user has already planned enough, don't show the card
     if (deficit <= 0 || (mainMetrics.pending.length === 0 && backlogMetrics.pending.length === 0)) return;
 
+    // 7. GENERATE BALANCED SUGGESTIONS
+    // We split the deficit proportionally based on the needs of each track
     const mainShare = mainMetrics.rate / (mainMetrics.rate + backlogMetrics.rate || 1);
-    let pointsForMain = deficit * mainShare;
+    
+    let pointsForMain = Math.round(deficit * mainShare);
     let pointsForBacklog = deficit - pointsForMain;
 
-    // FIX 3: FORCE BACKLOG INCLUSION
-    // If we have backlog pending, ensure we allocate at least 2 points to it
-    // This prevents the "Physics (4pt)" tasks from eating the entire suggestion budget.
-    if (backlogMetrics.pending.length > 0 && pointsForBacklog < 2) {
-        pointsForBacklog = 2; // Force at least 2 points for backlog
-        pointsForMain = Math.max(0, deficit - pointsForBacklog); // Adjust main down
-    }
-
-    mainMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
-    backlogMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
+    // Fetch highest value tasks first
+    mainMetrics.pending.sort((a,b) => b.points - a.points);
+    backlogMetrics.pending.sort((a,b) => b.points - a.points);
 
     let suggestions = [];
     let currentFill = 0;
 
+    // Fill Main Quota
     for (let task of mainMetrics.pending) {
         if (currentFill >= pointsForMain) break;
         suggestions.push(task);
         currentFill += task.points;
     }
+    
+    // Fill Backlog Quota
     currentFill = 0;
     for (let task of backlogMetrics.pending) {
         if (currentFill >= pointsForBacklog) break;
@@ -2449,49 +2444,47 @@ window.checkStudyPace = function() {
 
     currentUnifiedSuggestion = suggestions;
 
+    // 8. RENDER THE UNIFIED CARD
     if (suggestions.length > 0) {
-        const totalPointsDisplay = Math.round(suggestions.reduce((sum, t) => sum + t.points, 0));
+        const totalPoints = suggestions.reduce((sum, t) => sum + t.points, 0);
         const mainCount = suggestions.filter(t => t.track === 'main').length;
         const backlogCount = suggestions.filter(t => t.track === 'backlog').length;
 
         const html = `
-        <div class="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-r from-blue-600 to-cyan-500 shadow-xl shadow-blue-500/20 text-white mb-6 group animate-in slide-in-from-top-2">
-            <div class="absolute -right-10 -top-10 text-white opacity-10 group-hover:rotate-12 transition-transform duration-700">
-                <i data-lucide="sparkles" class="w-48 h-48"></i>
+        <div class="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-slate-900 dark:to-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl p-5 relative overflow-hidden shadow-sm mb-6 animate-in slide-in-from-top-2">
+            <div class="absolute -right-6 -top-6 text-indigo-500 opacity-5 transform rotate-12">
+                <i data-lucide="scale" class="w-40 h-40"></i>
             </div>
 
             <div class="relative z-10 flex flex-col md:flex-row gap-6 items-center justify-between">
                 <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-3">
-                        <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-2">
-                            <i data-lucide="brain-circuit" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs font-bold uppercase tracking-wider">AI Recommendation</span>
-                        </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 tracking-wide flex items-center gap-1">
+                            <i data-lucide="brain-circuit" class="w-3 h-3"></i> Balanced Mix
+                        </span>
+                        <span class="text-xs font-medium text-slate-500">Based on your velocity</span>
                     </div>
                     
-                    <h3 class="text-2xl font-bold leading-tight mb-1">
-                        Load Balance: <span class="text-white drop-shadow-sm">${totalPointsDisplay} Points</span>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                        Today's Optimal Load: <span class="text-indigo-600 dark:text-indigo-400">${totalPoints} Points</span>
                     </h3>
                     
-                    <p class="text-blue-100 text-sm font-medium opacity-90">
-                        Optimized mix to hit your <strong>Feb 7</strong> and <strong>Phase 1</strong> deadlines.
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Calculated to finish <strong class="text-slate-700 dark:text-slate-300">Main 1 day early</strong> & <strong class="text-slate-700 dark:text-slate-300">Backlog on time</strong>.
                     </p>
 
-                    <div class="flex items-center gap-3 mt-4">
-                        <div class="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
-                            <i data-lucide="zap" class="w-3.5 h-3.5 text-yellow-300"></i> 
-                            <span class="text-xs font-bold">${mainCount} Main</span>
+                    <div class="flex items-center gap-3 mt-3">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-2 py-1 rounded-lg border border-brand-100 dark:border-brand-900/50">
+                            <i data-lucide="zap" class="w-3 h-3"></i> ${mainCount} Exam Topics
                         </div>
-                        <div class="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
-                            <i data-lucide="history" class="w-3.5 h-3.5 text-orange-300"></i> 
-                            <span class="text-xs font-bold">${backlogCount} Backlog</span>
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg border border-orange-100 dark:border-orange-900/50">
+                            <i data-lucide="history" class="w-3 h-3"></i> ${backlogCount} Backlog Topics
                         </div>
                     </div>
                 </div>
 
-                <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-8 py-4 bg-white text-blue-600 rounded-xl text-sm font-bold shadow-lg shadow-black/10 hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                    Add to Today
+                <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Accept Daily Mix
                 </button>
             </div>
         </div>`;
@@ -2500,6 +2493,7 @@ window.checkStudyPace = function() {
         if (window.lucide) lucide.createIcons({ root: container });
     }
 };
+
 window.acceptUnifiedPlan = function() {
     if (!currentUnifiedSuggestion || currentUnifiedSuggestion.length === 0) return;
 
@@ -2911,37 +2905,36 @@ window.assignChapterTime = function(chapName, inputId) {
         };
 
         
-window.renderAll = function() {
-    renderHeader();
-    updateHeaderPrayerBtn();
-    renderStats();
-    
-    // Performance Optimization: Lazy Rendering
-    if (state.activeView === 'overview') {
-        renderTasks();
-        // FORCE UPDATE: Ensure AI checks pace every time the UI updates (e.g. deletions)
-        if (typeof checkStudyPace === 'function') {
-            checkStudyPace(); 
+function renderAll() {
+            renderHeader();
+            updateHeaderPrayerBtn();
+            renderStats();
+            
+            // Performance Optimization: Lazy Rendering
+            if (state.activeView === 'overview') {
+                renderTasks();
+                checkStudyPace(); // This activates the Smart Coach
+            } else if (state.activeView === 'target') {
+                renderSyllabus('main');
+            } else if (state.activeView === 'backlog') {
+                renderSyllabus('backlog');
+            } else if (state.activeView === 'mistakes') {
+                if(state.activeNotebook) {
+                    renderNotebookEntries();
+                } else {
+                    updateShelfCounts();
+                }
+            } else if (state.activeView === 'namaz') {
+                renderNamazView();
+            } else if (state.activeView === 'leaderboard') {
+                renderLeaderboardList();
+            }
+            
+            // Re-scan icons if library is loaded
+            if(window.lucide) lucide.createIcons();
         }
-    } else if (state.activeView === 'target') {
-        renderSyllabus('main');
-    } else if (state.activeView === 'backlog') {
-        renderSyllabus('backlog');
-    } else if (state.activeView === 'mistakes') {
-        if(state.activeNotebook) {
-            renderNotebookEntries();
-        } else {
-            updateShelfCounts();
-        }
-    } else if (state.activeView === 'namaz') {
-        renderNamazView();
-    } else if (state.activeView === 'leaderboard') {
-        renderLeaderboardList();
-    }
-    
-    // Re-scan icons if library is loaded
-    if(window.lucide) lucide.createIcons();
-};
+// FIX: Make all these functions global so HTML buttons can see them
+window.renderAll = renderAll;
 window.renderTasks = renderTasks;
         function renderHeader() {
             const els = { date: document.getElementById('overview-date'), agendaDate: document.getElementById('agenda-date-display') };
@@ -2949,176 +2942,151 @@ window.renderTasks = renderTasks;
             if(els.date) els.date.textContent = state.selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             if(els.agendaDate) els.agendaDate.textContent = dateStr;
         }
-
-window.renderStats = function() {
-    const container = document.getElementById('stats-container');
-    if (!container) return;
-
-    // 1. GATHER HISTORY
-    const allCompleted = new Set();
-    if (state.tasks) {
-        Object.values(state.tasks).flat().forEach(t => {
-            if (t.completed) allCompleted.add(t.text);
-        });
-    }
-
-    // --- CALCULATE DATA ---
-    const nextExam = state.nextExam;
-    let daysLeft = 0;
-    let primaryPercent = 0;
-
-    if (nextExam) {
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const examDate = new Date(nextExam.date);
-        daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
-        
-        let totalSubTopics = 0;
-        let doneSubTopics = 0;
-        
-        nextExam.syllabus.forEach(chapter => {
-            chapter.dailyTests.forEach(dt => {
-                const isTestDone = state.dailyTestsAttempted[dt.name];
-                dt.subs.forEach(sub => {
-                    totalSubTopics++;
-                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) doneSubTopics++;
-                });
-            });
-        });
-        primaryPercent = totalSubTopics === 0 ? 0 : Math.round((doneSubTopics / totalSubTopics) * 100);
-    }
-
-    let currentPhase = 1;
-    let totalPercent = 0;
-    let phasePercent = 0;
-
-    if (typeof backlogPlan !== 'undefined') {
-        const planStart = new Date(backlogPlan.startDate);
-        const today = new Date();
-        const diffDays = Math.ceil(Math.abs(today - planStart) / (1000 * 60 * 60 * 24)); 
-        if(diffDays > 15) currentPhase = 2;
-        if(diffDays > 30) currentPhase = 3;
-        if(diffDays > 45) currentPhase = 4;
-        if(diffDays > 60) currentPhase = 4; 
-
-        let totalBacklogSubs = 0;
-        let doneBacklogSubs = 0;
-        let phaseTotalSubs = 0;
-        let phaseDoneSubs = 0;
-
-        backlogPlan.syllabus.forEach(chapter => {
-            const isPhase = chapter.phase === currentPhase;
-            chapter.dailyTests.forEach(dt => {
-                const isTestDone = state.dailyTestsAttempted[dt.name];
-                dt.subs.forEach(sub => {
-                    totalBacklogSubs++;
-                    if (isPhase) phaseTotalSubs++;
-                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) {
-                        doneBacklogSubs++;
-                        if (isPhase) phaseDoneSubs++;
-                    }
-                });
-            });
-        });
-
-        totalPercent = totalBacklogSubs === 0 ? 0 : Math.round((doneBacklogSubs / totalBacklogSubs) * 100);
-        phasePercent = phaseTotalSubs === 0 ? 0 : Math.round((phaseDoneSubs / phaseTotalSubs) * 100);
-    }
-
-    // --- RENDER BRIGHT & COMPACT UI ---
-    container.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+function renderStats() {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const exDate = new Date(state.nextExam.date); exDate.setHours(0,0,0,0);
             
-            <div class="md:col-span-3 relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-indigo-500 via-purple-600 to-blue-600 text-white shadow-2xl shadow-indigo-500/30 group hover:scale-[1.01] transition-transform duration-300">
-                <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
-                <div class="absolute -left-8 -bottom-8 w-40 h-40 bg-cyan-400/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
-                
-                <div class="relative z-10 flex flex-col h-full justify-between">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-wider mb-2 shadow-sm">
-                                <i data-lucide="crosshair" class="w-3 h-3 text-cyan-300"></i> Main Target
-                            </div>
-                            <h2 class="text-2xl md:text-3xl font-black text-white drop-shadow-sm truncate pr-2">
-                                ${nextExam ? nextExam.name : 'No Exam'}
-                            </h2>
-                        </div>
-                        <div class="text-right">
-                            <span class="block text-4xl md:text-5xl font-black tracking-tighter leading-none">${daysLeft}</span>
-                            <span class="text-[9px] font-bold uppercase opacity-80 tracking-widest">Days Left</span>
-                        </div>
-                    </div>
+            // FIXED: Exclude exam day from prep days for visual count
+            let rawDiff = Math.ceil((exDate - today)/(1000*60*60*24));
+            const diff = rawDiff > 0 ? rawDiff - 1 : rawDiff;
+                    const formattedDate = state.nextExam.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            // Text Updates
+            const elements = {
+                name: document.getElementById('card-main-name'),
+                date: document.getElementById('card-main-date-info'),
+                days: document.getElementById('card-main-days'),
+                sylTitle: document.getElementById('syllabus-title'),
+                sylDate: document.getElementById('syllabus-date'),
+                sylDays: document.getElementById('syllabus-days-left'),
+                blDays: document.getElementById('backlog-days-left'),
+                blLarge: document.getElementById('backlog-days-large')
+            };
 
-                    <div class="mt-6">
-                        <div class="flex justify-between items-end mb-2 px-1">
-                            <span class="text-xs font-bold text-indigo-100 uppercase">Mission Progress</span>
-                            <span class="text-2xl font-black">${primaryPercent}%</span>
-                        </div>
-                        <div class="h-5 w-full bg-black/20 rounded-full p-1 backdrop-blur-sm shadow-inner border border-white/10">
-                            <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 relative overflow-hidden shadow-lg shadow-cyan-400/30 transition-all duration-1000 ease-out" style="width: ${primaryPercent}%">
-                                <div class="absolute inset-0 bg-white/30 w-full -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            if(elements.name) elements.name.textContent = state.nextExam.name;
+            if(elements.date) elements.date.textContent = `Exam Date: ${formattedDate}`;
+            if(elements.days) elements.days.textContent = diff; // Allow negatives to show passed
+            if(elements.sylTitle) elements.sylTitle.textContent = state.nextExam.name + " Syllabus";
+            if(elements.sylDate) elements.sylDate.textContent = formattedDate;
+            if(elements.sylDays) elements.sylDays.textContent = `${diff} Days Left`;
+const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
+            
+            // FIX: Subtract 1 day to exclude the deadline day itself
+            let rawBlDiff = Math.ceil((blDate - today)/(1000*60*60*24));
+            const blDiff = rawBlDiff > 0 ? rawBlDiff - 1 : rawBlDiff;
 
-            <div class="md:col-span-2 grid grid-cols-2 gap-4">
-                
-                <div class="relative overflow-hidden rounded-3xl p-4 bg-gradient-to-br from-emerald-400 to-cyan-600 text-white shadow-lg shadow-emerald-500/20 hover:-translate-y-1 transition-transform">
-                    <div class="relative z-10 flex flex-col h-full justify-between">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[9px] font-bold uppercase text-emerald-100 tracking-wider mb-0.5">Focus</p>
-                                <h3 class="text-lg font-bold leading-tight">Phase ${currentPhase}</h3>
-                            </div>
-                            <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
-                                <i data-lucide="zap" class="w-4 h-4 text-white"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
-                                <span>Sprint</span>
-                                <span>${phasePercent}%</span>
-                            </div>
-                            <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
-                                <div class="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] rounded-full transition-all duration-1000" style="width: ${phasePercent}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            if(elements.blDays) elements.blDays.textContent = `${blDiff} Days Left`;
+            if(elements.blLarge) elements.blLarge.textContent = blDiff;
+           
+            // Global Progress Calculation
+            const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
+            
+            // Main Syllabus Progress
+            let mainTotal = 0, mainDone = 0;
+            state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => dt.subs.forEach(sub => {
+                mainTotal++;
+                if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) mainDone++;
+            })));
+            const mainPct = mainTotal ? Math.round((mainDone/mainTotal)*100) : 0;
+            const mainBar = document.getElementById('card-main-bar');
+            if(mainBar) mainBar.style.width = `${mainPct}%`;
+            const mainText = document.getElementById('card-main-text');
+            if(mainText) mainText.textContent = `${mainPct}%`;
 
-                <div class="relative overflow-hidden rounded-3xl p-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-500/20 hover:-translate-y-1 transition-transform">
-                    <div class="relative z-10 flex flex-col h-full justify-between">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[9px] font-bold uppercase text-orange-100 tracking-wider mb-0.5">Total</p>
-                                <h3 class="text-lg font-bold leading-tight">Backlog</h3>
-                            </div>
-                            <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
-                                <i data-lucide="layers" class="w-4 h-4 text-white"></i>
-                            </div>
-                        </div>
+            // Backlog Progress
+            let blTotal = 0, blDone = 0;
+            backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => dt.subs.forEach(sub => {
+                blTotal++;
+                if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) blDone++;
+            })));
+            const blPct = blTotal ? Math.round((blDone/blTotal)*100) : 0;
+            const blBar = document.getElementById('card-backlog-bar');
+            if(blBar) blBar.style.width = `${blPct}%`;
+            const blText = document.getElementById('card-backlog-text');
+            if(blText) blText.textContent = `${blPct}%`;
 
-                        <div class="mt-3">
-                            <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
-                                <span>Recovered</span>
-                                <span>${totalPercent}%</span>
-                            </div>
-                            <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-yellow-300 to-white shadow-[0_0_10px_rgba(255,200,0,0.6)] rounded-full transition-all duration-1000" style="width: ${totalPercent}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            // Sidebar / Daily Goal Logic
+            const subjectSelect = document.getElementById('new-task-subject');
+            const selectedSubject = subjectSelect ? subjectSelect.value : 'General';
+            const k = formatDateKey(state.selectedDate);
+            const todays = state.tasks[k] || [];
+            
+            let filteredTasks = todays;
+            if (selectedSubject !== 'General') filteredTasks = todays.filter(t => t.subject === selectedSubject);
 
-            </div>
-        </div>
-    `;
+            const totalFiltered = filteredTasks.length;
+            const completedFiltered = filteredTasks.filter(t=>t.completed).length;
+            const dayPct = totalFiltered ? Math.round((completedFiltered / totalFiltered)*100) : 0;
+            
+            // CONFETTI & SOUND LOGIC
+            if (totalFiltered > 0 && dayPct === 100 && !state.goalCompletedToday) {
+                // Check if this completion just happened (avoid looping on re-render)
+                state.goalCompletedToday = true; 
+                try {
+                    // Realistic Confetti Fire
+                    var count = 200;
+                    var defaults = { origin: { y: 0.7 } };
 
-    if (window.lucide) lucide.createIcons({ root: container });
-};
+                    function fire(particleRatio, opts) {
+                        if (window.confetti) {
+                            confetti(Object.assign({}, defaults, opts, {
+                                particleCount: Math.floor(count * particleRatio)
+                            }));
+                        }
+                    }
+
+                    fire(0.25, { spread: 26, startVelocity: 55, });
+                    fire(0.2, { spread: 60, });
+                    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+                    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+                    fire(0.1, { spread: 120, startVelocity: 45, });
+                    
+                    // Sound
+                    successSound.currentTime = 0;
+                    successSound.play().catch(e => console.log("Audio play failed (interaction required first)"));
+                } catch(e) {
+                    console.log("Effects failed", e);
+                }
+            } else if (dayPct < 100) {
+                state.goalCompletedToday = false;
+            }
+
+            // Gradient Bar
+            let completedExamCount = filteredTasks.filter(t => t.completed && t.type === 'main').length;
+            let completedBacklogCount = filteredTasks.filter(t => t.completed && t.type === 'backlog').length;
+            let gradientStyle = `bg-brand-500`; 
+            
+            if (completedFiltered > 0) {
+                const totalScored = completedExamCount + completedBacklogCount;
+                if (totalScored > 0) {
+                    const examShare = (completedExamCount / totalScored) * 100;
+                    gradientStyle = `background: linear-gradient(90deg, #0ea5e9 0%, #0ea5e9 ${examShare}%, #f97316 ${examShare}%, #f97316 100%)`;
+                } else { gradientStyle = `background-color: #0ea5e9`; }
+            } else { gradientStyle = `background-color: #0ea5e9`; }
+
+            const sideBar = document.getElementById('sidebar-progress-bar');
+            if(sideBar) {
+                sideBar.style = `width: ${dayPct}%; ${gradientStyle}`;
+                sideBar.classList.remove('bg-brand-500'); 
+            }
+            
+            const sideText = document.getElementById('sidebar-progress-text');
+            if(sideText) sideText.textContent = `${dayPct}%`;
+// --- START OF NEW CODE FOR MOBILE ---
+            const mobSideBar = document.getElementById('mobile-sidebar-progress-bar');
+            if(mobSideBar) {
+                mobSideBar.style = `width: ${dayPct}%; ${gradientStyle}`;
+                mobSideBar.classList.remove('bg-brand-500'); 
+            }
+            
+            const mobSideText = document.getElementById('mobile-sidebar-progress-text');
+            if(mobSideText) mobSideText.textContent = `${dayPct}%`;
+            // --- END OF NEW CODE FOR MOBILE ---
+            
+            const footerLabel = document.getElementById('footer-goal-label');
+            if(footerLabel) footerLabel.textContent = selectedSubject === 'General' ? 'Daily Goal' : `${selectedSubject} Goal`;
+        }
+
  function createTaskElementHTML(t, isSubTask = false) {
             // Updated Styles for "Pill" look
             let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
@@ -3366,218 +3334,217 @@ function renderTasks() {
             
             if(window.lucide) lucide.createIcons({ root: list });
         }
-? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${dt.name}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
-                                    <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm">${dt.name}</span>
-
 window.renderSyllabus = function(type, searchQuery = '') {
-    try {
-        const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
-        if(!container) return;
+    const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
+    if(!container) return;
+    
+    container.innerHTML = '';
+    const rawData = type === 'main' ? state.nextExam.syllabus : backlogPlan.syllabus;
+    
+    // --- 4. DEADLINE & PROGRESS LOGIC ---
+    // If we are in Backlog mode, update the Header UI to show Phase Deadline
+    if(type === 'backlog') {
+        const planStart = backlogPlan.startDate || new Date();
+        const now = new Date();
+        const diffTime = Math.abs(now - planStart);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
         
-        container.innerHTML = '';
-        
-        // Safety check: Ensure data exists
-        if (type === 'main' && (!state.nextExam || !state.nextExam.syllabus)) {
-            container.innerHTML = '<div class="p-8 text-center text-slate-500">No exam data found.</div>';
-            return;
-        }
-        
-        const rawData = type === 'main' ? state.nextExam.syllabus : (backlogPlan ? backlogPlan.syllabus : []);
-        if(!rawData || rawData.length === 0) {
-             container.innerHTML = '<div class="p-8 text-center text-slate-500">No syllabus data available.</div>';
-             return;
-        }
+        // Determine Active Phase
+        let currentPhase = 1;
+        if(diffDays > 15) currentPhase = 2;
+        if(diffDays > 30) currentPhase = 3;
+        if(diffDays > 45) currentPhase = 4;
 
-        // --- 4. DEADLINE & PROGRESS LOGIC ---
-        if(type === 'backlog' && typeof backlogPlan !== 'undefined') {
-            const planStart = backlogPlan.startDate || new Date();
-            const now = new Date();
-            const diffTime = Math.abs(now - planStart);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        // Calculate Phase End Date
+        const phaseEndDate = new Date(planStart);
+        phaseEndDate.setDate(planStart.getDate() + (currentPhase * 15));
+        
+        // Update DOM elements (Assuming you have these IDs in your HTML)
+        const deadlineEl = document.getElementById('backlog-deadline-display'); // You might need to add this ID to your HTML date card
+        if(deadlineEl) deadlineEl.innerText = phaseEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        const phaseLabelEl = document.getElementById('backlog-phase-label');
+        if(phaseLabelEl) phaseLabelEl.innerText = `Phase ${currentPhase} Active`;
+    }
+    // ------------------------------------
+
+    const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
+    const k = formatDateKey(state.selectedDate);
+    const todaysTasks = new Set((state.tasks[k] || []).map(t => t.text));
+    const lowerQuery = searchQuery.toLowerCase().trim();
+    const fragment = document.createDocumentFragment();
+    
+    // Phase & Unit Trackers
+    let lastPhase = 0;
+    let lastUnit = "";
+
+    // Active Phase Calculation for highlighting
+    let activePhaseUI = 1;
+    if(type === 'backlog') {
+        const planStart = backlogPlan.startDate;
+        const d = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+        if(d > 15) activePhaseUI = 2;
+        if(d > 30) activePhaseUI = 3;
+        if(d > 45) activePhaseUI = 4;
+    }
+
+    rawData.forEach((item, chapterIdx) => {
+        // --- 1. PHASE DIVIDER WITH DATES ---
+        if(item.phase && item.phase !== lastPhase) {
+            lastPhase = item.phase;
+            lastUnit = ""; // Reset unit on new phase
             
-            let currentPhase = 1;
-            if(diffDays > 15) currentPhase = 2;
-            if(diffDays > 30) currentPhase = 3;
-            if(diffDays > 45) currentPhase = 4;
-
-            const phaseEndDate = new Date(planStart);
-            phaseEndDate.setDate(planStart.getDate() + (currentPhase * 15));
+            // Calculate Dates
+            const pStart = new Date(backlogPlan.startDate);
+            pStart.setDate(pStart.getDate() + ((item.phase-1)*15));
+            const pEnd = new Date(backlogPlan.startDate);
+            pEnd.setDate(pEnd.getDate() + (item.phase*15) - 1);
             
-            const deadlineEl = document.getElementById('backlog-deadline-display');
-            if(deadlineEl) deadlineEl.innerText = phaseEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            
-            const phaseLabelEl = document.getElementById('backlog-phase-label');
-            if(phaseLabelEl) phaseLabelEl.innerText = `Phase ${currentPhase} Active`;
-        }
+            const dateStr = `${pStart.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${pEnd.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+            const isActive = item.phase === activePhaseUI;
 
-        const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
-        const k = formatDateKey(state.selectedDate);
-        const todaysTasks = new Set((state.tasks[k] || []).map(t => t.text));
-        const lowerQuery = searchQuery.toLowerCase().trim();
-        const fragment = document.createDocumentFragment();
-        
-        let lastPhase = 0;
-        let lastUnit = "";
-
-        // Active Phase Calculation
-        let activePhaseUI = 1;
-        if(type === 'backlog' && typeof backlogPlan !== 'undefined') {
-            const planStart = backlogPlan.startDate;
-            const d = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
-            if(d > 15) activePhaseUI = 2;
-            if(d > 30) activePhaseUI = 3;
-            if(d > 45) activePhaseUI = 4;
-        }
-
-        rawData.forEach((item, chapterIdx) => {
-            // --- 1. PHASE DIVIDER ---
-            if(item.phase && item.phase !== lastPhase && typeof backlogPlan !== 'undefined') {
-                lastPhase = item.phase;
-                lastUnit = ""; 
-                
-                const pStart = new Date(backlogPlan.startDate);
-                pStart.setDate(pStart.getDate() + ((item.phase-1)*15));
-                const pEnd = new Date(backlogPlan.startDate);
-                pEnd.setDate(pEnd.getDate() + (item.phase*15) - 1);
-                
-                const dateStr = `${pStart.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${pEnd.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
-                const isActive = item.phase === activePhaseUI;
-
-                const divider = document.createElement('div');
-                divider.className = `mt-8 mb-4 flex flex-col gap-1 ${isActive ? 'opacity-100' : 'opacity-60 grayscale'}`;
-                divider.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
-                        <div class="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest border ${isActive ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500'}">
-                            Phase ${item.phase} <span class="opacity-75 font-medium ml-1">(${dateStr})</span>
-                        </div>
-                        <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
+            const divider = document.createElement('div');
+            divider.className = `mt-8 mb-4 flex flex-col gap-1 ${isActive ? 'opacity-100' : 'opacity-60 grayscale'}`;
+            divider.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
+                    <div class="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest border ${isActive ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500'}">
+                        Phase ${item.phase} <span class="opacity-75 font-medium ml-1">(${dateStr})</span>
                     </div>
-                `;
-                fragment.appendChild(divider);
-            }
-
-            // --- 2. UNIT HEADER ---
-            if(item.unit && item.unit !== lastUnit) {
-                lastUnit = item.unit;
-                const unitHeader = document.createElement('div');
-                unitHeader.className = "mt-4 mb-2 ml-1";
-                unitHeader.innerHTML = `
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
-                        <i data-lucide="layers" class="w-3 h-3"></i> ${item.unit}
-                    </span>
-                `;
-                fragment.appendChild(unitHeader);
-            }
-
-            // --- 3. CHAPTER CARD RENDER ---
-            const chapterMatch = item.topic.toLowerCase().includes(lowerQuery) || item.subject.toLowerCase().includes(lowerQuery);
-            
-            const matchingTests = item.dailyTests.filter(dt => {
-                if (chapterMatch) return true; 
-                return dt.name.toLowerCase().includes(lowerQuery) || 
-                    dt.subs.some(sub => sub.toLowerCase().includes(lowerQuery));
-            });
-
-            if (lowerQuery && !chapterMatch && matchingTests.length === 0) return;
-            
-            const chapterId = `${type}-chapter-${chapterIdx}`;
-            const isChapterExpanded = lowerQuery ? true : state.expandedTests[chapterId];
-            const allDailyTestsCompleted = item.dailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
-            
-            let borderClass = "border-slate-200 dark:border-slate-800";
-            if(item.phase === activePhaseUI && !allDailyTestsCompleted) borderClass = "border-brand-400 dark:border-brand-600 ring-1 ring-brand-400/30";
-
-            const chapterCardClass = allDailyTestsCompleted 
-                ? "bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl overflow-hidden shadow-sm mb-4 opacity-70"
-                : `bg-white dark:bg-slate-900 border ${borderClass} rounded-xl overflow-hidden shadow-sm mb-4 transition-all`;
-
-            const card = document.createElement('div');
-            card.className = chapterCardClass;
-            
-            const safeTopic = escapeHtml(item.topic);
-            
-            let html = `
-                <div class="px-4 py-3 border-b ${allDailyTestsCompleted ? 'border-green-200 dark:border-green-800 bg-green-100 dark:bg-green-900/20' : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800'} flex justify-between items-center cursor-pointer select-none" onclick="toggleChapter('${chapterId}')">
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider ${allDailyTestsCompleted ? 'text-green-700 dark:text-green-300' : 'text-slate-400 dark:text-slate-500'}">${item.subject}</span>
-                        <div class="flex items-center gap-2">
-                            <h4 class="font-bold text-slate-800 dark:text-white">${safeTopic}</h4> 
-                            ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}
-                        </div>
-                    </div>
-                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
+                    <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
                 </div>
             `;
-            
-            if (isChapterExpanded) {
-                html += `<div class="p-4 grid grid-cols-1 gap-3">`;
-                const testsToRender = lowerQuery ? matchingTests : item.dailyTests;
-                
-                testsToRender.forEach((dt) => {
-                    const originalIndex = item.dailyTests.indexOf(dt);
-                    const testId = `${chapterId}-test-${originalIndex}`;
-                    const isTestExpanded = lowerQuery ? true : state.expandedTests[testId];
-                    const total = dt.subs.length;
-                    const doneCount = dt.subs.filter(s => allCompleted.has(`Study: ${item.topic} - ${s}`)).length;
-                    const isReady = total > 0 && doneCount === total;
-                    const isAttempted = state.dailyTestsAttempted[dt.name];
-                    
-                    let cardStyle = "border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-800 hover:border-brand-100 dark:hover:border-brand-900 transition-colors relative";
-                    if (isAttempted) cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md";
+            fragment.appendChild(divider);
+        }
 
-                    const showCheckbox = isReady || isAttempted;
-                    
-                    html += `
-                        <div class="${cardStyle} overflow-hidden">
-                            <div class="p-3 flex justify-between items-center cursor-pointer" onclick="toggleDailyTest('${testId}')">
-                                 <div class="flex items-center gap-2">
-                                    <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
-                                    <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                                        ${showCheckbox ? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${dt.name}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
-                                        <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm">${dt.name}</span>
-                                    </div>
-                                </div>
-                                <span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400'}">${doneCount}/${total}</span>
-                            </div>
-                            ${isTestExpanded ? `
-                                <div class="px-3 pb-3 pt-0 border-t ${isAttempted ? 'border-white/20' : 'border-slate-50 dark:border-slate-700'} mt-2">
-                                    <div class="space-y-1 mt-2 ${isAttempted ? 'text-white' : 'text-slate-500 dark:text-slate-400'}">
-                                        ${dt.subs.map(sub => {
-                                            const taskName = `Study: ${item.topic} - ${sub}`;
-                                            const isAdded = todaysTasks.has(taskName);
-                                            const isDone = allCompleted.has(taskName);
-                                             return `
-                                                <div class="flex items-center justify-between group pl-6 py-0.5">
-                                                    <span class="text-[11px] truncate w-3/4 ${isDone ? 'line-through opacity-50' : ''}" title="${sub}">• ${sub}</span>
-                                                    ${!isDone ? 
-                                                        `<button onclick="addSyllabusTask('${item.topic} - ${sub}', '${type}', '${item.subject}', '${item.topic}')" class="${isAttempted ? 'text-white/80' : 'text-brand-400 hover:text-brand-600'} transition-colors p-1">
-                                                            <i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i>
-                                                        </button>` : 
-                                                        `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500'}"></i>`
-                                                    }
-                                                </div>`;
-                                        }).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-            }
-            card.innerHTML = html;
-            fragment.appendChild(card);
-        });
-        container.appendChild(fragment);
-        if(window.lucide) lucide.createIcons({ root: container });
+        // --- 2. UNIT HEADER (New!) ---
+        if(item.unit && item.unit !== lastUnit) {
+            lastUnit = item.unit;
+            const unitHeader = document.createElement('div');
+            unitHeader.className = "mt-4 mb-2 ml-1";
+            unitHeader.innerHTML = `
+                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
+                    <i data-lucide="layers" class="w-3 h-3"></i> ${item.unit}
+                </span>
+            `;
+            fragment.appendChild(unitHeader);
+        }
+
+        // --- 3. CHAPTER CARD RENDER ---
+        const chapterMatch = item.topic.toLowerCase().includes(lowerQuery) || item.subject.toLowerCase().includes(lowerQuery);
+        // ... (Rest of the rendering logic is exactly the same as before, just ensure you include it) ...
+        // ... Copy the rest of the renderSyllabus function from previous step here ...
         
-    } catch (e) {
-        console.error("Critical error in renderSyllabus:", e);
-        const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
-        if(container) container.innerHTML = '<div class="p-8 text-center text-red-500">Something went wrong loading the syllabus.<br>Please refresh.</div>';
-    }
+        // [Insert the Card Creation Logic here from previous turn]
+        // This is where "const chapterId = ..." starts.
+        // Make sure to use item.topic as the Chapter Name.
+        
+        // (Shortened for brevity - Paste the previous card generation code here)
+        
+        // ...
+        
+        // START OF CARD LOGIC (Pasted for clarity)
+        const matchingTests = item.dailyTests.filter(dt => {
+            if (chapterMatch) return true; 
+            return dt.name.toLowerCase().includes(lowerQuery) || 
+                dt.subs.some(sub => sub.toLowerCase().includes(lowerQuery));
+        });
+
+        if (lowerQuery && !chapterMatch && matchingTests.length === 0) return;
+        
+        const chapterId = `${type}-chapter-${chapterIdx}`;
+        const isChapterExpanded = lowerQuery ? true : state.expandedTests[chapterId];
+        const allDailyTestsCompleted = item.dailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
+        
+        let borderClass = "border-slate-200 dark:border-slate-800";
+        if(item.phase === activePhaseUI && !allDailyTestsCompleted) borderClass = "border-brand-400 dark:border-brand-600 ring-1 ring-brand-400/30";
+
+        const chapterCardClass = allDailyTestsCompleted 
+            ? "bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl overflow-hidden shadow-sm mb-4 opacity-70"
+            : `bg-white dark:bg-slate-900 border ${borderClass} rounded-xl overflow-hidden shadow-sm mb-4 transition-all`;
+
+        const card = document.createElement('div');
+        card.className = chapterCardClass;
+        
+        // Use 'topic' as Chapter Name
+        const safeTopic = escapeHtml(item.topic);
+        
+        let html = `
+            <div class="px-4 py-3 border-b ${allDailyTestsCompleted ? 'border-green-200 dark:border-green-800 bg-green-100 dark:bg-green-900/20' : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800'} flex justify-between items-center cursor-pointer select-none" onclick="toggleChapter('${chapterId}')">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider ${allDailyTestsCompleted ? 'text-green-700 dark:text-green-300' : 'text-slate-400 dark:text-slate-500'}">${item.subject}</span>
+                    <div class="flex items-center gap-2">
+                        <h4 class="font-bold text-slate-800 dark:text-white">${safeTopic}</h4> 
+                        ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}
+                    </div>
+                </div>
+                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
+            </div>
+        `;
+        
+        // ... (Daily Test Loop - Same as before) ...
+         if (isChapterExpanded) {
+            html += `<div class="p-4 grid grid-cols-1 gap-3">`;
+            const testsToRender = lowerQuery ? matchingTests : item.dailyTests;
+            testsToRender.forEach((dt) => {
+                const originalIndex = item.dailyTests.indexOf(dt);
+                const testId = `${chapterId}-test-${originalIndex}`;
+                const isTestExpanded = lowerQuery ? true : state.expandedTests[testId];
+                const total = dt.subs.length;
+                const doneCount = dt.subs.filter(s => allCompleted.has(`Study: ${item.topic} - ${s}`)).length;
+                const isReady = total > 0 && doneCount === total;
+                const isAttempted = state.dailyTestsAttempted[dt.name];
+                
+                let cardStyle = "border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-800 hover:border-brand-100 dark:hover:border-brand-900 transition-colors relative";
+                if (isAttempted) cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md";
+
+                const showCheckbox = isReady || isAttempted;
+                
+                html += `
+                    <div class="${cardStyle} overflow-hidden">
+                        <div class="p-3 flex justify-between items-center cursor-pointer" onclick="toggleDailyTest('${testId}')">
+                             <div class="flex items-center gap-2">
+                                <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
+                                <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                                    ${showCheckbox ? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${dt.name}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
+                                    <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm">${dt.name}</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400'}">${doneCount}/${total}</span>
+                        </div>
+                        ${isTestExpanded ? `
+                            <div class="px-3 pb-3 pt-0 border-t ${isAttempted ? 'border-white/20' : 'border-slate-50 dark:border-slate-700'} mt-2">
+                                <div class="space-y-1 mt-2 ${isAttempted ? 'text-white' : 'text-slate-500 dark:text-slate-400'}">
+                                    ${dt.subs.map(sub => {
+                                        const taskName = `Study: ${item.topic} - ${sub}`;
+                                        const isAdded = todaysTasks.has(taskName);
+                                        const isDone = allCompleted.has(taskName);
+                                         return `
+                                            <div class="flex items-center justify-between group pl-6 py-0.5">
+                                                <span class="text-[11px] truncate w-3/4 ${isDone ? 'line-through opacity-50' : ''}" title="${sub}">• ${sub}</span>
+                                                ${!isDone ? 
+                                                    `<button onclick="addSyllabusTask('${item.topic} - ${sub}', '${type}', '${item.subject}', '${item.topic}')" class="${isAttempted ? 'text-white/80' : 'text-brand-400 hover:text-brand-600'} transition-colors p-1">
+                                                        <i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i>
+                                                    </button>` : 
+                                                    `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500'}"></i>`
+                                                }
+                                            </div>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+        card.innerHTML = html;
+        fragment.appendChild(card);
+    });
+    container.appendChild(fragment);
+    if(window.lucide) lucide.createIcons({ root: container });
 };
+
       
     // --- MODAL CONTROLLER ---
 const modal = document.getElementById('customModal');
