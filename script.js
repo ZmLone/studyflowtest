@@ -835,117 +835,206 @@ const mainSchedule = [
        syllabus: [ { subject: "General", topic: "Full Syllabus NEET Pattern", dailyTests: [{name:"Mock-8", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
    }
 ];
-
+// --- REPLACED BACKLOG PLAN (60-DAY EASY FLOW) ---
 const backlogPlan = {
-   name: "Backlog & Revision", // Renamed to reflect mixed content
-   date: new Date('2026-02-03T00:00:00'), // Updated to Feb 3, 2026
-    syllabus: [
+   name: "60-Day Recovery", 
+   date: new Date('2026-03-30T00:00:00'), // Approx 60 days from now
+   syllabus: [
        // =========================================
-       // PART 1: AIATS-5 PENDING (Chem/Bio Only)
+       // PHASE 1: The Rhythmic Start (Days 1-15)
        // =========================================
-
-       // --- CHEMISTRY (AIATS-5) ---
        {
-           subject: "Chemistry",
-           topic: "Hydrocarbons (XI)",
+           subject: "Physics",
+           topic: "Phase 1: Oscillations & Waves",
            dailyTests: [
-               {name:"DT-28 (Chem-XI)", subs:["Alkanes: Prep & Properties"]},
-               {name:"DT-29 (Chem-XI)", subs:["Alkenes: Prep & Properties"]},
-               {name:"DT-30 (Chem-XI)", subs:["Alkynes", "Aromatic Hydrocarbons"]}
+               {
+                   name: "Day 1-15: Formulas Only",
+                   subs: [
+                       "SHM: Time Period (Spring/Pendulum)", 
+                       "Wave Equation (v=fλ)", 
+                       "Organ Pipes (Open/Closed Frequencies)",
+                       "Beats & Doppler Formula"
+                   ]
+               }
+           ]
+       },
+       {
+           subject: "Biology",
+           topic: "Phase 1: Cell Unit",
+           dailyTests: [
+               {
+                   name: "Day 1-15: High Weightage",
+                   subs: [
+                       "Cell Cycle (Mitosis/Meiosis Stages)", 
+                       "Biomolecules (Enzymes & Graphs)", 
+                       "Cell Organelles (Functions)"
+                   ]
+               }
            ]
        },
        {
            subject: "Chemistry",
-           topic: "Haloalkanes & Haloarenes",
+           topic: "Phase 1: Atom & Redox",
            dailyTests: [
-               {name:"DT-16 (Chem-XII)", subs:["Haloalkanes: Prep", "Physical Properties"]},
-               {name:"DT-17 (Chem-XII)", subs:["SN1 Mechanism", "SN2 Mechanism"]},
-               {name:"DT-18 (Chem-XII)", subs:["Elimination Reactions", "Reaction with Metals"]},
-               {name:"DT-19 (Chem-XII)", subs:["Haloarenes"]}
-           ]
-       },
-       {
-           subject: "Chemistry",
-           topic: "Alcohols, Phenols & Ethers",
-           dailyTests: [
-               {name:"DT-20 (Chem-XII)", subs:["Alcohols Prep", "Nomenclature"]},
-               {name:"DT-21 (Chem-XII)", subs:["Phenols Prep", "Phenols Reactions"]},
-               {name:"DT-22 (Chem-XII)", subs:["Ethers Prep", "Ethers Properties"]}
-           ]
-       },
-       {
-           subject: "Chemistry",
-           topic: "Aldehydes, Ketones & Carboxylic",
-           dailyTests: [
-               {name:"DT-23 (Chem-XII)", subs:["Aldehydes Prep", "Ketones Prep", "Nucleophilic Addition"]},
-               {name:"DT-24 (Chem-XII)", subs:["Carboxylic Acids", "Aldehyde Oxidation"]}
-           ]
-       },
-
-       // --- BOTANY (AIATS-5) ---
-       {
-           subject: "Botany",
-           topic: "Sexual Reproduction in Plants",
-           dailyTests: [
-               {name:"DT-1 (Bot-XII)", subs:["Flower Structure", "Microsporogenesis"]},
-               {name:"DT-2 (Bot-XII)", subs:["Pistil", "Megasporangium (Ovule)"]},
-               {name:"DT-3 (Bot-XII)", subs:["Pollination"]},
-               {name:"DT-4 (Bot-XII)", subs:["Outbreeding Devices", "Double Fertilization"]},
-               {name:"DT-5 (Bot-XII)", subs:["Seed", "Fruit", "Apomixis"]}
-           ]
-       },
-       {
-           subject: "Botany",
-           topic: "Principles of Inheritance",
-           dailyTests: [
-               {name:"DT-6 (Bot-XII)", subs:["Mendelian Genetics", "Incomplete Dominance"]},
-               {name:"DT-7 (Bot-XII)", subs:["Co-dominance", "Epistasis"]},
-               {name:"DT-8 (Bot-XII)", subs:["Linkage", "Mutation"]},
-               {name:"DT-9 (Bot-XII)", subs:["Genetic Disorders", "Pedigree Analysis"]}
-           ]
-       },
-
-       // --- ZOOLOGY (AIATS-5) ---
-       {
-           subject: "Zoology",
-           topic: "Human Reproduction",
-           dailyTests: [
-               {name:"DT-1 (Zoo-XII)", subs:["Male Reproductive System"]},
-               {name:"DT-2 (Zoo-XII)", subs:["Female Reproductive System"]},
-               {name:"DT-3 (Zoo-XII)", subs:["Spermatogenesis"]},
-               {name:"DT-4 (Zoo-XII)", subs:["Oogenesis"]},
-               {name:"DT-5 (Zoo-XII)", subs:["Menstrual Cycle"]},
-               {name:"DT-6 (Zoo-XII)", subs:["Pregnancy", "Parturition"]}
-           ]
-       },
-       {
-           subject: "Zoology",
-           topic: "Reproductive Health",
-           dailyTests: [
-               {name:"DT-7 (Zoo-XII)", subs:["Population Stabilization"]},
-               {name:"DT-8 (Zoo-XII)", subs:["Contraception Methods"]},
-               {name:"DT-9 (Zoo-XII)", subs:["Infertility", "STIs", "ART"]}
+               {
+                   name: "Day 1-15: Calculations",
+                   subs: [
+                       "Quantum Numbers (n, l, m, s)", 
+                       "Electronic Configuration", 
+                       "Oxidation Number Calculation",
+                       "Balancing Redox Reactions"
+                   ]
+               }
            ]
        },
 
        // =========================================
-       // PART 2: CLASS 11 REVISION (New Section)
+       // PHASE 2: Formula & Story (Days 16-30)
        // =========================================
-
-              { 
-           subject: "Chemistry", 
-           topic: "GOC: General Organic Chem", 
+       {
+           subject: "Physics",
+           topic: "Phase 2: Bulk Matter",
            dailyTests: [
-               {name:"DT-23 (Chem-XI)", subs:["IUPAC Nomenclature"]},
-               {name:"DT-24 (Chem-XI)", subs:["Nucleophiles & Electrophiles"]},
-               {name:"DT-25 (Chem-XI)", subs:["Inductive Effect", "Resonance", "Hyperconjugation"]},
-               {name:"DT-26 (Chem-XI)", subs:["Carbocation", "Carbanion", "Free Radicals"]}
-              
-           ] 
+               {
+                   name: "Day 16-30: Property Charts",
+                   subs: [
+                       "Solids: Young's Modulus Graph", 
+                       "Fluids: Bernoulli’s Principle", 
+                       "Fluids: Surface Tension & Viscosity",
+                       "Thermal Expansion & Calorimetry"
+                   ]
+               }
+           ]
+       },
+       {
+           subject: "Biology",
+           topic: "Phase 2: Diversity & Structural",
+           dailyTests: [
+               {
+                   name: "Day 16-30: NCERT Reading",
+                   subs: [
+                       "Plant Kingdom Examples", 
+                       "Animal Kingdom (Phylum Features)", 
+                       "Morphology: Root/Stem/Leaf Mods",
+                       "Morphology: New Families (Malvaceae etc)"
+                   ]
+               }
+           ]
+       },
+       {
+           subject: "Chemistry",
+           topic: "Phase 2: Periodic Table",
+           dailyTests: [
+               {
+                   name: "Day 16-30: Trends",
+                   subs: [
+                       "Atomic Radius Trend", 
+                       "Ionization Energy Trend", 
+                       "Electronegativity & Electron Gain Enthalpy"
+                   ]
+               }
+           ]
+       },
+
+       // =========================================
+       // PHASE 3: The Critical Core (Days 31-45)
+       // =========================================
+       {
+           subject: "Physics",
+           topic: "Phase 3: Mechanics (Light)",
+           dailyTests: [
+               {
+                   name: "Day 31-45: Standard Cases",
+                   subs: [
+                       "Kinematics: v-t and x-t Graphs", 
+                       "Laws of Motion: Pulleys & Friction", 
+                       "Work-Energy Theorem",
+                       "Conservation of Momentum"
+                   ]
+               }
+           ]
+       },
+       {
+           subject: "Chemistry",
+           topic: "Phase 3: Bonding & GOC",
+           dailyTests: [
+               {
+                   name: "Day 31-45: The Backbone",
+                   subs: [
+                       "Chemical Bonding: Hybridization (sp, sp2, sp3)", 
+                       "Chemical Bonding: VSEPR Shape Chart", 
+                       "Chemical Bonding: MOT & Bond Order",
+                       "GOC: Inductive & Resonance Effects",
+                       "GOC: Carbocation Stability"
+                   ]
+               }
+           ]
+       },
+       {
+           subject: "Biology",
+           topic: "Phase 3: Plant Physiology",
+           dailyTests: [
+               {
+                   name: "Day 31-45: Cycles",
+                   subs: [
+                       "Photosynthesis: C3 vs C4 Cycle", 
+                       "Respiration: Glycolysis & Krebs Cycle", 
+                       "Plant Growth: Auxin & Gibberellin Functions"
+                   ]
+               }
+           ]
+       },
+
+       // =========================================
+       // PHASE 4: The Final Lap (Days 46-60)
+       // =========================================
+       {
+           subject: "Physics",
+           topic: "Phase 4: Gravity & Rotation",
+           dailyTests: [
+               {
+                   name: "Day 46-60: Selective Study",
+                   subs: [
+                       "Gravitation: Kepler's Laws & Satellites", 
+                       "Rotation: Torque (τ = r x F)", 
+                       "Rotation: Moment of Inertia Formulas"
+                   ]
+               }
+           ]
+       },
+       {
+           subject: "Chemistry",
+           topic: "Phase 4: Thermo & Equilibrium",
+           dailyTests: [
+               {
+                   name: "Day 46-60: Formula Sheet",
+                   subs: [
+                       "Thermo: Work Done & Gibbs Energy", 
+                       "Equilibrium: Le Chatelier's Principle", 
+                       "Ionic Equilibrium: pH Formulas",
+                       "Ionic Equilibrium: Buffer Solutions"
+                   ]
+               }
+           ]
+       },
+       {
+           subject: "Biology",
+           topic: "Phase 4: Human Physiology",
+           dailyTests: [
+               {
+                   name: "Day 46-60: Mechanisms",
+                   subs: [
+                       "Breathing: Transport of Gases", 
+                       "Body Fluids: Cardiac Cycle", 
+                       "Excretion: Counter Current Mechanism",
+                       "Neural: Nerve Impulse Generation",
+                       "Chemical: Mechanism of Hormone Action"
+                   ]
+               }
+           ]
        }
    ]
 };
-
 
 
         // --- STATE MODIFICATION: USE REAL DATE ---
@@ -2775,54 +2864,18 @@ function renderStats() {
 
             if(elements.name) elements.name.textContent = state.nextExam.name;
             if(elements.date) elements.date.textContent = `Exam Date: ${formattedDate}`;
-if(elements.days) {
-    elements.days.textContent = diff;
-    
-    // URGENCY FOR MAIN EXAM (Starts at 5 days)
-    if (diff <= 5) {
-        // Neon Pink + Pulse (Beautiful contrast on Blue)
-        elements.days.className = "block text-5xl font-black tracking-tighter text-fuchsia-300 animate-pulse";
-    } else {
-        // Reset to default white
-        elements.days.className = "block text-5xl font-black tracking-tighter";
-    }
-}
-    
-    
-    
-    if(elements.sylTitle) elements.sylTitle.textContent = state.nextExam.name + " Syllabus";
+            if(elements.days) elements.days.textContent = diff; // Allow negatives to show passed
+            if(elements.sylTitle) elements.sylTitle.textContent = state.nextExam.name + " Syllabus";
             if(elements.sylDate) elements.sylDate.textContent = formattedDate;
             if(elements.sylDays) elements.sylDays.textContent = `${diff} Days Left`;
 const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
-// NEW LOGIC BLOCK:
-if(elements.blDateDisplay && typeof backlogPlan !== 'undefined') {
-    elements.blDateDisplay.textContent = backlogPlan.date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-    });
-}
-
-
-    
+            
             // FIX: Subtract 1 day to exclude the deadline day itself
             let rawBlDiff = Math.ceil((blDate - today)/(1000*60*60*24));
-            const blDiff = rawBlDiff > 0 ? rawBlDiff  : rawBlDiff;
-    
-if(elements.blLarge) elements.blLarge.textContent = blDiff;
-// 2. REPLACE the old 'blDays' line with this new block:
-if(elements.blDays) {
-    elements.blDays.textContent = `${blDiff} Days Left`;
-    
-    // Dynamic Urgency Color Logic
-    if (blDiff <= 3) {
-        // Red + Pulse (Critical)
-        elements.blDays.className = "text-xs font-bold text-red-600 dark:text-red-400 mt-1 animate-pulse";
-    } else {
-        // Orange (Normal)
-        elements.blDays.className = "text-xs font-bold text-orange-600 dark:text-orange-400 mt-1";
-    }
-}           
+            const blDiff = rawBlDiff > 0 ? rawBlDiff - 1 : rawBlDiff;
+
+            if(elements.blDays) elements.blDays.textContent = `${blDiff} Days Left`;
+            if(elements.blLarge) elements.blLarge.textContent = blDiff;
            
             // Global Progress Calculation
             const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
@@ -3639,25 +3692,3 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSnowUI();
     }
 });
-// --- INTERACTIVE AURORA EFFECT ---
-document.addEventListener('mousemove', (e) => {
-    updateAurora(e.clientX, e.clientY);
-});
-
-document.addEventListener('touchmove', (e) => {
-    const touch = e.touches[0];
-    updateAurora(touch.clientX, touch.clientY);
-});
-
-function updateAurora(x, y) {
-    const root = document.documentElement;
-    root.style.setProperty('--mouse-x', `${x}px`);
-    root.style.setProperty('--mouse-y', `${y}px`);
-}
-
-
-
-
-
-
-
