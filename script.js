@@ -835,56 +835,49 @@ const mainSchedule = [
        syllabus: [ { subject: "General", topic: "Full Syllabus NEET Pattern", dailyTests: [{name:"Mock-8", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
    }
 ];
-// --- REPLACED BACKLOG PLAN (60-DAY EASY FLOW) ---
+// --- REPLACED BACKLOG PLAN (With Phases & Real DTs) ---
 const backlogPlan = {
-   name: "60-Day Recovery", 
-   date: new Date('2026-03-30T00:00:00'), // Approx 60 days from now
+   name: "60-Day Recovery",
+   // SET THIS TO YOUR START DATE
+   startDate: new Date('2026-01-28T00:00:00'), 
+   date: new Date('2026-03-30T00:00:00'), 
    syllabus: [
        // =========================================
        // PHASE 1: The Rhythmic Start (Days 1-15)
        // =========================================
        {
+           phase: 1,
            subject: "Physics",
-           topic: "Phase 1: Oscillations & Waves",
+           topic: "Oscillations & Waves",
            dailyTests: [
-               {
-                   name: "Day 1-15: Formulas Only",
-                   subs: [
-                       "SHM: Time Period (Spring/Pendulum)", 
-                       "Wave Equation (v=fλ)", 
-                       "Organ Pipes (Open/Closed Frequencies)",
-                       "Beats & Doppler Formula"
-                   ]
-               }
+               {name:"DT-46 (Phy-XI)", subs:["SHM Equation", "Uniform Circular Motion"]},
+               {name:"DT-47 (Phy-XI)", subs:["Energy in SHM", "Force Law"]},
+               {name:"DT-48 (Phy-XI)", subs:["Simple Pendulum", "Spring Systems"]},
+               {name:"DT-49 (Phy-XI)", subs:["Transverse & Longitudinal Waves"]},
+               {name:"DT-50 (Phy-XI)", subs:["Speed of Travelling Wave"]},
+               {name:"DT-51 (Phy-XI)", subs:["Superposition", "Beats", "Doppler"]}
            ]
        },
        {
+           phase: 1,
            subject: "Biology",
-           topic: "Phase 1: Cell Unit",
+           topic: "Cell: The Unit of Life",
            dailyTests: [
-               {
-                   name: "Day 1-15: High Weightage",
-                   subs: [
-                       "Cell Cycle (Mitosis/Meiosis Stages)", 
-                       "Biomolecules (Enzymes & Graphs)", 
-                       "Cell Organelles (Functions)"
-                   ]
-               }
+               {name:"DT-1 (Bot-XI)", subs:["Cell Theory", "Prokaryotic Cells"]},
+               {name:"DT-2 (Bot-XI)", subs:["Eukaryotic Cells: Membrane & Wall"]},
+               {name:"DT-3 (Bot-XI)", subs:["Endomembrane System", "Mitochondria"]},
+               {name:"DT-4 (Bot-XI)", subs:["Plastids", "Ribosomes", "Cytoskeleton"]},
+               {name:"DT-5 (Bot-XI)", subs:["Nucleus", "Chromosomes"]}
            ]
        },
        {
+           phase: 1,
            subject: "Chemistry",
-           topic: "Phase 1: Atom & Redox",
+           topic: "Structure of Atom",
            dailyTests: [
-               {
-                   name: "Day 1-15: Calculations",
-                   subs: [
-                       "Quantum Numbers (n, l, m, s)", 
-                       "Electronic Configuration", 
-                       "Oxidation Number Calculation",
-                       "Balancing Redox Reactions"
-                   ]
-               }
+               {name:"DT-4 (Chem-XI)", subs:["Sub-atomic particles", "Atomic Models"]},
+               {name:"DT-5 (Chem-XI)", subs:["Dual Nature", "Heisenberg Uncertainty"]},
+               {name:"DT-6 (Chem-XI)", subs:["Quantum Numbers", "Electronic Config"]}
            ]
        },
 
@@ -892,47 +885,37 @@ const backlogPlan = {
        // PHASE 2: Formula & Story (Days 16-30)
        // =========================================
        {
+           phase: 2,
            subject: "Physics",
-           topic: "Phase 2: Bulk Matter",
+           topic: "Properties of Bulk Matter",
            dailyTests: [
-               {
-                   name: "Day 16-30: Property Charts",
-                   subs: [
-                       "Solids: Young's Modulus Graph", 
-                       "Fluids: Bernoulli’s Principle", 
-                       "Fluids: Surface Tension & Viscosity",
-                       "Thermal Expansion & Calorimetry"
-                   ]
-               }
+               {name:"DT-33 (Phy-XI)", subs:["Elasticity", "Stress-Strain Curve"]},
+               {name:"DT-34 (Phy-XI)", subs:["Fluid Pascal's Law", "Archimedes Principle"]},
+               {name:"DT-35 (Phy-XI)", subs:["Bernoulli's Principle", "Viscosity"]},
+               {name:"DT-36 (Phy-XI)", subs:["Surface Tension"]},
+               {name:"DT-37 (Phy-XI)", subs:["Thermal Expansion", "Calorimetry"]}
            ]
        },
        {
+           phase: 2,
            subject: "Biology",
-           topic: "Phase 2: Diversity & Structural",
+           topic: "Diversity in Living World",
            dailyTests: [
-               {
-                   name: "Day 16-30: NCERT Reading",
-                   subs: [
-                       "Plant Kingdom Examples", 
-                       "Animal Kingdom (Phylum Features)", 
-                       "Morphology: Root/Stem/Leaf Mods",
-                       "Morphology: New Families (Malvaceae etc)"
-                   ]
-               }
+               {name:"DT-6 (Bot-XI)", subs:["Taxonomic Categories", "Tools"]},
+               {name:"DT-7 (Bot-XI)", subs:["Monera", "Protista"]},
+               {name:"DT-8 (Bot-XI)", subs:["Fungi", "Viruses"]},
+               {name:"DT-9 (Bot-XI)", subs:["Plant Kingdom: Algae/Bryo"]},
+               {name:"DT-10 (Bot-XI)", subs:["Pterido/Gymno/Angiosperm"]}
            ]
        },
        {
+           phase: 2,
            subject: "Chemistry",
-           topic: "Phase 2: Periodic Table",
+           topic: "Classification of Elements",
            dailyTests: [
-               {
-                   name: "Day 16-30: Trends",
-                   subs: [
-                       "Atomic Radius Trend", 
-                       "Ionization Energy Trend", 
-                       "Electronegativity & Electron Gain Enthalpy"
-                   ]
-               }
+               {name:"DT-7 (Chem-XI)", subs:["Modern Periodic Law", "Nomenclature >100"]},
+               {name:"DT-8 (Chem-XI)", subs:["Trends: Radius, Ionization Enthalpy"]},
+               {name:"DT-9 (Chem-XI)", subs:["Electron Gain Enthalpy", "Electronegativity"]}
            ]
        },
 
@@ -940,48 +923,38 @@ const backlogPlan = {
        // PHASE 3: The Critical Core (Days 31-45)
        // =========================================
        {
+           phase: 3,
            subject: "Physics",
-           topic: "Phase 3: Mechanics (Light)",
+           topic: "Mechanics (Part 1)",
            dailyTests: [
-               {
-                   name: "Day 31-45: Standard Cases",
-                   subs: [
-                       "Kinematics: v-t and x-t Graphs", 
-                       "Laws of Motion: Pulleys & Friction", 
-                       "Work-Energy Theorem",
-                       "Conservation of Momentum"
-                   ]
-               }
+               {name:"DT-7 (Phy-XI)", subs:["Kinematics Graphs (v-t, x-t)"]},
+               {name:"DT-13 (Phy-XI)", subs:["Newton's Laws", "Conservation of Momentum"]},
+               {name:"DT-14 (Phy-XI)", subs:["Friction", "Circular Motion"]},
+               {name:"DT-18 (Phy-XI)", subs:["Work Energy Theorem"]},
+               {name:"DT-19 (Phy-XI)", subs:["Collisions"]}
            ]
        },
        {
+           phase: 3,
            subject: "Chemistry",
-           topic: "Phase 3: Bonding & GOC",
+           topic: "Chemical Bonding",
            dailyTests: [
-               {
-                   name: "Day 31-45: The Backbone",
-                   subs: [
-                       "Chemical Bonding: Hybridization (sp, sp2, sp3)", 
-                       "Chemical Bonding: VSEPR Shape Chart", 
-                       "Chemical Bonding: MOT & Bond Order",
-                       "GOC: Inductive & Resonance Effects",
-                       "GOC: Carbocation Stability"
-                   ]
-               }
+               {name:"DT-10 (Chem-XI)", subs:["Ionic Bond", "Lattice Enthalpy"]},
+               {name:"DT-11 (Chem-XI)", subs:["VSEPR Theory", "Hybridisation"]},
+               {name:"DT-12 (Chem-XI)", subs:["MOT (Molecular Orbital Theory)"]},
+               {name:"DT-13 (Chem-XI)", subs:["Hydrogen Bonding", "Dipole Moment"]}
            ]
        },
        {
+           phase: 3,
            subject: "Biology",
-           topic: "Phase 3: Plant Physiology",
+           topic: "Plant Physiology",
            dailyTests: [
-               {
-                   name: "Day 31-45: Cycles",
-                   subs: [
-                       "Photosynthesis: C3 vs C4 Cycle", 
-                       "Respiration: Glycolysis & Krebs Cycle", 
-                       "Plant Growth: Auxin & Gibberellin Functions"
-                   ]
-               }
+               {name:"DT-26 (Bot-XI)", subs:["Photosynthesis: Light Reaction"]},
+               {name:"DT-27 (Bot-XI)", subs:["Photosynthesis: Dark Reaction (C3/C4)"]},
+               {name:"DT-28 (Bot-XI)", subs:["Respiration: Glycolysis"]},
+               {name:"DT-29 (Bot-XI)", subs:["Respiration: Krebs Cycle & ETS"]},
+               {name:"DT-30 (Bot-XI)", subs:["Plant Growth Regulators"]}
            ]
        },
 
@@ -989,48 +962,38 @@ const backlogPlan = {
        // PHASE 4: The Final Lap (Days 46-60)
        // =========================================
        {
+           phase: 4,
            subject: "Physics",
-           topic: "Phase 4: Gravity & Rotation",
+           topic: "System of Particles",
            dailyTests: [
-               {
-                   name: "Day 46-60: Selective Study",
-                   subs: [
-                       "Gravitation: Kepler's Laws & Satellites", 
-                       "Rotation: Torque (τ = r x F)", 
-                       "Rotation: Moment of Inertia Formulas"
-                   ]
-               }
+               {name:"DT-22 (Phy-XI)", subs:["Centre of Mass"]},
+               {name:"DT-23 (Phy-XI)", subs:["Torque & Angular Momentum"]},
+               {name:"DT-24 (Phy-XI)", subs:["Moment of Inertia"]},
+               {name:"DT-25 (Phy-XI)", subs:["Rolling Motion"]},
+               {name:"DT-28 (Phy-XI)", subs:["Gravitation: Kepler's Laws"]}
            ]
        },
        {
+           phase: 4,
            subject: "Chemistry",
-           topic: "Phase 4: Thermo & Equilibrium",
+           topic: "Thermodynamics & Equilibrium",
            dailyTests: [
-               {
-                   name: "Day 46-60: Formula Sheet",
-                   subs: [
-                       "Thermo: Work Done & Gibbs Energy", 
-                       "Equilibrium: Le Chatelier's Principle", 
-                       "Ionic Equilibrium: pH Formulas",
-                       "Ionic Equilibrium: Buffer Solutions"
-                   ]
-               }
+               {name:"DT-14 (Chem-XI)", subs:["First Law of Thermo", "Enthalpy"]},
+               {name:"DT-15 (Chem-XI)", subs:["Entropy & Gibbs Energy"]},
+               {name:"DT-16 (Chem-XI)", subs:["Chemical Equilibrium (Kp/Kc)"]},
+               {name:"DT-17 (Chem-XI)", subs:["Ionic Eq: pH & Buffer"]},
+               {name:"DT-18 (Chem-XI)", subs:["Solubility Product"]}
            ]
        },
        {
+           phase: 4,
            subject: "Biology",
-           topic: "Phase 4: Human Physiology",
+           topic: "Human Physiology (Neural)",
            dailyTests: [
-               {
-                   name: "Day 46-60: Mechanisms",
-                   subs: [
-                       "Breathing: Transport of Gases", 
-                       "Body Fluids: Cardiac Cycle", 
-                       "Excretion: Counter Current Mechanism",
-                       "Neural: Nerve Impulse Generation",
-                       "Chemical: Mechanism of Hormone Action"
-                   ]
-               }
+               {name:"DT-21 (Zoo-XI)", subs:["Neural System: Neuron Structure"]},
+               {name:"DT-22 (Zoo-XI)", subs:["Nerve Impulse Generation"]},
+               {name:"DT-23 (Zoo-XI)", subs:["Transmission of Impulse"]},
+               {name:"DT-24 (Zoo-XI)", subs:["Central Neural System (Brain)"]}
            ]
        }
    ]
@@ -2224,27 +2187,63 @@ window.checkStudyPace = function() {
         return 1; // Botany/Zoology
     }
 
-    // --- ENGINE: The "Gap Filler" Algorithm ---
+    // --- ENGINE: The "Gap Filler" Algorithm (Phase-Aware) ---
     function generateSmartMix(trackName, syllabusData, deadlineDate, colorTheme) {
-        if (!deadlineDate) return null;
+        
+        // --- NEW: PHASE DETECTION LOGIC ---
+        let activePhase = 0; // Default (All)
+        let phaseDeadline = deadlineDate;
+        let phaseName = "";
 
-        const dDate = new Date(deadlineDate);
+        // Only calculate phases for Backlog track
+        if(trackName === 'backlog') {
+            const planStart = backlogPlan.startDate || new Date();
+            const now = new Date();
+            const dayDiff = Math.ceil((now - planStart) / (1000 * 60 * 60 * 24));
+            
+            // Determine Phase based on Day 1-60 timeline
+            if(dayDiff <= 15) { 
+                activePhase = 1; 
+                phaseName = "Phase 1"; 
+                // Set deadline to end of this phase
+                phaseDeadline = new Date(planStart.getTime() + 15*24*60*60*1000); 
+            }
+            else if(dayDiff <= 30) { 
+                activePhase = 2; 
+                phaseName = "Phase 2"; 
+                phaseDeadline = new Date(planStart.getTime() + 30*24*60*60*1000); 
+            }
+            else if(dayDiff <= 45) { 
+                activePhase = 3; 
+                phaseName = "Phase 3"; 
+                phaseDeadline = new Date(planStart.getTime() + 45*24*60*60*1000); 
+            }
+            else { 
+                activePhase = 4; 
+                phaseName = "Phase 4"; 
+                phaseDeadline = new Date(planStart.getTime() + 60*24*60*60*1000); 
+            }
+        }
+        // ----------------------------------
+
+        if (!phaseDeadline) return null;
+
+        const dDate = new Date(phaseDeadline);
         let rawDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
-        if (trackName === 'main') rawDays = rawDays > 0 ? rawDays - 1 : 0;
         const daysLeft = Math.max(1, rawDays);
 
-        // 1. CALCULATE TOTAL REMAINING WORK (Backlog + Future)
+        // 1. CALCULATE REMAINING WORK (Filtered by Phase)
         let allPending = [];
         let totalRemainingPoints = 0;
 
         syllabusData.forEach(chapter => {
+            // NEW: Filter by Phase if applicable
+            if(activePhase > 0 && chapter.phase !== activePhase) return;
+
             chapter.dailyTests.forEach(dt => {
-                // Only include if NOT done 
                 if (!state.dailyTestsAttempted[dt.name]) {
                     const pts = getWeight(chapter.subject, chapter.topic);
                     
-                    // CHECK: Is this specific sub-task ALREADY in today's planner?
-                    // We check if ANY sub-topic of this test is planned
                     const isAlreadyPlanned = dt.subs.some(sub => 
                         todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`)
                     );
@@ -2262,36 +2261,33 @@ window.checkStudyPace = function() {
             });
         });
 
-        if (allPending.length === 0) return null; // Nothing left!
+        if (allPending.length === 0) return null; 
 
-        // 2. CALCULATE "ALREADY PLANNED" SCORE
-        // This is the "Intelligence" part. We sum up points of tasks you manually added.
+        // 2. CALCULATE "ALREADY PLANNED" (Filtered by Phase)
         let manualPoints = 0;
         todaysTasks.forEach(t => {
-            // Only count tasks that match this track (Main vs Backlog)
             if (t.type === trackName) {
-                // Try to infer weight from the text or subject
                 let subject = t.subject;
                 let topic = t.chapter || '';
+                // Try to extract topic if missing
                 if (!topic && t.text.includes(' - ')) topic = t.text.split(' - ')[0].replace('Study: ', '');
                 
-                manualPoints += getWeight(subject, topic);
+                // Only count manual points if they belong to current phase topics
+                const isCurrentPhase = syllabusData.some(c => c.topic === topic && (activePhase === 0 || c.phase === activePhase));
+                
+                if(isCurrentPhase) manualPoints += getWeight(subject, topic);
             }
         });
 
-        // 3. CALCULATE THE GAP (Target - Manual)
+        // 3. CALCULATE THE GAP
         const bufferMultiplier = daysLeft < 5 ? 1.25 : 1.15;
         const rawDailyTarget = Math.ceil((totalRemainingPoints / daysLeft) * bufferMultiplier);
-        
-        // The Magic: Subtract what you've already done/planned
         let neededPoints = rawDailyTarget - manualPoints;
 
-        // If you've already planned MORE than the target, don't suggest anything!
         if (neededPoints <= 0) return null; 
 
-        // 4. FILL THE GAP (Greedy Sort)
-        allPending.sort((a, b) => b.points - a.points); // Hardest first
-
+        // 4. FILL THE GAP
+        allPending.sort((a, b) => b.points - a.points); 
         let selectedBatch = [];
         let currentPoints = 0;
 
@@ -2301,10 +2297,8 @@ window.checkStudyPace = function() {
             currentPoints += task.points;
         }
 
-        // Save for the button
         currentAiSuggestions[trackName] = selectedBatch;
 
-        // 5. GENERATE PREVIEW
         const previewMap = selectedBatch.reduce((acc, item) => {
             let n = item.subject.substring(0,3); 
             if(item.subject === 'Chemistry') n = item.points >= 3 ? 'Org/Phys' : 'Inorg';
@@ -2312,17 +2306,21 @@ window.checkStudyPace = function() {
             return acc;
         }, {});
 
+        // Display Name adjustment for UI
+        const displayName = trackName === 'main' ? 'Smart Gap Fill' : `${phaseName} Booster`;
+
         return {
-            name: trackName === 'main' ? 'Smart Gap Fill' : 'Backlog Gap Fill',
+            name: displayName,
             days: daysLeft,
             dailyCount: selectedBatch.length,
             points: currentPoints,
-            manualPoints: manualPoints, // Pass this to show off intelligence
+            manualPoints: manualPoints,
             color: colorTheme,
             trackId: trackName,
             preview: previewMap
         };
     }
+   
 
     // --- RENDER UI ---
     let html = '';
@@ -3239,31 +3237,52 @@ window.renderSyllabus = function(type, searchQuery = '') {
     const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
     if(!container) return;
     
-    // 1. Clear Container
     container.innerHTML = '';
-
-    // 2. Prepare Data & Helpers
     const rawData = type === 'main' ? state.nextExam.syllabus : backlogPlan.syllabus;
     
-    // BUG FIX: Distinguish between "Done Ever" and "Added Today"
-    // 'allCompleted' is for history (Green Strikethrough)
     const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
-    
-    // 'todaysTasks' is for the "Add" button state (Plus vs Check icon)
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = new Set((state.tasks[k] || []).map(t => t.text));
-
     const lowerQuery = searchQuery.toLowerCase().trim();
-
-    // 3. Performance: Create a DocumentFragment
     const fragment = document.createDocumentFragment();
-    let hasResults = false;
-
     const safeQuery = escapeRegex(lowerQuery);
     const queryRegex = safeQuery ? new RegExp(`(${safeQuery})`, 'gi') : null;
 
+    // --- NEW: DETERMINE ACTIVE PHASE FOR UI HIGHLIGHTING ---
+    let activePhaseUI = 0;
+    if(type === 'backlog') {
+        const planStart = backlogPlan.startDate || new Date();
+        const dayDiff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+        if(dayDiff <= 15) activePhaseUI = 1;
+        else if(dayDiff <= 30) activePhaseUI = 2;
+        else if(dayDiff <= 45) activePhaseUI = 3;
+        else activePhaseUI = 4;
+    }
+
+    let lastPhase = 0;
+
     rawData.forEach((item, chapterIdx) => {
-        // Search Logic
+        // --- NEW: VISUAL PHASE SEPARATOR ---
+        // Only insert divider if phase changes and we are in backlog view
+        if(item.phase && item.phase !== lastPhase) {
+            lastPhase = item.phase;
+            const isActive = item.phase === activePhaseUI;
+            const phaseTitle = `Phase ${item.phase} (Days ${((item.phase-1)*15)+1}-${item.phase*15})`;
+            
+            const divider = document.createElement('div');
+            // If active, show full color; if not, dim it out
+            divider.className = `mt-6 mb-3 flex items-center gap-4 ${isActive ? 'opacity-100' : 'opacity-50 grayscale'}`;
+            divider.innerHTML = `
+                <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
+                <div class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${isActive ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/30' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}">
+                    ${isActive ? '⚡ Currently Active: ' : ''}${phaseTitle}
+                </div>
+                <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
+            `;
+            fragment.appendChild(divider);
+        }
+        // -----------------------------
+
         const chapterMatch = item.topic.toLowerCase().includes(lowerQuery) || item.subject.toLowerCase().includes(lowerQuery);
         const matchingTests = item.dailyTests.filter(dt => {
             if (chapterMatch) return true; 
@@ -3273,20 +3292,20 @@ window.renderSyllabus = function(type, searchQuery = '') {
 
         if (lowerQuery && !chapterMatch && matchingTests.length === 0) return;
         
-        hasResults = true;
         const chapterId = `${type}-chapter-${chapterIdx}`;
         const isChapterExpanded = lowerQuery ? true : state.expandedTests[chapterId];
+        const allDailyTestsCompleted = item.dailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
         
-        const allDailyTests = item.dailyTests || [];
-        const allDailyTestsCompleted = allDailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
-        
+        // --- HIGHLIGHT ACTIVE CARD ---
+        let borderClass = "border-slate-200 dark:border-slate-800";
+        // If this is the active phase, give it a subtle brand-colored border/ring
+        if(item.phase === activePhaseUI && !allDailyTestsCompleted) {
+            borderClass = "border-brand-400 dark:border-brand-600 ring-1 ring-brand-400/30";
+        }
+
         const chapterCardClass = allDailyTestsCompleted 
-            ? "bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-transition mb-4"
-            : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow card-transition mb-4";
-        
-        const chapterHeaderClass = allDailyTestsCompleted
-            ? "bg-green-100 dark:bg-green-900/20 px-4 py-3 border-b border-green-200 dark:border-green-800 flex justify-between items-center cursor-pointer select-none"
-            : "bg-slate-50 dark:bg-slate-800 px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center cursor-pointer select-none";
+            ? "bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl overflow-hidden shadow-sm mb-4 opacity-70"
+            : `bg-white dark:bg-slate-900 border ${borderClass} rounded-xl overflow-hidden shadow-sm mb-4 transition-all`;
 
         const card = document.createElement('div');
         card.className = chapterCardClass;
@@ -3296,8 +3315,9 @@ window.renderSyllabus = function(type, searchQuery = '') {
             ? safeTopic.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-900/50 text-slate-900 dark:text-white">$1</span>')
             : safeTopic;
 
+        // Render Card Header
         let html = `
-            <div class="${chapterHeaderClass}" onclick="toggleChapter('${chapterId}')">
+            <div class="px-4 py-3 border-b ${allDailyTestsCompleted ? 'border-green-200 dark:border-green-800 bg-green-100 dark:bg-green-900/20' : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800'} flex justify-between items-center cursor-pointer select-none" onclick="toggleChapter('${chapterId}')">
                 <div>
                     <span class="text-[10px] font-bold uppercase tracking-wider ${allDailyTestsCompleted ? 'text-green-700 dark:text-green-300' : 'text-slate-400 dark:text-slate-500'}">${item.subject}</span>
                     <div class="flex items-center gap-2">
@@ -3305,97 +3325,56 @@ window.renderSyllabus = function(type, searchQuery = '') {
                         ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}
                     </div>
                 </div>
-                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
+                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
             </div>
         `;
 
         if (isChapterExpanded) {
-            html += `<div class="p-4 grid grid-cols-1 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">`;
-            
+            html += `<div class="p-4 grid grid-cols-1 gap-3">`;
             const testsToRender = lowerQuery ? matchingTests : item.dailyTests;
-
             testsToRender.forEach((dt) => {
                 const originalIndex = item.dailyTests.indexOf(dt);
                 const testId = `${chapterId}-test-${originalIndex}`;
                 const isTestExpanded = lowerQuery ? true : state.expandedTests[testId];
-                
                 const total = dt.subs.length;
                 const doneCount = dt.subs.filter(s => allCompleted.has(`Study: ${item.topic} - ${s}`)).length;
                 const isReady = total > 0 && doneCount === total;
                 const isAttempted = state.dailyTestsAttempted[dt.name];
-
-                let cardStyle = "border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-800 hover:border-brand-100 dark:hover:border-brand-900 transition-colors relative";
-                let cardContentStyle = ""; 
                 
-                if (isAttempted) {
-                    cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 transition-colors relative shadow-md text-white";
-                    cardContentStyle = "text-white"; 
-                }
+                let cardStyle = "border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-800 hover:border-brand-100 dark:hover:border-brand-900 transition-colors relative";
+                if (isAttempted) cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md";
 
                 const showCheckbox = isReady || isAttempted;
-                const safeTestName = escapeHtml(dt.name);
-                const displayName = queryRegex 
-                    ? safeTestName.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') 
-                    : safeTestName;
-
+                
                 html += `
                     <div class="${cardStyle} overflow-hidden">
                         <div class="p-3 flex justify-between items-center cursor-pointer" onclick="toggleDailyTest('${testId}')">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400 dark:text-slate-500'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
+                             <div class="flex items-center gap-2">
+                                <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
                                 <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                               ${showCheckbox ? 
-    `<input type="checkbox" 
-        ${isAttempted ? 'checked' : ''} 
-        onchange="toggleTestAttempt('${safeQuote(dt.name)}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer"
-    >` : ''
-}        
-
-                                    <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm select-text cursor-text">${displayName}</span>
+                                    ${showCheckbox ? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${dt.name}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
+                                    <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm">${dt.name}</span>
                                 </div>
                             </div>
-                                ${isAttempted ? 
-                                `<span class="text-[10px] font-bold text-green-700 bg-white px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm"><i data-lucide="award" class="w-3 h-3"></i> Done</span>` 
-                            : isReady ? 
-                                `<span class="text-[10px] font-bold text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse"><i data-lucide="check-circle" class="w-3 h-3"></i> Ready</span>` 
-                            :
-                                `<span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'}">${doneCount}/${total}</span>`
-                            }
+                            <span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400'}">${doneCount}/${total}</span>
                         </div>
                         ${isTestExpanded ? `
-                            <div class="px-3 pb-3 pt-0 border-t ${isAttempted ? 'border-white/20' : 'border-slate-50 dark:border-slate-700'} animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div class="space-y-1 mt-2 ${cardContentStyle}">
+                            <div class="px-3 pb-3 pt-0 border-t ${isAttempted ? 'border-white/20' : 'border-slate-50 dark:border-slate-700'} mt-2">
+                                <div class="space-y-1 mt-2 ${isAttempted ? 'text-white' : 'text-slate-500 dark:text-slate-400'}">
                                     ${dt.subs.map(sub => {
                                         const taskName = `Study: ${item.topic} - ${sub}`;
-                                        
-                                        // HERE IS THE FIX: Check todaysTasks for "Added" status
                                         const isAdded = todaysTasks.has(taskName);
                                         const isDone = allCompleted.has(taskName);
-                                        
-                                        const safeSub = escapeHtml(sub);
-                                        const displaySub = queryRegex 
-                                            ? safeSub.replace(queryRegex, '<span class="bg-yellow-200 dark:bg-yellow-600 text-black">$1</span>') 
-                                            : safeSub;
-
-                                        let textClass = "text-slate-500 dark:text-slate-400";
-                                        if (isAttempted) textClass = "text-white/90";
-                                        if (isDone) textClass = isAttempted ? "line-through opacity-70 text-white/70" : "line-through opacity-50 decoration-slate-400 dark:decoration-slate-500";
-                                        
-                                        let btnClass = "text-brand-400 hover:text-brand-600 dark:hover:text-brand-300";
-                                        if (isAttempted) btnClass = "text-white/80 hover:text-white";
-                                        
-                                        return `
+                                         return `
                                             <div class="flex items-center justify-between group pl-6 py-0.5">
-                                                <span class="text-[11px] truncate w-3/4 ${textClass}" title="${safeSub}">• ${displaySub}</span>
+                                                <span class="text-[11px] truncate w-3/4 ${isDone ? 'line-through opacity-50' : ''}" title="${sub}">• ${sub}</span>
                                                 ${!isDone ? 
-                                                    `
-<button onclick="addSyllabusTask('${safeQuote(item.topic)} - ${safeQuote(sub)}', '${type}', '${item.subject}', '${safeQuote(item.topic)}')" class="${btnClass} transition-colors p-1" title="${isAdded ? 'Already in Agenda' : 'Add to Selected Date'}" aria-label="Add to plan">
+                                                    `<button onclick="addSyllabusTask('${item.topic} - ${sub}', '${type}', '${item.subject}', '${item.topic}')" class="${isAttempted ? 'text-white/80' : 'text-brand-400 hover:text-brand-600'} transition-colors p-1">
                                                         <i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i>
                                                     </button>` : 
-                                                    `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500 dark:text-green-400'}"></i>`
+                                                    `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500'}"></i>`
                                                 }
-                                            </div>
-                                        `;
+                                            </div>`;
                                     }).join('')}
                                 </div>
                             </div>
@@ -3403,18 +3382,17 @@ window.renderSyllabus = function(type, searchQuery = '') {
                     </div>
                 `;
             });
-            
             html += `</div>`;
         }
-
+        
         card.innerHTML = html;
         fragment.appendChild(card);
     });
 
-    if (!hasResults && lowerQuery) {
-        container.innerHTML = `<div class="p-8 text-center text-slate-400 dark:text-slate-500">No topics found matching "${escapeHtml(searchQuery)}"</div>`;
+    if (!rawData.some(i => i.topic.toLowerCase().includes(lowerQuery)) && lowerQuery) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-400">No topics found.</div>`;
     } else {
-        container.appendChild(fragment); 
+        container.appendChild(fragment);
     }
     
     if(window.lucide) lucide.createIcons({ root: container });
