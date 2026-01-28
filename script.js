@@ -3054,7 +3054,7 @@ window.renderStats = function() {
                     </div>
                     <div class="flex justify-between items-start relative z-10">
                         <div>
-                            <div class="text-[10px] uppercase font-bold opacity-80 mb-0.5 tracking-wide">Current Focus</div>
+                            <div class="text-[10px] uppercase font-bold opacity-80 mb-0.5 tracking-wide">Current Backlog Focus</div>
                             <h3 class="text-lg font-bold">Phase ${currentPhase}</h3>
                         </div>
                         <div class="text-right">
@@ -3847,4 +3847,5 @@ document.addEventListener('mousemove', (e) => {
         const y = (window.innerHeight - e.pageY * speed) / 100;
         layer.style.transform = `translateX(${x}px) translateY(${y}px)`;
     });
+
 });
