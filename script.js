@@ -1183,6 +1183,7 @@ window.state = state;
                 default: return 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200';
             }
         }
+// --- NEW PROFILE UI LOGIC ---
 window.updateProfileUI = function(user) {
     const isGuest = !user || user.isAnonymous;
     const name = state.displayName || (user && user.email ? user.email.split('@')[0] : "Guest User");
@@ -1205,45 +1206,36 @@ window.updateProfileUI = function(user) {
     const updateElements = (prefix) => {
         const card = document.getElementById(`${prefix}-user-card`);
         const avatarBg = document.getElementById(`${prefix}-user-avatar-bg`);
+        // Removed avatarText because new design puts text directly in avatarBg
         const nameEl = document.getElementById(`${prefix}-user-name`);
         const statusEl = document.getElementById(`${prefix}-sync-status`);
         const btn = document.getElementById(`${prefix}-auth-btn`);
 
-        // Safety check: If the card doesn't exist, stop.
         if(!card) return;
 
-        // 1. Update Card Styling
         if(prefix === 'mobile') {
             card.className = `flex items-center gap-3 px-3 py-3 rounded-2xl border transition-all cursor-pointer ${currentStyle.cardBorder}`;
         }
         
-        // 2. Update Avatar
-        if (avatarBg) {
-            avatarBg.className = `flex items-center justify-center font-bold shadow-sm transition-colors ${prefix === 'mobile' ? 'w-10 h-10 rounded-full text-sm' : 'w-9 h-9 rounded-xl text-xs'} ${currentStyle.avatarBg}`;
-            avatarBg.textContent = isGuest ? "?" : initial;
-        }
+        avatarBg.className = `flex items-center justify-center font-bold shadow-sm transition-colors ${prefix === 'mobile' ? 'w-10 h-10 rounded-full text-sm' : 'w-9 h-9 rounded-xl text-xs'} ${currentStyle.avatarBg}`;
         
-        // 3. Update Name & Status
-        if (nameEl) nameEl.textContent = name;
-        if (statusEl) {
-            statusEl.innerHTML = isGuest 
-                ? `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> <span class="text-slate-500 dark:text-slate-400">Local Only</span>`
-                : `<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> <span class="text-green-600 dark:text-green-400">Synced</span>`;
-        }
+        // FIX: Set text directly on the background element
+        avatarBg.textContent = isGuest ? "?" : initial;
+        
+        nameEl.textContent = name;
+        
+        statusEl.innerHTML = isGuest 
+            ? `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> <span class="text-slate-500 dark:text-slate-400">Local Only</span>`
+            : `<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> <span class="text-green-600 dark:text-green-400">Synced</span>`;
 
-        // 4. Update Button (ONLY IF IT EXISTS)
-        // This prevents the "Cannot set properties of null" error on Desktop
-        if (btn) {
-            btn.innerHTML = `<i data-lucide="${currentStyle.icon}" class="${prefix === 'mobile' ? 'w-5 h-5' : 'w-4 h-4'}"></i>`;
-            
-            if(isGuest) {
-                btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-all`;
-            } else {
-                btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all`;
-            }
+        btn.innerHTML = `<i data-lucide="${currentStyle.icon}" class="${prefix === 'mobile' ? 'w-5 h-5' : 'w-4 h-4'}"></i>`;
+        
+        if(isGuest) {
+            btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-all`;
+        } else {
+            btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all`;
         }
     };
-
     updateElements('mobile');
     updateElements('desktop');
     if(window.lucide) lucide.createIcons();
@@ -1820,49 +1812,42 @@ function renderDailyHadith() {
     state.activeView = view;
     toggleMobileMenu(true); 
     
-    // ... (Your specific view logic: leaderboard, namaz, planner calls remain here) ...
+    // Handle specific view logic
+    if(view === 'leaderboard') {
+        fetchLeaderboard();
+        switchRankTab('overall'); 
+    }
+    if(view === 'namaz') {
+        renderNamazView();
+    }
+    // NEW: Handle Planner View
+    if(view === 'planner') {
+        renderPlanner();
+    }
+    // Reset Notebook if leaving mistakes view
+    if(view === 'mistakes') {
+        closeNotebook(); 
+    }
 
-    // NEW STYLE HANDLER
-    const allViews = ['overview', 'target', 'backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'];
-    
-    allViews.forEach(v => {
-        // Desktop Buttons
+    // Updated list to include 'planner'
+    ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'].forEach(v => {
         const btn = document.getElementById(`nav-${v}`);
         if(btn) {
-            if(v === view) {
-                // Active State: White background + Brand Text + Shadow
-                btn.className = "nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-white/10 transition-all";
-                // Colorize the Icon
-                const icon = btn.querySelector('svg');
-                if(icon) icon.classList.add('text-brand-500');
-            } else {
-                // Inactive State
-                btn.className = "nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all group";
-                const icon = btn.querySelector('svg');
-                if(icon) icon.classList.remove('text-brand-500');
-            }
+            if(v === view) btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 shadow-sm";
+            else btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all";
         }
-
-        // Mobile Buttons
-        const mobBtn = document.getElementById(`mob-nav-${v}`);
-        if(mobBtn) {
-            if(v === view) {
-                mobBtn.className = "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300";
-            } else {
-                mobBtn.className = "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 group";
-            }
-        }
-
-        // Toggle View Containers
         const viewEl = document.getElementById(`view-${v}`);
-        if(viewEl) {
-            if(v === view) viewEl.classList.remove('hidden');
-            else viewEl.classList.add('hidden');
-        }
+        if(viewEl) viewEl.classList.add('hidden');
     });
 
+    const activeEl = document.getElementById(`view-${view}`);
+    if(activeEl) activeEl.classList.remove('hidden');
+    
+    // Only render standard views if NOT leaderboard or planner (Planner handles its own render)
     if(view !== 'leaderboard' && view !== 'planner') renderAll();
 };
+
+
 
         window.toggleMobileMenu = function(forceClose = false) {
             const body = document.getElementById('app-body');
@@ -2305,6 +2290,43 @@ window.renderLeaderboardList = function() {
 let currentUnifiedSuggestion = [];
 
 
+
+// --- AI STRATEGY: BALANCED MIX LOGIC ---
+
+// 1. Helper: Define Difficulty Categories & Points
+function getTopicDetails(subject, topic) {
+    const t = (topic || '').toLowerCase();
+    const s = subject;
+
+    // Default: Easy / 1 Point
+    let category = 'Easy';
+    let points = 1;
+
+    // --- HARD (Physics, Organic Chem) - 4 Points ---
+    const isPhysics = s === 'Physics';
+    const isOrganic = s === 'Chemistry' && (t.includes('organic') || t.includes('hydro') || t.includes('halo') || t.includes('alcohol') || t.includes('aldehyde') || t.includes('amine') || t.includes('goc'));
+    
+    // Exception: EMI is Medium
+    const isEMI = t.includes('emi') || t.includes('electromagnetic') || t.includes('induction');
+
+    if ((isPhysics && !isEMI) || isOrganic) {
+        category = 'Hard';
+        points = 4;
+    }
+
+    // --- MEDIUM (Phys Chem, EMI, Bio Genetics/Repro) - 2.5 Points ---
+    const isPhysChem = s === 'Chemistry' && (t.includes('equilibrium') || t.includes('thermo') || t.includes('electro') || t.includes('kinetics') || t.includes('solution'));
+    const isBioGenetics = s === 'Biology' && (t.includes('inheritance') || t.includes('molecular') || t.includes('genetic') || t.includes('dna'));
+    const isBioRepro = s === 'Biology' && (t.includes('sexual reproduction') || t.includes('flowering'));
+
+    if (isEMI || isPhysChem || isBioGenetics || isBioRepro) {
+        category = 'Medium';
+        points = 2.5; // Slightly higher than easy, lower than hard
+    }
+
+    return { category, points };
+}
+
 window.checkStudyPace = function() {
     const container = document.getElementById('ai-strategy-container');
     if (!container) return;
@@ -2321,30 +2343,25 @@ window.checkStudyPace = function() {
     const allCompleted = new Set();
     Object.values(state.tasks).flat().forEach(t => { if (t.completed) allCompleted.add(t.text); });
 
-    function getWeight(subject, topic) {
-        if (subject === 'Physics') return 4; 
-        if (subject === 'Chemistry') {
-            const t = (topic || '').toLowerCase();
-            if (t.includes('organic') || t.includes('hydro') || t.includes('halo') || 
-                t.includes('alcohol') || t.includes('aldehyde') || t.includes('amine') || 
-                t.includes('thermo') || t.includes('equilibrium') || t.includes('electro')) return 3;
-            return 2; 
-        }
-        return 1; 
-    }
-
+    // --- STEP 1: CALCULATE DEADLINES & RATES ---
     function calculateTrackMetrics(syllabus, deadlineDate, trackType) {
-        if (!syllabus || !deadlineDate) return { pending: [], rate: 0, days: 1 };
+        if (!syllabus || !deadlineDate) return { pending: [], rate: 0 };
         
         let effectiveDeadline = new Date(deadlineDate);
-        if (trackType === 'main') effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
-        else {
+        
+        // RULE: Main Test must be completed 1 day BEFORE exam
+        if (trackType === 'main') {
+            effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
+        } else {
+            // RULE: Backlog follows Phase deadlines
             const planStart = backlogPlan.startDate || new Date();
             const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
             let currentPhase = 1;
             if(diff > 15) currentPhase = 2;
             if(diff > 30) currentPhase = 3;
             if(diff > 45) currentPhase = 4;
+            
+            // Set deadline to end of current phase
             effectiveDeadline = new Date(planStart);
             effectiveDeadline.setDate(planStart.getDate() + (currentPhase * 15));
         }
@@ -2356,6 +2373,7 @@ window.checkStudyPace = function() {
         let pendingTasks = [];
 
         syllabus.forEach(chapter => {
+            // Filter Backlog Phase
             if (trackType === 'backlog') {
                 const planStart = backlogPlan.startDate || new Date();
                 const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
@@ -2366,6 +2384,8 @@ window.checkStudyPace = function() {
                 if (chapter.phase && chapter.phase !== phase) return;
             }
 
+            const { category, points } = getTopicDetails(chapter.subject, chapter.topic);
+
             chapter.dailyTests.forEach(dt => {
                 const remainingSubs = dt.subs.filter(sub => !allCompleted.has(`Study: ${chapter.topic} - ${sub}`));
                 if (remainingSubs.length === 0) return;
@@ -2373,16 +2393,17 @@ window.checkStudyPace = function() {
                 const isPlannedToday = remainingSubs.some(sub => todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`));
 
                 if (!isPlannedToday) {
-                    const w = getWeight(chapter.subject, chapter.topic);
+                    // Normalize points based on how much of the Daily Test is left
                     const ratio = remainingSubs.length / dt.subs.length;
-                    const adjustedPoints = w * ratio;
+                    const adjustedPoints = points * ratio;
 
                     pendingTasks.push({
                         name: dt.name,
                         subject: chapter.subject,
                         topic: chapter.topic,
+                        category: category, // Hard, Medium, or Easy
                         points: adjustedPoints,
-                        rawPoints: w,
+                        rawPoints: points,
                         track: trackType,
                         subs: remainingSubs
                     });
@@ -2391,103 +2412,143 @@ window.checkStudyPace = function() {
             });
         });
 
-        return { pending: pendingTasks, rate: totalPoints / daysLeft, days: daysLeft };
+        return { pending: pendingTasks, rate: totalPoints / daysLeft };
     }
 
     const mainMetrics = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
     const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
         calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : { pending: [], rate: 0 };
 
-    // FIX 1: INCREASED AGGRESSION (1.1 -> 1.25)
-    // This raises the "Minimum Daily Target" so even small deletions trigger the AI.
-    const totalDailyRate = Math.ceil((mainMetrics.rate + backlogMetrics.rate) * 1.25);
+    // --- STEP 2: CALCULATE DEFICIT ---
+    // Aggression factor 1.1 ensures we stay slightly ahead
+    const totalDailyRate = (mainMetrics.rate + backlogMetrics.rate) * 1.1;
     
-    // FIX 2: COUNT ALL PLANNED TASKS (Correctly handles deletes)
     let manualPoints = 0;
     todaysTasks.forEach(t => { 
-        manualPoints += getWeight(t.subject, t.chapter); 
+        manualPoints += getTopicDetails(t.subject, t.chapter).points; 
     });
 
     const deficit = totalDailyRate - manualPoints;
     
-    // Only return if we have truly met the (now higher) target
-    if (deficit <= 0 || (mainMetrics.pending.length === 0 && backlogMetrics.pending.length === 0)) return;
+    // Only suggest if we have a real deficit
+    if (deficit <= 0.5 || (mainMetrics.pending.length === 0 && backlogMetrics.pending.length === 0)) return;
 
-    const mainShare = mainMetrics.rate / (mainMetrics.rate + backlogMetrics.rate || 1);
-    let pointsForMain = deficit * mainShare;
-    let pointsForBacklog = deficit - pointsForMain;
+    // --- STEP 3: THE SMART MIX ALGORITHM (60/25/15) ---
+    
+    // Combine all pending tasks
+    let allPending = [...mainMetrics.pending, ...backlogMetrics.pending];
+    
+    // Buckets
+    const buckets = {
+        Hard: allPending.filter(t => t.category === 'Hard'),
+        Medium: allPending.filter(t => t.category === 'Medium'),
+        Easy: allPending.filter(t => t.category === 'Easy')
+    };
 
-    // FIX 3: FORCE BACKLOG INCLUSION
-    // If we have backlog pending, ensure we allocate at least 2 points to it
-    // This prevents the "Physics (4pt)" tasks from eating the entire suggestion budget.
-    if (backlogMetrics.pending.length > 0 && pointsForBacklog < 2) {
-        pointsForBacklog = 2; // Force at least 2 points for backlog
-        pointsForMain = Math.max(0, deficit - pointsForBacklog); // Adjust main down
-    }
+    // Sort buckets by Track Priority (Main > Backlog) then Points
+    const sortFn = (a, b) => {
+        if (a.track === 'main' && b.track !== 'main') return -1;
+        if (a.track !== 'main' && b.track === 'main') return 1;
+        return b.points - a.points;
+    };
+    buckets.Hard.sort(sortFn);
+    buckets.Medium.sort(sortFn);
+    buckets.Easy.sort(sortFn);
 
-    mainMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
-    backlogMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
+    // Targets based on Deficit
+    // 60% Hard, 25% Medium, 15% Easy
+    let targets = {
+        Hard: deficit * 0.60,
+        Medium: deficit * 0.25,
+        Easy: deficit * 0.15
+    };
 
     let suggestions = [];
-    let currentFill = 0;
+    let currentFill = { Hard: 0, Medium: 0, Easy: 0 };
 
-    for (let task of mainMetrics.pending) {
-        if (currentFill >= pointsForMain) break;
-        suggestions.push(task);
-        currentFill += task.points;
+    // Helper to fill a specific bucket
+    function fillBucket(type, targetAmount) {
+        for (let task of buckets[type]) {
+            if (currentFill[type] >= targetAmount) break;
+            if (suggestions.includes(task)) continue; // Avoid dupes
+
+            suggestions.push(task);
+            currentFill[type] += task.points;
+        }
     }
-    currentFill = 0;
-    for (let task of backlogMetrics.pending) {
-        if (currentFill >= pointsForBacklog) break;
-        suggestions.push(task);
-        currentFill += task.points;
+
+    // 1. First Pass: Try to fill exact percentages
+    fillBucket('Hard', targets.Hard);
+    fillBucket('Medium', targets.Medium);
+    fillBucket('Easy', targets.Easy);
+
+    // 2. Overflow Handling (Waterfalls down)
+    // If we ran out of Hard tasks, move credit to Medium. If out of Medium, move to Easy.
+    // And vice versa to ensure TOTAL points are met.
+    
+    const totalFilled = currentFill.Hard + currentFill.Medium + currentFill.Easy;
+    const remainingDeficit = deficit - totalFilled;
+
+    if (remainingDeficit > 0.5) {
+        // Just fill the rest with whatever is available, prioritizing Main track
+        const remainingTasks = allPending.filter(t => !suggestions.includes(t)).sort(sortFn);
+        for (let task of remainingTasks) {
+            if ((currentFill.Hard + currentFill.Medium + currentFill.Easy) >= deficit) break;
+            suggestions.push(task);
+            currentFill[task.category] += task.points;
+        }
     }
 
     currentUnifiedSuggestion = suggestions;
 
     if (suggestions.length > 0) {
         const totalPointsDisplay = Math.round(suggestions.reduce((sum, t) => sum + t.points, 0));
-        const mainCount = suggestions.filter(t => t.track === 'main').length;
-        const backlogCount = suggestions.filter(t => t.track === 'backlog').length;
+        
+        // Count for UI Badge
+        const hardCount = suggestions.filter(t => t.category === 'Hard').length;
+        const medCount = suggestions.filter(t => t.category === 'Medium').length;
+        const easyCount = suggestions.filter(t => t.category === 'Easy').length;
 
         const html = `
-        <div class="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-r from-blue-600 to-cyan-500 shadow-xl shadow-blue-500/20 text-white mb-6 group animate-in slide-in-from-top-2">
-            <div class="absolute -right-10 -top-10 text-white opacity-10 group-hover:rotate-12 transition-transform duration-700">
-                <i data-lucide="sparkles" class="w-48 h-48"></i>
+        <div class="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-br from-indigo-900 via-slate-900 to-black border border-indigo-500/30 shadow-2xl text-white mb-6 group animate-in slide-in-from-top-2">
+            <div class="absolute top-0 right-0 p-8 opacity-20">
+                <i data-lucide="bar-chart-2" class="w-32 h-32 text-indigo-400"></i>
             </div>
 
             <div class="relative z-10 flex flex-col md:flex-row gap-6 items-center justify-between">
                 <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-3">
-                        <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-2">
-                            <i data-lucide="brain-circuit" class="w-3.5 h-3.5"></i>
-                            <span class="text-xs font-bold uppercase tracking-wider">AI Recommendation</span>
-                        </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">Smart Study Mix</span>
+                        <div class="h-px bg-indigo-500/50 flex-1"></div>
                     </div>
                     
-                    <h3 class="text-2xl font-bold leading-tight mb-1">
-                        Load Balance: <span class="text-white drop-shadow-sm">${totalPointsDisplay} Points</span>
+                    <h3 class="text-xl md:text-2xl font-bold leading-tight mb-2">
+                        Today's Balanced Plan
                     </h3>
                     
-                    <p class="text-blue-100 text-sm font-medium opacity-90">
-                        Optimized mix to hit your <strong>Feb 7</strong> and <strong>Phase 1</strong> deadlines.
-                    </p>
-
-                    <div class="flex items-center gap-3 mt-4">
-                        <div class="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
-                            <i data-lucide="zap" class="w-3.5 h-3.5 text-yellow-300"></i> 
-                            <span class="text-xs font-bold">${mainCount} Main</span>
-                        </div>
-                        <div class="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
-                            <i data-lucide="history" class="w-3.5 h-3.5 text-orange-300"></i> 
-                            <span class="text-xs font-bold">${backlogCount} Backlog</span>
-                        </div>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        ${hardCount > 0 ? `<div class="flex items-center gap-1.5 bg-red-500/20 border border-red-500/30 px-2.5 py-1 rounded-lg">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            <span class="text-xs font-bold text-red-100">${hardCount} Hard</span>
+                        </div>` : ''}
+                        ${medCount > 0 ? `<div class="flex items-center gap-1.5 bg-yellow-500/20 border border-yellow-500/30 px-2.5 py-1 rounded-lg">
+                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                            <span class="text-xs font-bold text-yellow-100">${medCount} Med</span>
+                        </div>` : ''}
+                        ${easyCount > 0 ? `<div class="flex items-center gap-1.5 bg-green-500/20 border border-green-500/30 px-2.5 py-1 rounded-lg">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span class="text-xs font-bold text-green-100">${easyCount} Easy</span>
+                        </div>` : ''}
                     </div>
+                    
+                    <p class="text-slate-400 text-xs mt-3 italic">
+                        "60% Heavy lifting, 40% Momentum."
+                    </p>
                 </div>
 
-                <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-8 py-4 bg-white text-blue-600 rounded-xl text-sm font-bold shadow-lg shadow-black/10 hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                    Add to Today
+                <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 active:scale-95">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    Add These ${suggestions.length} Tasks
                 </button>
             </div>
         </div>`;
@@ -2496,6 +2557,7 @@ window.checkStudyPace = function() {
         if (window.lucide) lucide.createIcons({ root: container });
     }
 };
+
 window.acceptUnifiedPlan = function() {
     if (!currentUnifiedSuggestion || currentUnifiedSuggestion.length === 0) return;
 
@@ -2907,64 +2969,11 @@ window.assignChapterTime = function(chapName, inputId) {
         };
 
         
-window.updateSidebarBadges = function() {
-    // 1. Calculate Backlog Pending (Phase Specific)
-    let backlogCount = 0;
-    if(typeof backlogPlan !== 'undefined') {
-        const k = formatDateKey(state.selectedDate);
-        const tasksDone = new Set((state.tasks[k] || []).filter(t => t.completed).map(t => t.text));
-        
-        // Determine current phase
-        const diff = Math.ceil((new Date() - backlogPlan.startDate) / (1000 * 60 * 60 * 24));
-        let phase = 1;
-        if(diff > 15) phase = 2; if(diff > 30) phase = 3; if(diff > 45) phase = 4;
-
-        backlogPlan.syllabus.forEach(item => {
-            if(item.phase === phase) {
-                item.dailyTests.forEach(dt => {
-                    if(!state.dailyTestsAttempted[dt.name]) backlogCount++;
-                });
-            }
-        });
-    }
-
-    // 2. Calculate Unresolved Mistakes
-    const mistakeCount = (state.mistakes || []).filter(m => !m.resolved).length;
-
-    // 3. Calculate Unscheduled Planner Tasks
-    const k = formatDateKey(state.selectedDate);
-    const plannerCount = (state.tasks[k] || []).filter(t => !t.completed && (!t.timeLabel || t.timeLabel === '')).length;
-
-    // Helper to update elements
-    const setBadge = (id, count) => {
-        ['', '-mob'].forEach(suffix => {
-            const el = document.getElementById(id + suffix);
-            if(el) {
-                if(count > 0) {
-                    el.textContent = count;
-                    el.classList.remove('hidden');
-                } else {
-                    el.classList.add('hidden');
-                }
-            }
-        });
-    };
-
-    setBadge('badge-backlog', backlogCount);
-    setBadge('badge-mistakes', mistakeCount);
-    setBadge('badge-planner', plannerCount);
-};
-
-
-
 window.renderAll = function() {
     renderHeader();
     updateHeaderPrayerBtn();
     renderStats();
-   
-// --- NEW LINE ADDED HERE ---
-    updateSidebarBadges();
- 
+    
     // Performance Optimization: Lazy Rendering
     if (state.activeView === 'overview') {
         renderTasks();
