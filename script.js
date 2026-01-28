@@ -1819,7 +1819,7 @@ window.switchView = function(view) {
     if(view === 'planner') renderPlanner();
     if(view === 'mistakes') closeNotebook(); 
 
-    // 2. Define Colors for Active State
+    // 2. Define Colors
     const activeBgStyles = {
         overview: 'bg-indigo-500 shadow-indigo-500/50',
         target: 'bg-blue-500 shadow-blue-500/50',
@@ -1834,56 +1834,38 @@ window.switchView = function(view) {
     const views = ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'];
     
     views.forEach(v => {
-        // Toggle Pages (Safe Check)
         const viewEl = document.getElementById(`view-${v}`);
         if(viewEl) {
             if(v === view) viewEl.classList.remove('hidden');
             else viewEl.classList.add('hidden');
         }
 
-        // Toggle Dock Icons
         const btn = document.getElementById(`dock-${v}`);
         if(btn) {
             const iconBg = btn.querySelector('.dock-icon-bg');
-            // FIX: Look for 'i' OR 'svg' so it works even after Lucide runs
-            const icon = iconBg ? iconBg.querySelector('i, svg') : null;
+            const icon = iconBg ? iconBg.querySelector('i, svg') : null; // Safe selector
             const dot = btn.querySelector('.dock-dot');
 
             if(v === view) {
-                // --- ACTIVE STATE ---
                 btn.classList.add('-translate-y-3'); 
-                
-                // Update Background
                 if(iconBg) iconBg.className = `p-3 rounded-2xl transition-all duration-300 shadow-lg scale-110 text-white dock-icon-bg ${activeBgStyles[v]}`;
-                
-                // Update Icon Color (Only if icon exists)
                 if(icon) {
-                    // Remove old text colors and add white
                     icon.classList.remove('text-slate-500', 'dark:text-slate-400');
                     icon.classList.add('text-white');
                 }
-
                 if(dot) dot.classList.remove('opacity-0');
-
             } else {
-                // --- INACTIVE STATE ---
                 btn.classList.remove('-translate-y-3');
-                
-                // Reset Background
                 if(iconBg) iconBg.className = `p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors shadow-sm dock-icon-bg`;
-                
-                // Reset Icon Color
                 if(icon) {
                     icon.classList.remove('text-white');
                     icon.classList.add('text-slate-500', 'dark:text-slate-400');
                 }
-
                 if(dot) dot.classList.add('opacity-0');
             }
         }
     });
 
-    // 4. Refresh Components
     if(view !== 'leaderboard' && view !== 'planner') renderAll();
 };
         window.toggleMobileMenu = function(forceClose = false) {
@@ -3384,217 +3366,218 @@ function renderTasks() {
             
             if(window.lucide) lucide.createIcons({ root: list });
         }
-window.renderSyllabus = function(type, searchQuery = '') {
-    const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
-    if(!container) return;
-    
-    container.innerHTML = '';
-    const rawData = type === 'main' ? state.nextExam.syllabus : backlogPlan.syllabus;
-    
-    // --- 4. DEADLINE & PROGRESS LOGIC ---
-    // If we are in Backlog mode, update the Header UI to show Phase Deadline
-    if(type === 'backlog') {
-        const planStart = backlogPlan.startDate || new Date();
-        const now = new Date();
-        const diffTime = Math.abs(now - planStart);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        
-        // Determine Active Phase
-        let currentPhase = 1;
-        if(diffDays > 15) currentPhase = 2;
-        if(diffDays > 30) currentPhase = 3;
-        if(diffDays > 45) currentPhase = 4;
-
-        // Calculate Phase End Date
-        const phaseEndDate = new Date(planStart);
-        phaseEndDate.setDate(planStart.getDate() + (currentPhase * 15));
-        
-        // Update DOM elements (Assuming you have these IDs in your HTML)
-        const deadlineEl = document.getElementById('backlog-deadline-display'); // You might need to add this ID to your HTML date card
-        if(deadlineEl) deadlineEl.innerText = phaseEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        
-        const phaseLabelEl = document.getElementById('backlog-phase-label');
-        if(phaseLabelEl) phaseLabelEl.innerText = `Phase ${currentPhase} Active`;
-    }
-    // ------------------------------------
-
-    const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
-    const k = formatDateKey(state.selectedDate);
-    const todaysTasks = new Set((state.tasks[k] || []).map(t => t.text));
-    const lowerQuery = searchQuery.toLowerCase().trim();
-    const fragment = document.createDocumentFragment();
-    
-    // Phase & Unit Trackers
-    let lastPhase = 0;
-    let lastUnit = "";
-
-    // Active Phase Calculation for highlighting
-    let activePhaseUI = 1;
-    if(type === 'backlog') {
-        const planStart = backlogPlan.startDate;
-        const d = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
-        if(d > 15) activePhaseUI = 2;
-        if(d > 30) activePhaseUI = 3;
-        if(d > 45) activePhaseUI = 4;
-    }
-
-    rawData.forEach((item, chapterIdx) => {
-        // --- 1. PHASE DIVIDER WITH DATES ---
-        if(item.phase && item.phase !== lastPhase) {
-            lastPhase = item.phase;
-            lastUnit = ""; // Reset unit on new phase
-            
-            // Calculate Dates
-            const pStart = new Date(backlogPlan.startDate);
-            pStart.setDate(pStart.getDate() + ((item.phase-1)*15));
-            const pEnd = new Date(backlogPlan.startDate);
-            pEnd.setDate(pEnd.getDate() + (item.phase*15) - 1);
-            
-            const dateStr = `${pStart.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${pEnd.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
-            const isActive = item.phase === activePhaseUI;
-
-            const divider = document.createElement('div');
-            divider.className = `mt-8 mb-4 flex flex-col gap-1 ${isActive ? 'opacity-100' : 'opacity-60 grayscale'}`;
-            divider.innerHTML = `
-                <div class="flex items-center gap-4">
-                    <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
-                    <div class="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest border ${isActive ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500'}">
-                        Phase ${item.phase} <span class="opacity-75 font-medium ml-1">(${dateStr})</span>
-                    </div>
-                    <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
-                </div>
-            `;
-            fragment.appendChild(divider);
-        }
-
-        // --- 2. UNIT HEADER (New!) ---
-        if(item.unit && item.unit !== lastUnit) {
-            lastUnit = item.unit;
-            const unitHeader = document.createElement('div');
-            unitHeader.className = "mt-4 mb-2 ml-1";
-            unitHeader.innerHTML = `
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
-                    <i data-lucide="layers" class="w-3 h-3"></i> ${item.unit}
-                </span>
-            `;
-            fragment.appendChild(unitHeader);
-        }
-
-        // --- 3. CHAPTER CARD RENDER ---
-        const chapterMatch = item.topic.toLowerCase().includes(lowerQuery) || item.subject.toLowerCase().includes(lowerQuery);
-        // ... (Rest of the rendering logic is exactly the same as before, just ensure you include it) ...
-        // ... Copy the rest of the renderSyllabus function from previous step here ...
-        
-        // [Insert the Card Creation Logic here from previous turn]
-        // This is where "const chapterId = ..." starts.
-        // Make sure to use item.topic as the Chapter Name.
-        
-        // (Shortened for brevity - Paste the previous card generation code here)
-        
-        // ...
-        
-        // START OF CARD LOGIC (Pasted for clarity)
-        const matchingTests = item.dailyTests.filter(dt => {
-            if (chapterMatch) return true; 
-            return dt.name.toLowerCase().includes(lowerQuery) || 
-                dt.subs.some(sub => sub.toLowerCase().includes(lowerQuery));
-        });
-
-        if (lowerQuery && !chapterMatch && matchingTests.length === 0) return;
-        
-        const chapterId = `${type}-chapter-${chapterIdx}`;
-        const isChapterExpanded = lowerQuery ? true : state.expandedTests[chapterId];
-        const allDailyTestsCompleted = item.dailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
-        
-        let borderClass = "border-slate-200 dark:border-slate-800";
-        if(item.phase === activePhaseUI && !allDailyTestsCompleted) borderClass = "border-brand-400 dark:border-brand-600 ring-1 ring-brand-400/30";
-
-        const chapterCardClass = allDailyTestsCompleted 
-            ? "bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl overflow-hidden shadow-sm mb-4 opacity-70"
-            : `bg-white dark:bg-slate-900 border ${borderClass} rounded-xl overflow-hidden shadow-sm mb-4 transition-all`;
-
-        const card = document.createElement('div');
-        card.className = chapterCardClass;
-        
-        // Use 'topic' as Chapter Name
-        const safeTopic = escapeHtml(item.topic);
-        
-        let html = `
-            <div class="px-4 py-3 border-b ${allDailyTestsCompleted ? 'border-green-200 dark:border-green-800 bg-green-100 dark:bg-green-900/20' : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800'} flex justify-between items-center cursor-pointer select-none" onclick="toggleChapter('${chapterId}')">
-                <div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider ${allDailyTestsCompleted ? 'text-green-700 dark:text-green-300' : 'text-slate-400 dark:text-slate-500'}">${item.subject}</span>
-                    <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-slate-800 dark:text-white">${safeTopic}</h4> 
-                        ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}
-                    </div>
-                </div>
-                <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
-            </div>
-        `;
-        
-        // ... (Daily Test Loop - Same as before) ...
-         if (isChapterExpanded) {
-            html += `<div class="p-4 grid grid-cols-1 gap-3">`;
-            const testsToRender = lowerQuery ? matchingTests : item.dailyTests;
-            testsToRender.forEach((dt) => {
-                const originalIndex = item.dailyTests.indexOf(dt);
-                const testId = `${chapterId}-test-${originalIndex}`;
-                const isTestExpanded = lowerQuery ? true : state.expandedTests[testId];
-                const total = dt.subs.length;
-                const doneCount = dt.subs.filter(s => allCompleted.has(`Study: ${item.topic} - ${s}`)).length;
-                const isReady = total > 0 && doneCount === total;
-                const isAttempted = state.dailyTestsAttempted[dt.name];
-                
-                let cardStyle = "border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-800 hover:border-brand-100 dark:hover:border-brand-900 transition-colors relative";
-                if (isAttempted) cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md";
-
-                const showCheckbox = isReady || isAttempted;
-                
-                html += `
-                    <div class="${cardStyle} overflow-hidden">
-                        <div class="p-3 flex justify-between items-center cursor-pointer" onclick="toggleDailyTest('${testId}')">
-                             <div class="flex items-center gap-2">
-                                <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
-                                <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                                    ${showCheckbox ? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${dt.name}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
+? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${dt.name}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
                                     <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm">${dt.name}</span>
-                                </div>
-                            </div>
-                            <span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400'}">${doneCount}/${total}</span>
+
+window.renderSyllabus = function(type, searchQuery = '') {
+    try {
+        const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
+        if(!container) return;
+        
+        container.innerHTML = '';
+        
+        // Safety check: Ensure data exists
+        if (type === 'main' && (!state.nextExam || !state.nextExam.syllabus)) {
+            container.innerHTML = '<div class="p-8 text-center text-slate-500">No exam data found.</div>';
+            return;
+        }
+        
+        const rawData = type === 'main' ? state.nextExam.syllabus : (backlogPlan ? backlogPlan.syllabus : []);
+        if(!rawData || rawData.length === 0) {
+             container.innerHTML = '<div class="p-8 text-center text-slate-500">No syllabus data available.</div>';
+             return;
+        }
+
+        // --- 4. DEADLINE & PROGRESS LOGIC ---
+        if(type === 'backlog' && typeof backlogPlan !== 'undefined') {
+            const planStart = backlogPlan.startDate || new Date();
+            const now = new Date();
+            const diffTime = Math.abs(now - planStart);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            
+            let currentPhase = 1;
+            if(diffDays > 15) currentPhase = 2;
+            if(diffDays > 30) currentPhase = 3;
+            if(diffDays > 45) currentPhase = 4;
+
+            const phaseEndDate = new Date(planStart);
+            phaseEndDate.setDate(planStart.getDate() + (currentPhase * 15));
+            
+            const deadlineEl = document.getElementById('backlog-deadline-display');
+            if(deadlineEl) deadlineEl.innerText = phaseEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            
+            const phaseLabelEl = document.getElementById('backlog-phase-label');
+            if(phaseLabelEl) phaseLabelEl.innerText = `Phase ${currentPhase} Active`;
+        }
+
+        const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
+        const k = formatDateKey(state.selectedDate);
+        const todaysTasks = new Set((state.tasks[k] || []).map(t => t.text));
+        const lowerQuery = searchQuery.toLowerCase().trim();
+        const fragment = document.createDocumentFragment();
+        
+        let lastPhase = 0;
+        let lastUnit = "";
+
+        // Active Phase Calculation
+        let activePhaseUI = 1;
+        if(type === 'backlog' && typeof backlogPlan !== 'undefined') {
+            const planStart = backlogPlan.startDate;
+            const d = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+            if(d > 15) activePhaseUI = 2;
+            if(d > 30) activePhaseUI = 3;
+            if(d > 45) activePhaseUI = 4;
+        }
+
+        rawData.forEach((item, chapterIdx) => {
+            // --- 1. PHASE DIVIDER ---
+            if(item.phase && item.phase !== lastPhase && typeof backlogPlan !== 'undefined') {
+                lastPhase = item.phase;
+                lastUnit = ""; 
+                
+                const pStart = new Date(backlogPlan.startDate);
+                pStart.setDate(pStart.getDate() + ((item.phase-1)*15));
+                const pEnd = new Date(backlogPlan.startDate);
+                pEnd.setDate(pEnd.getDate() + (item.phase*15) - 1);
+                
+                const dateStr = `${pStart.toLocaleDateString('en-US', {month:'short', day:'numeric'})} - ${pEnd.toLocaleDateString('en-US', {month:'short', day:'numeric'})}`;
+                const isActive = item.phase === activePhaseUI;
+
+                const divider = document.createElement('div');
+                divider.className = `mt-8 mb-4 flex flex-col gap-1 ${isActive ? 'opacity-100' : 'opacity-60 grayscale'}`;
+                divider.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
+                        <div class="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest border ${isActive ? 'bg-brand-500 border-brand-500 text-white shadow-lg shadow-brand-500/20' : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500'}">
+                            Phase ${item.phase} <span class="opacity-75 font-medium ml-1">(${dateStr})</span>
                         </div>
-                        ${isTestExpanded ? `
-                            <div class="px-3 pb-3 pt-0 border-t ${isAttempted ? 'border-white/20' : 'border-slate-50 dark:border-slate-700'} mt-2">
-                                <div class="space-y-1 mt-2 ${isAttempted ? 'text-white' : 'text-slate-500 dark:text-slate-400'}">
-                                    ${dt.subs.map(sub => {
-                                        const taskName = `Study: ${item.topic} - ${sub}`;
-                                        const isAdded = todaysTasks.has(taskName);
-                                        const isDone = allCompleted.has(taskName);
-                                         return `
-                                            <div class="flex items-center justify-between group pl-6 py-0.5">
-                                                <span class="text-[11px] truncate w-3/4 ${isDone ? 'line-through opacity-50' : ''}" title="${sub}">• ${sub}</span>
-                                                ${!isDone ? 
-                                                    `<button onclick="addSyllabusTask('${item.topic} - ${sub}', '${type}', '${item.subject}', '${item.topic}')" class="${isAttempted ? 'text-white/80' : 'text-brand-400 hover:text-brand-600'} transition-colors p-1">
-                                                        <i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i>
-                                                    </button>` : 
-                                                    `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500'}"></i>`
-                                                }
-                                            </div>`;
-                                    }).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
+                        <div class="h-px bg-slate-300 dark:bg-slate-700 flex-1"></div>
                     </div>
                 `;
-            });
-            html += `</div>`;
-        }
-        card.innerHTML = html;
-        fragment.appendChild(card);
-    });
-    container.appendChild(fragment);
-    if(window.lucide) lucide.createIcons({ root: container });
-};
+                fragment.appendChild(divider);
+            }
 
+            // --- 2. UNIT HEADER ---
+            if(item.unit && item.unit !== lastUnit) {
+                lastUnit = item.unit;
+                const unitHeader = document.createElement('div');
+                unitHeader.className = "mt-4 mb-2 ml-1";
+                unitHeader.innerHTML = `
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2">
+                        <i data-lucide="layers" class="w-3 h-3"></i> ${item.unit}
+                    </span>
+                `;
+                fragment.appendChild(unitHeader);
+            }
+
+            // --- 3. CHAPTER CARD RENDER ---
+            const chapterMatch = item.topic.toLowerCase().includes(lowerQuery) || item.subject.toLowerCase().includes(lowerQuery);
+            
+            const matchingTests = item.dailyTests.filter(dt => {
+                if (chapterMatch) return true; 
+                return dt.name.toLowerCase().includes(lowerQuery) || 
+                    dt.subs.some(sub => sub.toLowerCase().includes(lowerQuery));
+            });
+
+            if (lowerQuery && !chapterMatch && matchingTests.length === 0) return;
+            
+            const chapterId = `${type}-chapter-${chapterIdx}`;
+            const isChapterExpanded = lowerQuery ? true : state.expandedTests[chapterId];
+            const allDailyTestsCompleted = item.dailyTests.every(dt => state.dailyTestsAttempted[dt.name]);
+            
+            let borderClass = "border-slate-200 dark:border-slate-800";
+            if(item.phase === activePhaseUI && !allDailyTestsCompleted) borderClass = "border-brand-400 dark:border-brand-600 ring-1 ring-brand-400/30";
+
+            const chapterCardClass = allDailyTestsCompleted 
+                ? "bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900 rounded-xl overflow-hidden shadow-sm mb-4 opacity-70"
+                : `bg-white dark:bg-slate-900 border ${borderClass} rounded-xl overflow-hidden shadow-sm mb-4 transition-all`;
+
+            const card = document.createElement('div');
+            card.className = chapterCardClass;
+            
+            const safeTopic = escapeHtml(item.topic);
+            
+            let html = `
+                <div class="px-4 py-3 border-b ${allDailyTestsCompleted ? 'border-green-200 dark:border-green-800 bg-green-100 dark:bg-green-900/20' : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800'} flex justify-between items-center cursor-pointer select-none" onclick="toggleChapter('${chapterId}')">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider ${allDailyTestsCompleted ? 'text-green-700 dark:text-green-300' : 'text-slate-400 dark:text-slate-500'}">${item.subject}</span>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-slate-800 dark:text-white">${safeTopic}</h4> 
+                            ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-300 ${isChapterExpanded ? 'rotate-180' : ''}"></i>
+                </div>
+            `;
+            
+            if (isChapterExpanded) {
+                html += `<div class="p-4 grid grid-cols-1 gap-3">`;
+                const testsToRender = lowerQuery ? matchingTests : item.dailyTests;
+                
+                testsToRender.forEach((dt) => {
+                    const originalIndex = item.dailyTests.indexOf(dt);
+                    const testId = `${chapterId}-test-${originalIndex}`;
+                    const isTestExpanded = lowerQuery ? true : state.expandedTests[testId];
+                    const total = dt.subs.length;
+                    const doneCount = dt.subs.filter(s => allCompleted.has(`Study: ${item.topic} - ${s}`)).length;
+                    const isReady = total > 0 && doneCount === total;
+                    const isAttempted = state.dailyTestsAttempted[dt.name];
+                    
+                    let cardStyle = "border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-800 hover:border-brand-100 dark:hover:border-brand-900 transition-colors relative";
+                    if (isAttempted) cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md";
+
+                    const showCheckbox = isReady || isAttempted;
+                    
+                    html += `
+                        <div class="${cardStyle} overflow-hidden">
+                            <div class="p-3 flex justify-between items-center cursor-pointer" onclick="toggleDailyTest('${testId}')">
+                                 <div class="flex items-center gap-2">
+                                    <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
+                                    <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+                                        ${showCheckbox ? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${dt.name}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
+                                        <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm">${dt.name}</span>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-medium ${isAttempted ? 'text-white/80' : 'text-slate-400'}">${doneCount}/${total}</span>
+                            </div>
+                            ${isTestExpanded ? `
+                                <div class="px-3 pb-3 pt-0 border-t ${isAttempted ? 'border-white/20' : 'border-slate-50 dark:border-slate-700'} mt-2">
+                                    <div class="space-y-1 mt-2 ${isAttempted ? 'text-white' : 'text-slate-500 dark:text-slate-400'}">
+                                        ${dt.subs.map(sub => {
+                                            const taskName = `Study: ${item.topic} - ${sub}`;
+                                            const isAdded = todaysTasks.has(taskName);
+                                            const isDone = allCompleted.has(taskName);
+                                             return `
+                                                <div class="flex items-center justify-between group pl-6 py-0.5">
+                                                    <span class="text-[11px] truncate w-3/4 ${isDone ? 'line-through opacity-50' : ''}" title="${sub}">• ${sub}</span>
+                                                    ${!isDone ? 
+                                                        `<button onclick="addSyllabusTask('${item.topic} - ${sub}', '${type}', '${item.subject}', '${item.topic}')" class="${isAttempted ? 'text-white/80' : 'text-brand-400 hover:text-brand-600'} transition-colors p-1">
+                                                            <i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i>
+                                                        </button>` : 
+                                                        `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500'}"></i>`
+                                                    }
+                                                </div>`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            card.innerHTML = html;
+            fragment.appendChild(card);
+        });
+        container.appendChild(fragment);
+        if(window.lucide) lucide.createIcons({ root: container });
+        
+    } catch (e) {
+        console.error("Critical error in renderSyllabus:", e);
+        const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
+        if(container) container.innerHTML = '<div class="p-8 text-center text-red-500">Something went wrong loading the syllabus.<br>Please refresh.</div>';
+    }
+};
       
     // --- MODAL CONTROLLER ---
 const modal = document.getElementById('customModal');
