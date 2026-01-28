@@ -3921,3 +3921,15 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSnowUI();
     }
 });
+
+// --- OPTIONAL: ADVANCED FLUID PHYSICS ---
+document.addEventListener('mousemove', (e) => {
+    // Parallax Effect
+    const layers = document.querySelectorAll('.blob');
+    layers.forEach((layer, index) => {
+        const speed = (index + 1) * 0.05;
+        const x = (window.innerWidth - e.pageX * speed) / 100;
+        const y = (window.innerHeight - e.pageY * speed) / 100;
+        layer.style.transform = `translateX(${x}px) translateY(${y}px)`;
+    });
+});
