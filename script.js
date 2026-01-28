@@ -1808,45 +1808,64 @@ function renderDailyHadith() {
             saveData();
         };
 
- window.switchView = function(view) {
+ 
+window.switchView = function(view) {
     state.activeView = view;
-    toggleMobileMenu(true); 
-    
-    // Handle specific view logic
-    if(view === 'leaderboard') {
-        fetchLeaderboard();
-        switchRankTab('overall'); 
-    }
-    if(view === 'namaz') {
-        renderNamazView();
-    }
-    // NEW: Handle Planner View
-    if(view === 'planner') {
-        renderPlanner();
-    }
-    // Reset Notebook if leaving mistakes view
-    if(view === 'mistakes') {
-        closeNotebook(); 
-    }
 
-    // Updated list to include 'planner'
-    ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'].forEach(v => {
-        const btn = document.getElementById(`nav-${v}`);
-        if(btn) {
-            if(v === view) btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 shadow-sm";
-            else btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all";
-        }
+    // 1. Run View Logic
+    if(view === 'leaderboard') { fetchLeaderboard(); switchRankTab('overall'); }
+    if(view === 'namaz') renderNamazView();
+    if(view === 'planner') renderPlanner();
+    if(view === 'mistakes') closeNotebook(); 
+
+    // 2. Define Colors for Active State
+    const styles = {
+        overview: 'bg-indigo-500 text-white shadow-indigo-500/50',
+        target: 'bg-blue-500 text-white shadow-blue-500/50',
+        backlog: 'bg-orange-500 text-white shadow-orange-500/50',
+        planner: 'bg-violet-500 text-white shadow-violet-500/50',
+        mistakes: 'bg-rose-500 text-white shadow-rose-500/50',
+        leaderboard: 'bg-yellow-500 text-white shadow-yellow-500/50',
+        namaz: 'bg-emerald-500 text-white shadow-emerald-500/50',
+    };
+
+    // 3. Update Dock UI
+    const views = ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'];
+    
+    views.forEach(v => {
+        // Toggle Pages
         const viewEl = document.getElementById(`view-${v}`);
-        if(viewEl) viewEl.classList.add('hidden');
+        if(viewEl) {
+            if(v === view) viewEl.classList.remove('hidden');
+            else viewEl.classList.add('hidden');
+        }
+
+        // Toggle Dock Icons
+        const btn = document.getElementById(`dock-${v}`);
+        if(btn) {
+            const iconBg = btn.querySelector('.dock-icon-bg');
+            const icon = iconBg.querySelector('i');
+            const dot = btn.querySelector('.dock-dot');
+
+            if(v === view) {
+                // ACTIVE: Pop up, colored background, white icon
+                btn.classList.add('-translate-y-3'); 
+                iconBg.className = `p-3 rounded-2xl transition-all duration-300 shadow-lg scale-110 ${styles[v]} dock-icon-bg`;
+                icon.className = `w-6 h-6 text-white transition-colors`;
+                if(dot) dot.classList.remove('opacity-0');
+            } else {
+                // INACTIVE: Reset position, gray icon
+                btn.classList.remove('-translate-y-3');
+                iconBg.className = `p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors shadow-sm dock-icon-bg`;
+                icon.className = `w-6 h-6 text-slate-500 dark:text-slate-400 transition-colors`;
+                if(dot) dot.classList.add('opacity-0');
+            }
+        }
     });
 
-    const activeEl = document.getElementById(`view-${view}`);
-    if(activeEl) activeEl.classList.remove('hidden');
-    
-    // Only render standard views if NOT leaderboard or planner (Planner handles its own render)
+    // 4. Refresh Components
     if(view !== 'leaderboard' && view !== 'planner') renderAll();
 };
-
 
 
         window.toggleMobileMenu = function(forceClose = false) {

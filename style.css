@@ -43,3 +43,11 @@
 .animate-out { animation-duration: 0.3s; animation-fill-mode: forwards; }
 .fade-out { animation-name: fadeIn; animation-direction: reverse; }
 .slide-out-to-bottom-4 { animation-name: slideDown; }
+/* Dock Scrollbar Hiding */
+.hide-scroll::-webkit-scrollbar { display: none; }
+.hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Add bottom padding to all views so the dock doesn't overlap content */
+#view-overview, #view-target, #view-backlog, #view-planner, #view-mistakes, #view-leaderboard, #view-namaz {
+    padding-bottom: 120px !important;
+}
