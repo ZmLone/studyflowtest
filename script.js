@@ -2285,7 +2285,6 @@ window.renderLeaderboardList = function() {
         renderHeader(); 
     };
 
-
 // --- NEW: UNIFIED SMART MIX (LOAD BALANCER) ---
 let currentUnifiedSuggestion = [];
 
@@ -2524,121 +2523,7 @@ window.acceptUnifiedPlan = function() {
     
     showToast(`🚀 Balanced Plan Activated! Added ${addedCount} topics to your list.`);
 };
-        // Display Name adjustment for UI
-        const displayName = trackName === 'main' ? 'Smart Gap Fill' : `${phaseName} Booster`;
 
-        return {
-            name: displayName,
-            days: daysLeft,
-            dailyCount: selectedBatch.length,
-            points: currentPoints,
-            manualPoints: manualPoints,
-            color: colorTheme,
-            trackId: trackName,
-            preview: previewMap
-        };
-    }
-   
-
-    // --- RENDER UI ---
-    let html = '';
-    
-    const renderCard = (stats) => {
-        const isV = stats.color === 'violet';
-        const bg = isV ? 'bg-violet-50 dark:bg-violet-900/10' : 'bg-orange-50 dark:bg-orange-900/10';
-        const border = isV ? 'border-violet-200 dark:border-violet-800' : 'border-orange-200 dark:border-orange-800';
-        const textMain = isV ? 'text-violet-700 dark:text-violet-300' : 'text-orange-700 dark:text-orange-300';
-        const btnBg = isV ? 'bg-violet-600 hover:bg-violet-700' : 'bg-orange-600 hover:bg-orange-700';
-        const mixText = Object.entries(stats.preview).map(([k,v]) => `${k}: ${v}`).join(', ');
-
-        // Smart Message: "You planned X, we suggest Y more"
-        const smartMessage = stats.manualPoints > 0 
-            ? `<span class="text-[10px] font-bold opacity-70 block mt-1">(You planned ${stats.manualPoints} pts manually. Adding ${stats.points} more.)</span>` 
-            : '';
-
-        return `
-        <div class="${bg} border ${border} rounded-2xl p-5 relative overflow-hidden group shadow-sm mb-4 animate-in slide-in-from-top-2 duration-500">
-            <div class="absolute -right-6 -top-6 ${textMain} opacity-10 transform rotate-12"><i data-lucide="brain-circuit" class="w-32 h-32"></i></div>
-            <div class="relative z-10 flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${isV ? 'bg-violet-100 dark:bg-violet-900' : 'bg-orange-100 dark:bg-orange-900'} ${textMain} tracking-wide flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3"></i> ${stats.name}</span>
-                        <span class="text-xs font-bold text-slate-400">${stats.days} Days Left</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800 dark:text-white">
-                        Recommended: <span class="${textMain}">${stats.points} Points</span>
-                        ${smartMessage}
-                    </h3>
-                    <div class="flex items-center gap-2 mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium bg-white/50 dark:bg-black/20 px-3 py-1.5 rounded-lg border border-${stats.color}-100 dark:border-${stats.color}-900/30 w-fit">
-                        <i data-lucide="layers" class="w-3 h-3"></i><span>${mixText}</span>
-                    </div>
-                </div>
-                <button onclick="acceptAiPlan('${stats.trackId}')" class="w-full md:w-auto px-6 py-3 ${btnBg} text-white rounded-xl text-sm font-bold shadow-lg shadow-${stats.color}-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Accept Mission
-                </button>
-            </div>
-        </div>`;
-    };
-
-    if (state.nextExam && state.nextExam.syllabus) {
-        const mainStats = generateSmartMix('main', state.nextExam.syllabus, state.nextExam.date, 'violet');
-        if (mainStats) html += renderCard(mainStats);
-    }
-    
-    if (typeof backlogPlan !== 'undefined' && backlogPlan.syllabus) {
-        const backlogStats = generateSmartMix('backlog', backlogPlan.syllabus, backlogPlan.date, 'orange');
-        if (backlogStats) html += renderCard(backlogStats);
-    }
-
-    container.innerHTML = html;
-    if (window.lucide) lucide.createIcons({ root: container });
-};
-
-
-
-window.acceptAiPlan = function(track) {
-    const suggestions = currentAiSuggestions[track];
-    if (!suggestions || suggestions.length === 0) return;
-
-    let addedCount = 0;
-    const key = formatDateKey(state.selectedDate);
-
-    suggestions.forEach(item => {
-        // Find the full test data from the syllabus to get all sub-topics
-        const sourceData = track === 'main' ? state.nextExam.syllabus : backlogPlan.syllabus;
-        const chapter = sourceData.find(c => c.topic === item.topic);
-        const testData = chapter?.dailyTests.find(dt => dt.name === item.name);
-
-        if (testData) {
-            testData.subs.forEach(sub => {
-                const taskText = `Study: ${item.topic} - ${sub}`;
-                // Only add if the task isn't already on today's list
-                const exists = (state.tasks[key] || []).some(t => t.text === taskText);
-                
-                if (!exists) {
-                    addTask(taskText, track, item.subject, item.topic);
-                    addedCount++;
-                }
-            });
-        }
-    });
-
-    // Save and Refresh
-    saveData();
-    renderAll();
-
-    // Feedback
-    if (window.confetti) {
-        confetti({ 
-            particleCount: 100, 
-            spread: 50, 
-            origin: { y: 0.8 },
-            colors: track === 'main' ? ['#8b5cf6'] : ['#f97316']
-        });
-    }
-
-    showToast(`📚 Added ${addedCount} sub-topics to your mission. Complete them to unlock the Daily Tests!`);
-};
 // --- PLANNER FUNCTIONS ---
 
 
