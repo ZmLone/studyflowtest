@@ -2942,150 +2942,168 @@ window.renderTasks = renderTasks;
             if(els.date) els.date.textContent = state.selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             if(els.agendaDate) els.agendaDate.textContent = dateStr;
         }
-function renderStats() {
-            const today = new Date(); today.setHours(0,0,0,0);
-            const exDate = new Date(state.nextExam.date); exDate.setHours(0,0,0,0);
-            
-            // FIXED: Exclude exam day from prep days for visual count
-            let rawDiff = Math.ceil((exDate - today)/(1000*60*60*24));
-            const diff = rawDiff > 0 ? rawDiff - 1 : rawDiff;
-                    const formattedDate = state.nextExam.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            
-            // Text Updates
-            const elements = {
-                name: document.getElementById('card-main-name'),
-                date: document.getElementById('card-main-date-info'),
-                days: document.getElementById('card-main-days'),
-                sylTitle: document.getElementById('syllabus-title'),
-                sylDate: document.getElementById('syllabus-date'),
-                sylDays: document.getElementById('syllabus-days-left'),
-                blDays: document.getElementById('backlog-days-left'),
-                blLarge: document.getElementById('backlog-days-large')
-            };
 
-            if(elements.name) elements.name.textContent = state.nextExam.name;
-            if(elements.date) elements.date.textContent = `Exam Date: ${formattedDate}`;
-            if(elements.days) elements.days.textContent = diff; // Allow negatives to show passed
-            if(elements.sylTitle) elements.sylTitle.textContent = state.nextExam.name + " Syllabus";
-            if(elements.sylDate) elements.sylDate.textContent = formattedDate;
-            if(elements.sylDays) elements.sylDays.textContent = `${diff} Days Left`;
-const blDate = new Date(backlogPlan.date); blDate.setHours(0,0,0,0);
-            
-            // FIX: Subtract 1 day to exclude the deadline day itself
-            let rawBlDiff = Math.ceil((blDate - today)/(1000*60*60*24));
-            const blDiff = rawBlDiff > 0 ? rawBlDiff - 1 : rawBlDiff;
+// ✅ PASTE THIS NEW UI CODE ✅
+window.renderStats = function() {
+    const container = document.getElementById('stats-container');
+    if (!container) return;
 
-            if(elements.blDays) elements.blDays.textContent = `${blDiff} Days Left`;
-            if(elements.blLarge) elements.blLarge.textContent = blDiff;
-           
-            // Global Progress Calculation
-            const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
-            
-            // Main Syllabus Progress
-            let mainTotal = 0, mainDone = 0;
-            state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => dt.subs.forEach(sub => {
-                mainTotal++;
-                if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) mainDone++;
-            })));
-            const mainPct = mainTotal ? Math.round((mainDone/mainTotal)*100) : 0;
-            const mainBar = document.getElementById('card-main-bar');
-            if(mainBar) mainBar.style.width = `${mainPct}%`;
-            const mainText = document.getElementById('card-main-text');
-            if(mainText) mainText.textContent = `${mainPct}%`;
+    // --- 1. CALCULATE PRIMARY EXAM DATA ---
+    const nextExam = state.nextExam;
+    let daysLeft = 0;
+    let primaryHtml = '';
 
-            // Backlog Progress
-            let blTotal = 0, blDone = 0;
-            backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => dt.subs.forEach(sub => {
-                blTotal++;
-                if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) blDone++;
-            })));
-            const blPct = blTotal ? Math.round((blDone/blTotal)*100) : 0;
-            const blBar = document.getElementById('card-backlog-bar');
-            if(blBar) blBar.style.width = `${blPct}%`;
-            const blText = document.getElementById('card-backlog-text');
-            if(blText) blText.textContent = `${blPct}%`;
+    if (nextExam) {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const examDate = new Date(nextExam.date);
+        daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+        
+        // Calculate Syllabus Completion for Next Exam
+        let totalTopics = 0;
+        let doneTopics = 0;
+        nextExam.syllabus.forEach(s => {
+            s.dailyTests.forEach(dt => {
+                totalTopics++;
+                if (state.dailyTestsAttempted[dt.name]) doneTopics++;
+            });
+        });
+        const primaryPercent = totalTopics === 0 ? 0 : Math.round((doneTopics / totalTopics) * 100);
 
-            // Sidebar / Daily Goal Logic
-            const subjectSelect = document.getElementById('new-task-subject');
-            const selectedSubject = subjectSelect ? subjectSelect.value : 'General';
-            const k = formatDateKey(state.selectedDate);
-            const todays = state.tasks[k] || [];
-            
-            let filteredTasks = todays;
-            if (selectedSubject !== 'General') filteredTasks = todays.filter(t => t.subject === selectedSubject);
-
-            const totalFiltered = filteredTasks.length;
-            const completedFiltered = filteredTasks.filter(t=>t.completed).length;
-            const dayPct = totalFiltered ? Math.round((completedFiltered / totalFiltered)*100) : 0;
-            
-            // CONFETTI & SOUND LOGIC
-            if (totalFiltered > 0 && dayPct === 100 && !state.goalCompletedToday) {
-                // Check if this completion just happened (avoid looping on re-render)
-                state.goalCompletedToday = true; 
-                try {
-                    // Realistic Confetti Fire
-                    var count = 200;
-                    var defaults = { origin: { y: 0.7 } };
-
-                    function fire(particleRatio, opts) {
-                        if (window.confetti) {
-                            confetti(Object.assign({}, defaults, opts, {
-                                particleCount: Math.floor(count * particleRatio)
-                            }));
-                        }
-                    }
-
-                    fire(0.25, { spread: 26, startVelocity: 55, });
-                    fire(0.2, { spread: 60, });
-                    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-                    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-                    fire(0.1, { spread: 120, startVelocity: 45, });
+        primaryHtml = `
+            <div class="relative overflow-hidden rounded-2xl p-5 md:p-6 bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-indigo-500/30 text-white flex flex-col justify-between h-full group transition-all hover:scale-[1.01]">
+                <div class="absolute -right-10 -top-10 text-white opacity-10 rotate-12 group-hover:rotate-6 transition-transform duration-700">
+                    <i data-lucide="target" class="w-40 h-40"></i>
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm border border-white/10">
+                            🚀 Primary Goal
+                        </span>
+                        <div class="text-right">
+                            <span class="block text-2xl md:text-3xl font-black leading-none">${daysLeft}</span>
+                            <span class="text-[10px] uppercase opacity-80 font-bold">Days Left</span>
+                        </div>
+                    </div>
                     
-                    // Sound
-                    successSound.currentTime = 0;
-                    successSound.play().catch(e => console.log("Audio play failed (interaction required first)"));
-                } catch(e) {
-                    console.log("Effects failed", e);
+                    <h2 class="text-xl md:text-2xl font-bold mb-1 truncate pr-8">${nextExam.name}</h2>
+                    <p class="text-indigo-100 text-xs md:text-sm font-medium opacity-90 truncate">Target: ${new Date(nextExam.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})}</p>
+                </div>
+
+                <div class="mt-6">
+                    <div class="flex justify-between text-xs font-bold mb-1.5 opacity-90">
+                        <span>Syllabus Progress</span>
+                        <span>${primaryPercent}%</span>
+                    </div>
+                    <div class="w-full bg-black/20 rounded-full h-3 backdrop-blur-sm overflow-hidden">
+                        <div class="bg-white h-3 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all duration-1000 ease-out" style="width: ${primaryPercent}%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- 2. CALCULATE BACKLOG DATA ---
+    let backlogHtml = '';
+    
+    if (typeof backlogPlan !== 'undefined') {
+        // A. Total Backlog Calc
+        let totalBacklog = 0;
+        let doneBacklog = 0;
+        
+        // B. Active Phase Calc
+        const planStart = new Date(backlogPlan.startDate);
+        const today = new Date();
+        const diffTime = Math.abs(today - planStart);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        
+        let currentPhase = 1;
+        if(diffDays > 15) currentPhase = 2;
+        if(diffDays > 30) currentPhase = 3;
+        if(diffDays > 45) currentPhase = 4;
+        if(diffDays > 60) currentPhase = 4; // Cap at 4
+
+        let phaseTotal = 0;
+        let phaseDone = 0;
+
+        backlogPlan.syllabus.forEach(s => {
+            // Check Phase
+            const isPhase = s.phase === currentPhase;
+            
+            s.dailyTests.forEach(dt => {
+                totalBacklog++;
+                if (state.dailyTestsAttempted[dt.name]) doneBacklog++;
+
+                if (isPhase) {
+                    phaseTotal++;
+                    if (state.dailyTestsAttempted[dt.name]) phaseDone++;
                 }
-            } else if (dayPct < 100) {
-                state.goalCompletedToday = false;
-            }
+            });
+        });
 
-            // Gradient Bar
-            let completedExamCount = filteredTasks.filter(t => t.completed && t.type === 'main').length;
-            let completedBacklogCount = filteredTasks.filter(t => t.completed && t.type === 'backlog').length;
-            let gradientStyle = `bg-brand-500`; 
-            
-            if (completedFiltered > 0) {
-                const totalScored = completedExamCount + completedBacklogCount;
-                if (totalScored > 0) {
-                    const examShare = (completedExamCount / totalScored) * 100;
-                    gradientStyle = `background: linear-gradient(90deg, #0ea5e9 0%, #0ea5e9 ${examShare}%, #f97316 ${examShare}%, #f97316 100%)`;
-                } else { gradientStyle = `background-color: #0ea5e9`; }
-            } else { gradientStyle = `background-color: #0ea5e9`; }
+        const totalPercent = totalBacklog === 0 ? 0 : Math.round((doneBacklog / totalBacklog) * 100);
+        const phasePercent = phaseTotal === 0 ? 0 : Math.round((phaseDone / phaseTotal) * 100);
 
-            const sideBar = document.getElementById('sidebar-progress-bar');
-            if(sideBar) {
-                sideBar.style = `width: ${dayPct}%; ${gradientStyle}`;
-                sideBar.classList.remove('bg-brand-500'); 
-            }
-            
-            const sideText = document.getElementById('sidebar-progress-text');
-            if(sideText) sideText.textContent = `${dayPct}%`;
-// --- START OF NEW CODE FOR MOBILE ---
-            const mobSideBar = document.getElementById('mobile-sidebar-progress-bar');
-            if(mobSideBar) {
-                mobSideBar.style = `width: ${dayPct}%; ${gradientStyle}`;
-                mobSideBar.classList.remove('bg-brand-500'); 
-            }
-            
-            const mobSideText = document.getElementById('mobile-sidebar-progress-text');
-            if(mobSideText) mobSideText.textContent = `${dayPct}%`;
-            // --- END OF NEW CODE FOR MOBILE ---
-            
-            const footerLabel = document.getElementById('footer-goal-label');
-            if(footerLabel) footerLabel.textContent = selectedSubject === 'General' ? 'Daily Goal' : `${selectedSubject} Goal`;
-        }
+        // --- Backlog HTML (Stacked Small Cards) ---
+        backlogHtml = `
+            <div class="flex flex-col gap-3 h-full">
+                <div class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl p-4 shadow-lg shadow-emerald-500/20 text-white relative overflow-hidden group hover:scale-[1.01] transition-transform">
+                     <div class="absolute -right-3 -bottom-3 text-white opacity-10 rotate-12">
+                        <i data-lucide="zap" class="w-20 h-20"></i>
+                    </div>
+                    <div class="flex justify-between items-start relative z-10">
+                        <div>
+                            <div class="text-[10px] uppercase font-bold opacity-80 mb-0.5 tracking-wide">Current Focus</div>
+                            <h3 class="text-lg font-bold">Phase ${currentPhase}</h3>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-2xl font-black">${phasePercent}%</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-black/20 rounded-full h-1.5 mt-3 backdrop-blur-sm">
+                        <div class="bg-white h-1.5 rounded-full" style="width: ${phasePercent}%"></div>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl p-4 shadow-lg shadow-orange-500/20 text-white relative overflow-hidden group hover:scale-[1.01] transition-transform">
+                     <div class="absolute -right-3 -bottom-3 text-white opacity-10 rotate-12">
+                        <i data-lucide="history" class="w-20 h-20"></i>
+                    </div>
+                    <div class="flex justify-between items-start relative z-10">
+                        <div>
+                            <div class="text-[10px] uppercase font-bold opacity-80 mb-0.5 tracking-wide">Overall Debt</div>
+                            <h3 class="text-lg font-bold">Total Backlog</h3>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-2xl font-black">${totalPercent}%</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-black/20 rounded-full h-1.5 mt-3 backdrop-blur-sm">
+                        <div class="bg-white h-1.5 rounded-full" style="width: ${totalPercent}%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- 3. FINAL LAYOUT COMPOSITION ---
+    // Grid Layout: Mobile = Stacked, Desktop = 2 Columns (Primary gets 60%, Backlog gets 40%)
+    container.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+            <div class="md:col-span-3 h-full">
+                ${primaryHtml}
+            </div>
+            <div class="md:col-span-2 h-full">
+                ${backlogHtml}
+            </div>
+        </div>
+    `;
+
+    // Initialize Icons
+    if (window.lucide) lucide.createIcons({ root: container });
+};
+
 
  function createTaskElementHTML(t, isSubTask = false) {
             // Updated Styles for "Pill" look
