@@ -2285,11 +2285,10 @@ window.renderLeaderboardList = function() {
         renderHeader(); 
     };
 
-// --- NEW: SMART WEIGHTED LOAD BALANCER ---
 
-let currentAiSuggestions = { main: [], backlog: [] };
+// --- NEW: UNIFIED SMART MIX (LOAD BALANCER) ---
+let currentUnifiedSuggestion = [];
 
-// --- INTELLIGENT GAP-FILLING SMART MIX ---
 window.checkStudyPace = function() {
     const container = document.getElementById('ai-strategy-container');
     if (!container) return;
@@ -2302,142 +2301,229 @@ window.checkStudyPace = function() {
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = state.tasks[k] || [];
 
-    // HELPER: Calculate Weight of any Subject/Topic
+    // 1. HELPER: Weight Calculator
     function getWeight(subject, topic) {
-        if (subject === 'Physics') return 4;
+        if (subject === 'Physics') return 4; // High Priority
         if (subject === 'Chemistry') {
             const t = (topic || '').toLowerCase();
+            // Organic & Physical get higher weight
             if (t.includes('organic') || t.includes('hydro') || t.includes('halo') || 
                 t.includes('alcohol') || t.includes('aldehyde') || t.includes('amine') || 
                 t.includes('thermo') || t.includes('equilibrium') || t.includes('electro')) {
                 return 3;
             }
-            return 2;
+            return 2; // Inorganic
         }
-        return 1; // Botany/Zoology
+        return 1; // Biology (Volume-based)
     }
 
-    // --- ENGINE: The "Gap Filler" Algorithm (Phase-Aware) ---
-    function generateSmartMix(trackName, syllabusData, deadlineDate, colorTheme) {
-        
-        // --- NEW: PHASE DETECTION LOGIC ---
-        let activePhase = 0; // Default (All)
-        let phaseDeadline = deadlineDate;
-        let phaseName = "";
+    // 2. HELPER: Calculate Work Debt for a Track
+    function calculateTrackMetrics(syllabus, deadlineDate, trackType) {
+        if (!syllabus || !deadlineDate) return { pending: [], rate: 0, days: 1 };
 
-        // Only calculate phases for Backlog track
-        if(trackName === 'backlog') {
+        // A. Adjust Deadline Logic
+        let effectiveDeadline = new Date(deadlineDate);
+        if (trackType === 'main') {
+            // Main Exam: Finish 1 day EARLY (Buffer)
+            effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
+        } else {
+            // Backlog: Finish ON deadline (Phase Logic)
             const planStart = backlogPlan.startDate || new Date();
-            const now = new Date();
-            const dayDiff = Math.ceil((now - planStart) / (1000 * 60 * 60 * 24));
+            const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+            let currentPhase = 1;
+            if(diff > 15) currentPhase = 2;
+            if(diff > 30) currentPhase = 3;
+            if(diff > 45) currentPhase = 4;
             
-            // Determine Phase based on Day 1-60 timeline
-            if(dayDiff <= 15) { 
-                activePhase = 1; 
-                phaseName = "Phase 1"; 
-                // Set deadline to end of this phase
-                phaseDeadline = new Date(planStart.getTime() + 15*24*60*60*1000); 
-            }
-            else if(dayDiff <= 30) { 
-                activePhase = 2; 
-                phaseName = "Phase 2"; 
-                phaseDeadline = new Date(planStart.getTime() + 30*24*60*60*1000); 
-            }
-            else if(dayDiff <= 45) { 
-                activePhase = 3; 
-                phaseName = "Phase 3"; 
-                phaseDeadline = new Date(planStart.getTime() + 45*24*60*60*1000); 
-            }
-            else { 
-                activePhase = 4; 
-                phaseName = "Phase 4"; 
-                phaseDeadline = new Date(planStart.getTime() + 60*24*60*60*1000); 
-            }
+            // Set deadline to end of current phase
+            effectiveDeadline = new Date(planStart);
+            effectiveDeadline.setDate(planStart.getDate() + (currentPhase * 15));
         }
-        // ----------------------------------
 
-        if (!phaseDeadline) return null;
+        // B. Days Remaining
+        let daysLeft = Math.ceil((effectiveDeadline - today) / (1000 * 60 * 60 * 24));
+        if (daysLeft < 1) daysLeft = 1; // Avoid division by zero
 
-        const dDate = new Date(phaseDeadline);
-        let rawDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
-        const daysLeft = Math.max(1, rawDays);
+        // C. Gather Pending Tasks (Phase Filtered for Backlog)
+        let totalPoints = 0;
+        let pendingTasks = [];
 
-        // 1. CALCULATE REMAINING WORK (Filtered by Phase)
-        let allPending = [];
-        let totalRemainingPoints = 0;
-
-        syllabusData.forEach(chapter => {
-            // NEW: Filter by Phase if applicable
-            if(activePhase > 0 && chapter.phase !== activePhase) return;
+        syllabus.forEach(chapter => {
+            // Backlog Phase Filter
+            if (trackType === 'backlog') {
+                const planStart = backlogPlan.startDate || new Date();
+                const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+                let phase = 1;
+                if(diff > 15) phase = 2;
+                if(diff > 30) phase = 3;
+                if(diff > 45) phase = 4;
+                
+                if (chapter.phase && chapter.phase !== phase) return;
+            }
 
             chapter.dailyTests.forEach(dt => {
                 if (!state.dailyTestsAttempted[dt.name]) {
-                    const pts = getWeight(chapter.subject, chapter.topic);
-                    
-                    const isAlreadyPlanned = dt.subs.some(sub => 
+                    // Check if already planned manually today
+                    const isPlanned = dt.subs.some(sub => 
                         todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`)
                     );
 
-                    if (!isAlreadyPlanned) {
-                        allPending.push({
+                    if (!isPlanned) {
+                        const w = getWeight(chapter.subject, chapter.topic);
+                        pendingTasks.push({
                             name: dt.name,
                             subject: chapter.subject,
                             topic: chapter.topic,
-                            points: pts
+                            points: w,
+                            track: trackType,
+                            subs: dt.subs
                         });
-                        totalRemainingPoints += pts;
+                        totalPoints += w;
                     }
                 }
             });
         });
 
-        if (allPending.length === 0) return null; 
+        // D. Required Daily Rate
+        const dailyRate = totalPoints / daysLeft;
+        
+        return { pending: pendingTasks, rate: dailyRate, days: daysLeft };
+    }
 
-        // 2. CALCULATE "ALREADY PLANNED" (Filtered by Phase)
-        let manualPoints = 0;
-        todaysTasks.forEach(t => {
-            if (t.type === trackName) {
-                let subject = t.subject;
-                // ... inside generateSmartMix loop ...
-let topic = t.chapter || '';
-if (!topic && t.text.includes(' - ')) topic = t.text.split(' - ')[0].replace('Study: ', '');
+    // --- MAIN LOGIC ---
+    
+    // 3. Analyze Both Tracks
+    const mainMetrics = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
+    const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
+        calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : 
+        { pending: [], rate: 0 };
 
-// This is the CRITICAL line that auto-calculates points
-// It checks if the Manual Task matches any chapter in the ACTIVE Phase
-const isCurrentPhase = syllabusData.some(c => c.topic === topic && (activePhase === 0 || c.phase === activePhase));
+    // 4. Calculate Combined Burden
+    const totalDailyRate = Math.ceil(mainMetrics.rate + backlogMetrics.rate);
+    
+    // 5. Calculate "Already Done" Points (Manual Additions)
+    let manualPoints = 0;
+    todaysTasks.forEach(t => {
+        // Approximate points for manual tasks based on subject
+        manualPoints += getWeight(t.subject, t.chapter);
+    });
 
-if(isCurrentPhase) manualPoints += getWeight(subject, topic);
-// ...
+    // 6. The "Gap" (How much more is needed?)
+    const deficit = totalDailyRate - manualPoints;
+
+    // If user has already planned enough, don't show the card
+    if (deficit <= 0 || (mainMetrics.pending.length === 0 && backlogMetrics.pending.length === 0)) return;
+
+    // 7. GENERATE BALANCED SUGGESTIONS
+    // We split the deficit proportionally based on the needs of each track
+    const mainShare = mainMetrics.rate / (mainMetrics.rate + backlogMetrics.rate || 1);
+    
+    let pointsForMain = Math.round(deficit * mainShare);
+    let pointsForBacklog = deficit - pointsForMain;
+
+    // Fetch highest value tasks first
+    mainMetrics.pending.sort((a,b) => b.points - a.points);
+    backlogMetrics.pending.sort((a,b) => b.points - a.points);
+
+    let suggestions = [];
+    let currentFill = 0;
+
+    // Fill Main Quota
+    for (let task of mainMetrics.pending) {
+        if (currentFill >= pointsForMain) break;
+        suggestions.push(task);
+        currentFill += task.points;
+    }
+    
+    // Fill Backlog Quota
+    currentFill = 0;
+    for (let task of backlogMetrics.pending) {
+        if (currentFill >= pointsForBacklog) break;
+        suggestions.push(task);
+        currentFill += task.points;
+    }
+
+    currentUnifiedSuggestion = suggestions;
+
+    // 8. RENDER THE UNIFIED CARD
+    if (suggestions.length > 0) {
+        const totalPoints = suggestions.reduce((sum, t) => sum + t.points, 0);
+        const mainCount = suggestions.filter(t => t.track === 'main').length;
+        const backlogCount = suggestions.filter(t => t.track === 'backlog').length;
+
+        const html = `
+        <div class="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-slate-900 dark:to-slate-900 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl p-5 relative overflow-hidden shadow-sm mb-6 animate-in slide-in-from-top-2">
+            <div class="absolute -right-6 -top-6 text-indigo-500 opacity-5 transform rotate-12">
+                <i data-lucide="scale" class="w-40 h-40"></i>
+            </div>
+
+            <div class="relative z-10 flex flex-col md:flex-row gap-6 items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 tracking-wide flex items-center gap-1">
+                            <i data-lucide="brain-circuit" class="w-3 h-3"></i> Balanced Mix
+                        </span>
+                        <span class="text-xs font-medium text-slate-500">Based on your velocity</span>
+                    </div>
+                    
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                        Today's Optimal Load: <span class="text-indigo-600 dark:text-indigo-400">${totalPoints} Points</span>
+                    </h3>
+                    
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Calculated to finish <strong class="text-slate-700 dark:text-slate-300">Main 1 day early</strong> & <strong class="text-slate-700 dark:text-slate-300">Backlog on time</strong>.
+                    </p>
+
+                    <div class="flex items-center gap-3 mt-3">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-2 py-1 rounded-lg border border-brand-100 dark:border-brand-900/50">
+                            <i data-lucide="zap" class="w-3 h-3"></i> ${mainCount} Exam Topics
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg border border-orange-100 dark:border-orange-900/50">
+                            <i data-lucide="history" class="w-3 h-3"></i> ${backlogCount} Backlog Topics
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Accept Daily Mix
+                </button>
+            </div>
+        </div>`;
+
+        container.innerHTML = html;
+        if (window.lucide) lucide.createIcons({ root: container });
+    }
+};
+
+window.acceptUnifiedPlan = function() {
+    if (!currentUnifiedSuggestion || currentUnifiedSuggestion.length === 0) return;
+
+    let addedCount = 0;
+    const key = formatDateKey(state.selectedDate);
+
+    currentUnifiedSuggestion.forEach(item => {
+        item.subs.forEach(sub => {
+            const taskText = `Study: ${item.topic} - ${sub}`;
+            // Check dupes
+            const exists = (state.tasks[key] || []).some(t => t.text === taskText);
+            
+            if (!exists) {
+                addTask(taskText, item.track, item.subject, item.topic);
+                addedCount++;
             }
         });
+    });
 
-        // 3. CALCULATE THE GAP
-        const bufferMultiplier = daysLeft < 5 ? 1.25 : 1.15;
-        const rawDailyTarget = Math.ceil((totalRemainingPoints / daysLeft) * bufferMultiplier);
-        let neededPoints = rawDailyTarget - manualPoints;
+    saveData();
+    renderAll();
 
-        if (neededPoints <= 0) return null; 
-
-        // 4. FILL THE GAP
-        allPending.sort((a, b) => b.points - a.points); 
-        let selectedBatch = [];
-        let currentPoints = 0;
-
-        for (const task of allPending) {
-            if (currentPoints >= neededPoints) break;
-            selectedBatch.push(task);
-            currentPoints += task.points;
-        }
-
-        currentAiSuggestions[trackName] = selectedBatch;
-
-        const previewMap = selectedBatch.reduce((acc, item) => {
-            let n = item.subject.substring(0,3); 
-            if(item.subject === 'Chemistry') n = item.points >= 3 ? 'Org/Phys' : 'Inorg';
-            acc[n] = (acc[n] || 0) + 1;
-            return acc;
-        }, {});
-
+    // Celebration
+    if (window.confetti) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#6366f1', '#f97316'] });
+    }
+    
+    showToast(`🚀 Balanced Plan Activated! Added ${addedCount} topics to your list.`);
+};
         // Display Name adjustment for UI
         const displayName = trackName === 'main' ? 'Smart Gap Fill' : `${phaseName} Booster`;
 
