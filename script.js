@@ -3078,11 +3078,16 @@ window.renderTasks = renderTasks;
             if(els.agendaDate) els.agendaDate.textContent = dateStr;
         }
 
-window.renderStats = function() {
-    const container = document.getElementById('stats-container');
-    if (!container) return;
+// ==========================================
+// 📊 STATS CALIBRATION ENGINE (100% Accuracy Fix)
+// ==========================================
 
-    // 1. GATHER HISTORY
+// 1. UNIFIED CALCULATION HELPER
+// This ensures Main, Backlog, and Phase cards use the EXACT same logic.
+function calculateSyllabusProgress(syllabus, filterFn = null) {
+    if (!syllabus) return { total: 0, done: 0, percent: 0 };
+
+    // A. Gather All Completed Tasks (History)
     const allCompleted = new Set();
     if (state.tasks) {
         Object.values(state.tasks).flat().forEach(t => {
@@ -3090,70 +3095,83 @@ window.renderStats = function() {
         });
     }
 
-    // --- CALCULATE DATA ---
-    const nextExam = state.nextExam;
-    let daysLeft = 0;
-    let primaryPercent = 0;
+    let totalPoints = 0;
+    let donePoints = 0;
 
-    if (nextExam) {
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const examDate = new Date(nextExam.date);
-        daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
-        
-        let totalSubTopics = 0;
-        let doneSubTopics = 0;
-        
-        nextExam.syllabus.forEach(chapter => {
-            chapter.dailyTests.forEach(dt => {
-                const isTestDone = state.dailyTestsAttempted[dt.name];
-                dt.subs.forEach(sub => {
-                    totalSubTopics++;
-                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) doneSubTopics++;
-                });
+    syllabus.forEach(chapter => {
+        // Apply Filter (e.g., for Phase specific stats)
+        if (filterFn && !filterFn(chapter)) return;
+
+        chapter.dailyTests.forEach(dt => {
+            // Check if the WHOLE test is marked as attempted
+            const isTestDone = state.dailyTestsAttempted[dt.name];
+
+            dt.subs.forEach(sub => {
+                totalPoints++;
+                
+                // It counts as done if:
+                // 1. The specific task "Study: Topic - Sub" is checked in the list
+                // 2. OR The parent Daily Test checkbox is checked
+                const taskName = `Study: ${chapter.topic} - ${sub}`;
+                if (isTestDone || allCompleted.has(taskName)) {
+                    donePoints++;
+                }
             });
         });
-        primaryPercent = totalSubTopics === 0 ? 0 : Math.round((doneSubTopics / totalSubTopics) * 100);
+    });
+
+    const percent = totalPoints === 0 ? 0 : Math.round((donePoints / totalPoints) * 100);
+    return { total: totalPoints, done: donePoints, percent: percent };
+}
+
+// 2. RENDER STATS UI
+window.renderStats = function() {
+    const container = document.getElementById('stats-container');
+    if (!container) return;
+
+    // --- A. CALCULATE MAIN EXAM STATS ---
+    const mainStats = calculateSyllabusProgress(
+        state.nextExam ? state.nextExam.syllabus : null
+    );
+    
+    // Days Left Calculation
+    let daysLeft = 0;
+    if (state.nextExam) {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const examDate = new Date(state.nextExam.date);
+        daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
     }
 
+    // --- B. CALCULATE BACKLOG STATS ---
+    let backlogTotalStats = { total: 0, done: 0, percent: 0 };
+    let backlogPhaseStats = { total: 0, done: 0, percent: 0 };
     let currentPhase = 1;
-    let totalPercent = 0;
-    let phasePercent = 0;
 
     if (typeof backlogPlan !== 'undefined') {
         const planStart = new Date(backlogPlan.startDate);
         const today = new Date();
-        const diffDays = Math.ceil(Math.abs(today - planStart) / (1000 * 60 * 60 * 24)); 
+        today.setHours(0,0,0,0);
+        
+        // Calculate Phase based on days passed since start
+        const diffTime = today - planStart;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
         if(diffDays > 15) currentPhase = 2;
         if(diffDays > 30) currentPhase = 3;
         if(diffDays > 45) currentPhase = 4;
-        if(diffDays > 60) currentPhase = 4; 
+        
+        // 1. Total Backlog Progress
+        backlogTotalStats = calculateSyllabusProgress(backlogPlan.syllabus);
 
-        let totalBacklogSubs = 0;
-        let doneBacklogSubs = 0;
-        let phaseTotalSubs = 0;
-        let phaseDoneSubs = 0;
-
-        backlogPlan.syllabus.forEach(chapter => {
-            const isPhase = chapter.phase === currentPhase;
-            chapter.dailyTests.forEach(dt => {
-                const isTestDone = state.dailyTestsAttempted[dt.name];
-                dt.subs.forEach(sub => {
-                    totalBacklogSubs++;
-                    if (isPhase) phaseTotalSubs++;
-                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) {
-                        doneBacklogSubs++;
-                        if (isPhase) phaseDoneSubs++;
-                    }
-                });
-            });
-        });
-
-        totalPercent = totalBacklogSubs === 0 ? 0 : Math.round((doneBacklogSubs / totalBacklogSubs) * 100);
-        phasePercent = phaseTotalSubs === 0 ? 0 : Math.round((phaseDoneSubs / phaseTotalSubs) * 100);
+        // 2. Current Phase Progress (Sprint)
+        backlogPhaseStats = calculateSyllabusProgress(
+            backlogPlan.syllabus, 
+            (chapter) => chapter.phase === currentPhase // Filter Function
+        );
     }
 
-    // --- RENDER BRIGHT & COMPACT UI ---
+    // --- C. RENDER UI ---
     container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             
@@ -3168,7 +3186,7 @@ window.renderStats = function() {
                                 <i data-lucide="crosshair" class="w-3 h-3 text-cyan-300"></i> Main Target
                             </div>
                             <h2 class="text-2xl md:text-3xl font-black text-white drop-shadow-sm truncate pr-2">
-                                ${nextExam ? nextExam.name : 'No Exam'}
+                                ${state.nextExam ? state.nextExam.name : 'No Exam'}
                             </h2>
                         </div>
                         <div class="text-right">
@@ -3179,14 +3197,15 @@ window.renderStats = function() {
 
                     <div class="mt-6">
                         <div class="flex justify-between items-end mb-2 px-1">
-                            <span class="text-xs font-bold text-indigo-100 uppercase">Mission Progress</span>
-                            <span class="text-2xl font-black">${primaryPercent}%</span>
+                            <span class="text-xs font-bold text-indigo-100 uppercase">Syllabus Completion</span>
+                            <span class="text-2xl font-black">${mainStats.percent}%</span>
                         </div>
                         <div class="h-5 w-full bg-black/20 rounded-full p-1 backdrop-blur-sm shadow-inner border border-white/10">
-                            <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 relative overflow-hidden shadow-lg shadow-cyan-400/30 transition-all duration-1000 ease-out" style="width: ${primaryPercent}%">
+                            <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 relative overflow-hidden shadow-lg shadow-cyan-400/30 transition-all duration-1000 ease-out" style="width: ${mainStats.percent}%">
                                 <div class="absolute inset-0 bg-white/30 w-full -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
                             </div>
                         </div>
+                        <p class="text-[10px] text-center mt-1 opacity-70 font-mono">${mainStats.done} / ${mainStats.total} Sub-topics</p>
                     </div>
                 </div>
             </div>
@@ -3207,11 +3226,11 @@ window.renderStats = function() {
                         
                         <div class="mt-3">
                             <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
-                                <span>Sprint</span>
-                                <span>${phasePercent}%</span>
+                                <span>Sprint Progress</span>
+                                <span>${backlogPhaseStats.percent}%</span>
                             </div>
                             <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
-                                <div class="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] rounded-full transition-all duration-1000" style="width: ${phasePercent}%"></div>
+                                <div class="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] rounded-full transition-all duration-1000" style="width: ${backlogPhaseStats.percent}%"></div>
                             </div>
                         </div>
                     </div>
@@ -3232,10 +3251,10 @@ window.renderStats = function() {
                         <div class="mt-3">
                             <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
                                 <span>Recovered</span>
-                                <span>${totalPercent}%</span>
+                                <span>${backlogTotalStats.percent}%</span>
                             </div>
                             <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-yellow-300 to-white shadow-[0_0_10px_rgba(255,200,0,0.6)] rounded-full transition-all duration-1000" style="width: ${totalPercent}%"></div>
+                                <div class="h-full bg-gradient-to-r from-yellow-300 to-white shadow-[0_0_10px_rgba(255,200,0,0.6)] rounded-full transition-all duration-1000" style="width: ${backlogTotalStats.percent}%"></div>
                             </div>
                         </div>
                     </div>
@@ -3247,6 +3266,8 @@ window.renderStats = function() {
 
     if (window.lucide) lucide.createIcons({ root: container });
 };
+
+
  function createTaskElementHTML(t, isSubTask = false) {
             // Updated Styles for "Pill" look
             let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
