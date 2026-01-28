@@ -2287,23 +2287,23 @@ window.renderLeaderboardList = function() {
 
 
 // ==========================================
-// 🧠 SMART MIX AI ENGINE (Mountain Subtraction Logic)
+// 🧠 SMART MIX AI ENGINE (Corrected & Transparent)
 // ==========================================
 
 // 1. GLOBAL VARIABLES
 window.currentMainSuggestions = [];
 window.currentBacklogSuggestions = [];
 
-// 2. STRICT POINT ALLOCATION (4-3-2 Rule)
+// 2. ROBUST POINT SYSTEM (4-3-2 Rule)
 function getTestBasePoints(subject, topic) {
     const s = (subject || '').trim().toLowerCase();
     const t = (topic || '').trim().toLowerCase();
 
     // --- TIER 1: 4 POINTS ---
-    // Physics (All)
-    if (s === 'physics') return 4;
+    // Physics (Any variation like 'Physics 11', 'Phy', etc.)
+    if (s.includes('physics')) return 4;
     
-    // Specific High-Value Topics
+    // High-Value Topics (Chem/Bio)
     if (t.includes('organic') || 
         t.includes('equilibrium') || 
         t.includes('electrochemistry') || 
@@ -2313,6 +2313,7 @@ function getTestBasePoints(subject, topic) {
     }
 
     // --- TIER 2: 3 POINTS ---
+    // Specific Medium Topics
     if (t.includes('physical') || 
         t.includes('inorganic') || 
         t.includes('coordination') || 
@@ -2322,11 +2323,12 @@ function getTestBasePoints(subject, topic) {
         t.includes('human health')) {
         return 3;
     }
-    // Default Chemistry
-    if (s === 'chemistry') return 3;
+    
+    // CATCH-ALL CHEMISTRY (If not Organic/High, assume it's Physical/Inorganic = 3)
+    if (s.includes('chemistry')) return 3;
 
     // --- TIER 3: 2 POINTS ---
-    // Rest of Biology
+    // Everything else (Rest of Biology)
     return 2;
 }
 
@@ -2343,13 +2345,13 @@ window.checkStudyPace = function() {
     const dateKey = formatDateKey(state.selectedDate);
     const todaysTasks = state.tasks[dateKey] || []; 
     
-    // Create a Set of ALL completed tasks for fast lookup
+    // Create Set of Completed Tasks (Normalized)
     const allCompletedSet = new Set();
     Object.values(state.tasks).flat().forEach(t => { 
-        if (t.completed) allCompletedSet.add(t.text); 
+        if (t.completed) allCompletedSet.add(t.text.trim()); 
     });
 
-    // --- ROBUST METRIC CALCULATOR ---
+    // --- METRIC CALCULATOR ---
     function calculateTrackMetrics(syllabus, baseDate, trackType) {
         if (!syllabus || !baseDate) return null;
         
@@ -2357,12 +2359,10 @@ window.checkStudyPace = function() {
         targetDate.setHours(0,0,0,0);
         let activePhase = 1;
 
-        // --- A. DEADLINE & PHASE SETUP ---
+        // A. DEADLINES
         if (trackType === 'backlog') {
             const planStart = backlogPlan.startDate || new Date();
             planStart.setHours(0,0,0,0);
-            
-            // Determine Phase
             const msPerDay = 1000 * 60 * 60 * 24;
             const diffDays = Math.floor((today - planStart) / msPerDay);
             
@@ -2370,29 +2370,23 @@ window.checkStudyPace = function() {
             if(diffDays >= 30) activePhase = 3;
             if(diffDays >= 45) activePhase = 4;
             
-            // Deadline = End of current 15-day block
             targetDate = new Date(planStart);
             targetDate.setDate(planStart.getDate() + (activePhase * 15)); 
         } 
         
-        // --- B. TIME REMAINING (The "-1 Day" Rule) ---
-        // (Target - Today). If 10 days left, we divide by 9.
+        // B. DAYS CALCULATION (Minus 1 Day Buffer)
         const msDiff = targetDate - today;
-        let rawDaysLeft = Math.ceil(msDiff / (1000 * 60 * 60 * 24));
-        let studyDays = rawDaysLeft - 1; 
-        
-        if (studyDays < 1) studyDays = 1; // Extreme Panic Mode (Last Day)
+        const rawDaysLeft = Math.ceil(msDiff / (1000 * 60 * 60 * 24));
+        let studyDays = rawDaysLeft - 1; // Strict Buffer
+        if (studyDays < 1) studyDays = 1;
 
-        // --- C. POINTS CALCULATION (Total - Done = Pending) ---
-        let grandTotalPoints = 0;
-        let completedPoints = 0;
-        let pendingQueue = []; // For suggestions
+        // C. POINTS AGGREGATION
+        let totalSyllabusPoints = 0;
+        let donePoints = 0;
+        let pendingQueue = [];
 
         syllabus.forEach(chapter => {
-            // Strict Phase Filtering for Backlog
-            if (trackType === 'backlog') {
-                if (chapter.phase && chapter.phase !== activePhase) return;
-            }
+            if (trackType === 'backlog' && chapter.phase && chapter.phase !== activePhase) return;
 
             const basePoints = getTestBasePoints(chapter.subject, chapter.topic);
 
@@ -2400,27 +2394,26 @@ window.checkStudyPace = function() {
                 const subCount = dt.subs.length;
                 if (subCount === 0) return;
                 
-                // Point value per sub-topic
                 const valPerSub = basePoints / subCount; 
-
-                // Add to Grand Total
-                grandTotalPoints += basePoints;
+                totalSyllabusPoints += basePoints;
 
                 // Check Completion
                 const remainingSubs = [];
                 dt.subs.forEach(sub => {
                     const taskName = `Study: ${chapter.topic} - ${sub}`;
                     
-                    if (allCompletedSet.has(taskName)) {
-                        completedPoints += valPerSub;
+                    // Check Completion (History OR Today's List)
+                    const isDone = allCompletedSet.has(taskName);
+                    const isOnList = todaysTasks.some(t => t.text.trim() === taskName);
+                    
+                    if (isDone) {
+                        donePoints += valPerSub;
+                    } else if (isOnList) {
+                        // It's on today's list, so it counts as "covered" for the deficit check, 
+                        // but strictly we calculate Rate based on (Total - Done_History).
+                        // However, to avoid double suggesting, we exclude it from pendingQueue.
                     } else {
-                        // It's not done in history. 
-                        // Is it on Today's list?
-                        const isOnToday = todaysTasks.some(t => t.text === taskName);
-                        if (!isOnToday) {
-                            // If NOT done AND NOT on today's list, it is TRULY pending
-                            remainingSubs.push(sub);
-                        }
+                        remainingSubs.push(sub);
                     }
                 });
 
@@ -2437,7 +2430,11 @@ window.checkStudyPace = function() {
             });
         });
 
-        // --- D. CURRENT SCORE (Today's List Value) ---
+        // D. MATH: (Total Remaining Points) / Days
+        const totalPendingPoints = pendingQueue.reduce((sum, item) => sum + item.points, 0);
+        const dailyRateRequired = totalPendingPoints / studyDays;
+
+        // E. CURRENT SCORE (Today's Plan)
         let currentScore = 0;
         todaysTasks.forEach(t => {
             if(t.text.startsWith("Study: ")) {
@@ -2445,36 +2442,31 @@ window.checkStudyPace = function() {
                 if (parts.length > 1) {
                     const topic = parts[0];
                     const sub = parts[1];
-                    // Recalculate value to be safe
                     const val = getSpecificSubTopicValue(syllabus, t.subject, topic, sub);
                     if (val > 0) currentScore += val;
                 }
             }
         });
 
-        // --- E. THE MATH ---
-        // Truly Pending = (Grand Total - Completed - CurrentlyOnList)
-        // actually, we calculated 'pendingQueue' strictly above. Use that sum.
-        const trulyPendingPoints = pendingQueue.reduce((sum, item) => sum + item.points, 0);
-
-        const dailyRateRequired = trulyPendingPoints / studyDays;
-
         return { 
             pending: pendingQueue, 
             dailyRateRequired: dailyRateRequired,
             currentScore: currentScore,
             studyDays: studyDays, 
+            totalPendingPoints: totalPendingPoints,
             targetDateDisplay: targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         };
     }
 
-    // Helper to get value for currentScore calculation
+    // Helper for Value Lookup
     function getSpecificSubTopicValue(syllabusList, subject, topic, subTopicName) {
         if (!syllabusList) return 0;
         const cleanSub = (subject || '').toLowerCase();
         for (const chapter of syllabusList) {
              const cSub = chapter.subject.toLowerCase();
-             const subjMatch = cSub === cleanSub || (cleanSub==='botany' && cSub==='biology') || (cleanSub==='zoology' && cSub==='biology');
+             // Loose subject matching here too
+             const subjMatch = cSub.includes(cleanSub) || (cleanSub==='botany' && cSub.includes('biology')) || (cleanSub==='zoology' && cSub.includes('biology'));
+             
              if (subjMatch && (chapter.topic === topic || topic.includes(chapter.topic) || chapter.topic.includes(topic))) {
                 for (const dt of chapter.dailyTests) {
                     if (dt.subs.includes(subTopicName)) {
@@ -2486,12 +2478,12 @@ window.checkStudyPace = function() {
         return 0;
     }
 
-    // --- RUN CALCULATIONS ---
+    // --- RUN ---
     const mainMetrics = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
     const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
         calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : null;
 
-    // --- UI RENDERER ---
+    // --- RENDER ---
     function generateCard(title, metrics, trackName, colorClass) {
         if(!metrics) return '';
 
@@ -2508,7 +2500,8 @@ window.checkStudyPace = function() {
                 <div class="bg-red-500/10 border border-red-500/50 rounded-lg p-3 mb-3 flex items-center gap-3 animate-pulse">
                     <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i>
                     <div>
-                        <p class="text-red-500 font-bold text-sm uppercase">Short by ${Math.abs(diff).toFixed(2)} pts</p>
+                        <p class="text-red-500 font-bold text-sm uppercase">Behind Schedule</p>
+                        <p class="text-red-400 text-xs">Short by: <span class="font-black text-lg">${Math.abs(diff).toFixed(2)}</span> pts</p>
                     </div>
                 </div>`;
         } else if (isAhead) {
@@ -2516,7 +2509,8 @@ window.checkStudyPace = function() {
                 <div class="bg-green-500/10 border border-green-500/50 rounded-lg p-3 mb-3 flex items-center gap-3">
                     <i data-lucide="check-circle" class="w-6 h-6 text-green-500"></i>
                     <div>
-                        <p class="text-green-500 font-bold text-sm uppercase">Ahead by +${diff.toFixed(2)} pts</p>
+                        <p class="text-green-500 font-bold text-sm uppercase">Ahead of Schedule</p>
+                        <p class="text-green-400 text-xs">Buffer: +${diff.toFixed(2)} pts</p>
                     </div>
                 </div>`;
         } else {
@@ -2524,12 +2518,12 @@ window.checkStudyPace = function() {
                 <div class="bg-blue-500/10 border border-blue-500/50 rounded-lg p-3 mb-3 flex items-center gap-3">
                     <i data-lucide="activity" class="w-6 h-6 text-blue-500"></i>
                     <div>
-                        <p class="text-blue-500 font-bold text-sm uppercase">Target Met</p>
+                        <p class="text-blue-500 font-bold text-sm uppercase">On Track</p>
                     </div>
                 </div>`;
         }
 
-        // --- SUGGESTION MIXER ---
+        // Suggestions
         let suggestionHtml = '';
         let suggestions = [];
         
@@ -2537,16 +2531,14 @@ window.checkStudyPace = function() {
             const deficit = Math.abs(diff);
             let filled = 0;
             
-            // Sort buckets high to low
             const getBucket = (subj) => metrics.pending
-                .filter(t => t.subject === subj || (subj === 'Biology' && (t.subject==='Botany'||t.subject==='Zoology')))
+                .filter(t => t.subject.includes(subj) || (subj === 'Biology' && (t.subject.includes('Botany')||t.subject.includes('Zoology'))))
                 .sort((a,b) => b.valPerSub - a.valPerSub);
 
             const phyQueue = getBucket('Physics');
             const chemQueue = getBucket('Chemistry');
             const bioQueue = getBucket('Biology');
             
-            // Round Robin Fill
             while (filled < deficit) {
                 let actionTaken = false;
                 if (phyQueue.length > 0) { const t = phyQueue.shift(); suggestions.push(t); filled += t.points; actionTaken = true; if(filled >= deficit) break; }
@@ -2560,12 +2552,14 @@ window.checkStudyPace = function() {
 
             suggestionHtml = `
                 <div class="mt-4 border-t border-white/10 pt-4">
+                    <p class="text-xs font-bold text-white/70 mb-2 uppercase">Recommended Mix:</p>
                     <div class="flex flex-wrap gap-2 mb-3">
                         ${suggestions.map(s => {
                             let sColor = 'bg-slate-700';
-                            if(s.subject==='Physics') sColor = 'bg-blue-900/50 border-blue-500/30';
-                            if(s.subject==='Chemistry') sColor = 'bg-orange-900/50 border-orange-500/30';
-                            if(s.subject==='Botany'||s.subject==='Zoology') sColor = 'bg-green-900/50 border-green-500/30';
+                            if(s.subject.includes('Physics')) sColor = 'bg-blue-900/50 border-blue-500/30';
+                            else if(s.subject.includes('Chemistry')) sColor = 'bg-orange-900/50 border-orange-500/30';
+                            else sColor = 'bg-green-900/50 border-green-500/30';
+                            
                             return `
                             <span class="px-2 py-1 rounded text-[10px] text-white/90 border ${sColor}">
                                 <b>${s.subject.substr(0,3)}</b>: ${s.topic.substr(0,8)}.. (${s.valPerSub.toFixed(2)})
@@ -2585,7 +2579,10 @@ window.checkStudyPace = function() {
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h3 class="text-lg font-black uppercase tracking-wider opacity-90">${title}</h3>
-                    <div class="text-[10px] opacity-75">Deadline: ${metrics.targetDateDisplay}</div>
+                    <div class="flex items-center gap-2 text-[10px] opacity-75 font-mono">
+                        <span>Total Left: ${metrics.totalPendingPoints.toFixed(1)}pts</span> | 
+                        <span>Days: ${metrics.studyDays}</span>
+                    </div>
                 </div>
                 <div class="text-right">
                     <span class="block text-2xl font-black leading-none">${metrics.studyDays}</span>
@@ -2595,7 +2592,7 @@ window.checkStudyPace = function() {
             
             <div class="bg-black/20 rounded-xl p-3 mb-4 backdrop-blur-sm">
                 <div class="flex justify-between text-xs font-bold mb-1">
-                    <span class="opacity-70">Daily Target</span>
+                    <span class="opacity-70">Daily Requirement</span>
                     <span>${target.toFixed(2)} pts</span>
                 </div>
                  <div class="flex justify-between text-xs font-bold mb-2">
