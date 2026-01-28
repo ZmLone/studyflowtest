@@ -1809,6 +1809,7 @@ function renderDailyHadith() {
         };
 
  
+
 window.switchView = function(view) {
     state.activeView = view;
 
@@ -1818,7 +1819,7 @@ window.switchView = function(view) {
     if(view === 'planner') renderPlanner();
     if(view === 'mistakes') closeNotebook(); 
 
-    // 2. Define Colors for Active State (Backgrounds only)
+    // 2. Define Colors for Active State
     const activeBgStyles = {
         overview: 'bg-indigo-500 shadow-indigo-500/50',
         target: 'bg-blue-500 shadow-blue-500/50',
@@ -1844,7 +1845,7 @@ window.switchView = function(view) {
         const btn = document.getElementById(`dock-${v}`);
         if(btn) {
             const iconBg = btn.querySelector('.dock-icon-bg');
-            // FIX: Search for 'i' OR 'svg' to handle Lucide transformation
+            // FIX: Look for 'i' OR 'svg' so it works even after Lucide runs
             const icon = iconBg ? iconBg.querySelector('i, svg') : null;
             const dot = btn.querySelector('.dock-dot');
 
@@ -1852,11 +1853,12 @@ window.switchView = function(view) {
                 // --- ACTIVE STATE ---
                 btn.classList.add('-translate-y-3'); 
                 
-                // Update Background (Pop + Color)
+                // Update Background
                 if(iconBg) iconBg.className = `p-3 rounded-2xl transition-all duration-300 shadow-lg scale-110 text-white dock-icon-bg ${activeBgStyles[v]}`;
                 
-                // Update Icon Color (Safely)
+                // Update Icon Color (Only if icon exists)
                 if(icon) {
+                    // Remove old text colors and add white
                     icon.classList.remove('text-slate-500', 'dark:text-slate-400');
                     icon.classList.add('text-white');
                 }
@@ -1867,10 +1869,10 @@ window.switchView = function(view) {
                 // --- INACTIVE STATE ---
                 btn.classList.remove('-translate-y-3');
                 
-                // Reset Background (Gray/Slate)
+                // Reset Background
                 if(iconBg) iconBg.className = `p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors shadow-sm dock-icon-bg`;
                 
-                // Reset Icon Color (Gray)
+                // Reset Icon Color
                 if(icon) {
                     icon.classList.remove('text-white');
                     icon.classList.add('text-slate-500', 'dark:text-slate-400');
@@ -1884,7 +1886,6 @@ window.switchView = function(view) {
     // 4. Refresh Components
     if(view !== 'leaderboard' && view !== 'planner') renderAll();
 };
-
         window.toggleMobileMenu = function(forceClose = false) {
             const body = document.getElementById('app-body');
             if (forceClose) { body.classList.remove('menu-open'); body.classList.add('menu-closed'); } 
