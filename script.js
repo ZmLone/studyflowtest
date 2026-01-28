@@ -2349,7 +2349,8 @@ window.checkStudyPace = function() {
     Object.values(state.tasks).flat().forEach(t => { if (t.completed) allCompleted.add(t.text); });
 
     // --- 2. CALCULATOR: REMAINING POINTS & DAILY RATE ---
-    function calculateTrackLoad(syllabus, deadlineDate, trackType) {
+    // FIXED NAME: Changed from calculateTrackLoad to calculateTrackMetrics to match usage
+    function calculateTrackMetrics(syllabus, deadlineDate, trackType) {
         if (!syllabus || !deadlineDate) return { pending: [], dailyRateRequired: 0 };
         
         // Determine Deadline
@@ -2424,6 +2425,7 @@ window.checkStudyPace = function() {
         };
     }
 
+    // Call the function using the corrected name
     const mainMetrics = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
     const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
         calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : { pending: [], dailyRateRequired: 0 };
@@ -2454,7 +2456,6 @@ window.checkStudyPace = function() {
     const targetScore = (mainMetrics.dailyRateRequired + backlogMetrics.dailyRateRequired) * 1.1;
     
     // If the user has planned enough points, STOP here.
-    // The "0.1" tolerance handles floating point rounding errors (e.g. 3.999 vs 4.0)
     if (currentScore >= (targetScore - 0.1)) {
         return; 
     }
@@ -2472,8 +2473,6 @@ window.checkStudyPace = function() {
 
     // Distribution Logic: 
     // If we have both tracks, try to give 70% main, 30% backlog
-    // BUT ensure at least one backlog item if backlog exists
-    
     const needsBacklog = backlogMetrics.pending.length > 0;
     let backlogQuota = needsBacklog ? Math.max(2, deficit * 0.3) : 0; // Force at least 2 pts if backlog exists
 
