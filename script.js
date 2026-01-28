@@ -1183,7 +1183,6 @@ window.state = state;
                 default: return 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200';
             }
         }
-// --- NEW PROFILE UI LOGIC ---
 window.updateProfileUI = function(user) {
     const isGuest = !user || user.isAnonymous;
     const name = state.displayName || (user && user.email ? user.email.split('@')[0] : "Guest User");
@@ -1206,36 +1205,45 @@ window.updateProfileUI = function(user) {
     const updateElements = (prefix) => {
         const card = document.getElementById(`${prefix}-user-card`);
         const avatarBg = document.getElementById(`${prefix}-user-avatar-bg`);
-        // Removed avatarText because new design puts text directly in avatarBg
         const nameEl = document.getElementById(`${prefix}-user-name`);
         const statusEl = document.getElementById(`${prefix}-sync-status`);
         const btn = document.getElementById(`${prefix}-auth-btn`);
 
+        // Safety check: If the card doesn't exist, stop.
         if(!card) return;
 
+        // 1. Update Card Styling
         if(prefix === 'mobile') {
             card.className = `flex items-center gap-3 px-3 py-3 rounded-2xl border transition-all cursor-pointer ${currentStyle.cardBorder}`;
         }
         
-        avatarBg.className = `flex items-center justify-center font-bold shadow-sm transition-colors ${prefix === 'mobile' ? 'w-10 h-10 rounded-full text-sm' : 'w-9 h-9 rounded-xl text-xs'} ${currentStyle.avatarBg}`;
+        // 2. Update Avatar
+        if (avatarBg) {
+            avatarBg.className = `flex items-center justify-center font-bold shadow-sm transition-colors ${prefix === 'mobile' ? 'w-10 h-10 rounded-full text-sm' : 'w-9 h-9 rounded-xl text-xs'} ${currentStyle.avatarBg}`;
+            avatarBg.textContent = isGuest ? "?" : initial;
+        }
         
-        // FIX: Set text directly on the background element
-        avatarBg.textContent = isGuest ? "?" : initial;
-        
-        nameEl.textContent = name;
-        
-        statusEl.innerHTML = isGuest 
-            ? `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> <span class="text-slate-500 dark:text-slate-400">Local Only</span>`
-            : `<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> <span class="text-green-600 dark:text-green-400">Synced</span>`;
+        // 3. Update Name & Status
+        if (nameEl) nameEl.textContent = name;
+        if (statusEl) {
+            statusEl.innerHTML = isGuest 
+                ? `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> <span class="text-slate-500 dark:text-slate-400">Local Only</span>`
+                : `<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> <span class="text-green-600 dark:text-green-400">Synced</span>`;
+        }
 
-        btn.innerHTML = `<i data-lucide="${currentStyle.icon}" class="${prefix === 'mobile' ? 'w-5 h-5' : 'w-4 h-4'}"></i>`;
-        
-        if(isGuest) {
-            btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-all`;
-        } else {
-            btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all`;
+        // 4. Update Button (ONLY IF IT EXISTS)
+        // This prevents the "Cannot set properties of null" error on Desktop
+        if (btn) {
+            btn.innerHTML = `<i data-lucide="${currentStyle.icon}" class="${prefix === 'mobile' ? 'w-5 h-5' : 'w-4 h-4'}"></i>`;
+            
+            if(isGuest) {
+                btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg hover:scale-105 transition-all`;
+            } else {
+                btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all`;
+            }
         }
     };
+
     updateElements('mobile');
     updateElements('desktop');
     if(window.lucide) lucide.createIcons();
