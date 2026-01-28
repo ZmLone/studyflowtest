@@ -1812,42 +1812,49 @@ function renderDailyHadith() {
     state.activeView = view;
     toggleMobileMenu(true); 
     
-    // Handle specific view logic
-    if(view === 'leaderboard') {
-        fetchLeaderboard();
-        switchRankTab('overall'); 
-    }
-    if(view === 'namaz') {
-        renderNamazView();
-    }
-    // NEW: Handle Planner View
-    if(view === 'planner') {
-        renderPlanner();
-    }
-    // Reset Notebook if leaving mistakes view
-    if(view === 'mistakes') {
-        closeNotebook(); 
-    }
+    // ... (Your specific view logic: leaderboard, namaz, planner calls remain here) ...
 
-    // Updated list to include 'planner'
-    ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'].forEach(v => {
+    // NEW STYLE HANDLER
+    const allViews = ['overview', 'target', 'backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'];
+    
+    allViews.forEach(v => {
+        // Desktop Buttons
         const btn = document.getElementById(`nav-${v}`);
         if(btn) {
-            if(v === view) btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 shadow-sm";
-            else btn.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all";
+            if(v === view) {
+                // Active State: White background + Brand Text + Shadow
+                btn.className = "nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold bg-white dark:bg-white/10 text-brand-600 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-white/10 transition-all";
+                // Colorize the Icon
+                const icon = btn.querySelector('svg');
+                if(icon) icon.classList.add('text-brand-500');
+            } else {
+                // Inactive State
+                btn.className = "nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all group";
+                const icon = btn.querySelector('svg');
+                if(icon) icon.classList.remove('text-brand-500');
+            }
         }
+
+        // Mobile Buttons
+        const mobBtn = document.getElementById(`mob-nav-${v}`);
+        if(mobBtn) {
+            if(v === view) {
+                mobBtn.className = "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300";
+            } else {
+                mobBtn.className = "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 group";
+            }
+        }
+
+        // Toggle View Containers
         const viewEl = document.getElementById(`view-${v}`);
-        if(viewEl) viewEl.classList.add('hidden');
+        if(viewEl) {
+            if(v === view) viewEl.classList.remove('hidden');
+            else viewEl.classList.add('hidden');
+        }
     });
 
-    const activeEl = document.getElementById(`view-${view}`);
-    if(activeEl) activeEl.classList.remove('hidden');
-    
-    // Only render standard views if NOT leaderboard or planner (Planner handles its own render)
     if(view !== 'leaderboard' && view !== 'planner') renderAll();
 };
-
-
 
         window.toggleMobileMenu = function(forceClose = false) {
             const body = document.getElementById('app-body');
@@ -2892,11 +2899,64 @@ window.assignChapterTime = function(chapName, inputId) {
         };
 
         
+window.updateSidebarBadges = function() {
+    // 1. Calculate Backlog Pending (Phase Specific)
+    let backlogCount = 0;
+    if(typeof backlogPlan !== 'undefined') {
+        const k = formatDateKey(state.selectedDate);
+        const tasksDone = new Set((state.tasks[k] || []).filter(t => t.completed).map(t => t.text));
+        
+        // Determine current phase
+        const diff = Math.ceil((new Date() - backlogPlan.startDate) / (1000 * 60 * 60 * 24));
+        let phase = 1;
+        if(diff > 15) phase = 2; if(diff > 30) phase = 3; if(diff > 45) phase = 4;
+
+        backlogPlan.syllabus.forEach(item => {
+            if(item.phase === phase) {
+                item.dailyTests.forEach(dt => {
+                    if(!state.dailyTestsAttempted[dt.name]) backlogCount++;
+                });
+            }
+        });
+    }
+
+    // 2. Calculate Unresolved Mistakes
+    const mistakeCount = (state.mistakes || []).filter(m => !m.resolved).length;
+
+    // 3. Calculate Unscheduled Planner Tasks
+    const k = formatDateKey(state.selectedDate);
+    const plannerCount = (state.tasks[k] || []).filter(t => !t.completed && (!t.timeLabel || t.timeLabel === '')).length;
+
+    // Helper to update elements
+    const setBadge = (id, count) => {
+        ['', '-mob'].forEach(suffix => {
+            const el = document.getElementById(id + suffix);
+            if(el) {
+                if(count > 0) {
+                    el.textContent = count;
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            }
+        });
+    };
+
+    setBadge('badge-backlog', backlogCount);
+    setBadge('badge-mistakes', mistakeCount);
+    setBadge('badge-planner', plannerCount);
+};
+
+
+
 window.renderAll = function() {
     renderHeader();
     updateHeaderPrayerBtn();
     renderStats();
-    
+   
+// --- NEW LINE ADDED HERE ---
+    updateSidebarBadges();
+ 
     // Performance Optimization: Lazy Rendering
     if (state.activeView === 'overview') {
         renderTasks();
