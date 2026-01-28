@@ -1,190 +1,100 @@
+/* --- STUDYOS 2.0: MODERN GLASS SKIN --- */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-    --brand-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-    --bg-gradient: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-                   radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-                   radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+    --brand-primary: #6366f1;
+    --brand-secondary: #a855f7;
+    --glass-light: rgba(255, 255, 255, 0.85);
+    --glass-dark: rgba(15, 23, 42, 0.85);
+    --blur-strength: 12px;
 }
 
-.dark {
-    --glass-bg: rgba(30, 41, 59, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.05);
-}
-
-* { box-sizing: border-box; }
-
+/* 1. Global Reboot */
 body {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Outfit', sans-serif !important;
     background-color: #f3f4f6;
     background-image: 
         radial-gradient(at 0% 0%, hsla(253,16%,90%,1) 0, transparent 50%), 
         radial-gradient(at 50% 0%, hsla(225,39%,90%,1) 0, transparent 50%), 
         radial-gradient(at 100% 0%, hsla(339,49%,90%,1) 0, transparent 50%);
-    color: #1e293b;
-    height: 100vh;
-    overflow: hidden;
+    background-attachment: fixed;
     transition: background 0.5s ease;
 }
 
 .dark body {
     background-color: #0f172a;
-    background-image: var(--bg-gradient);
-    color: #f8fafc;
+    background-image: 
+        radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+        radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+        radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
 }
 
-/* --- THE GLASS CARD --- */
-.glass-panel {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
+/* 2. Glassmorphism Override (Targets existing bg-white/slate-900) */
+.bg-white, .dark .bg-slate-800, .dark .bg-slate-900 {
+    background-color: var(--glass-light) !important;
+    backdrop-filter: blur(var(--blur-strength));
+    -webkit-backdrop-filter: blur(var(--blur-strength));
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.dark .bg-white, .dark .bg-slate-800, .dark .bg-slate-900 {
+    background-color: var(--glass-dark) !important;
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* 3. Modern Sidebar (Floating Dock Look) */
+/* Assuming your sidebar has a generic container, we target the aside or first flex child */
+aside, .w-64 { 
+    border-right: none !important;
+    margin: 10px;
     border-radius: 24px;
+    height: calc(100vh - 20px) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-/* --- LAYOUT --- */
-#app-container {
-    display: flex;
-    height: 100vh;
-    padding: 16px; /* Gap from screen edges */
-    gap: 16px;
+/* 4. Rounded Corners Everywhere */
+div, button, input { border-radius: 12px !important; }
+.rounded-2xl { border-radius: 20px !important; }
+.rounded-xl { border-radius: 16px !important; }
+
+/* 5. Typography Boost */
+h1, h2, h3, h4, .font-bold {
+    letter-spacing: -0.02em;
 }
 
-/* --- SIDEBAR (Now a Floating Dock) --- */
-.sidebar {
-    width: 80px; /* Collapsed by default for cleaner look */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 24px 0;
-    transition: width 0.3s ease;
-    z-index: 50;
+/* 6. Button Glows */
+button.bg-indigo-600, button.bg-brand-500, .bg-orange-500 {
+    background-image: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary)) !important;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none !important;
 }
 
-.sidebar:hover { width: 240px; } /* Expands on hover */
-
-.logo-area { font-weight: 800; font-size: 1.5rem; margin-bottom: 40px; color: #6366f1; white-space: nowrap; overflow: hidden; }
-.sidebar:hover .logo-area::after { content: "StudyOS"; margin-left: 10px; color: inherit; }
-.sidebar:not(:hover) .logo-area::after { content: ""; }
-
-.nav-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 12px;
-    color: #94a3b8;
-    transition: all 0.2s ease;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
 }
 
-.sidebar:hover .nav-btn { width: 90%; justify-content: flex-start; padding-left: 16px; }
-.nav-text { display: none; margin-left: 12px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; }
-.sidebar:hover .nav-text { display: block; }
-
-.nav-btn:hover { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
-.nav-btn.active { 
-    background: var(--brand-gradient); 
-    color: white; 
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-}
-
-/* --- MAIN CONTENT AREA --- */
-.main-content {
-    flex: 1;
-    position: relative;
-    overflow: hidden; /* Contains the scroll */
-    border-radius: 24px;
-}
-
-/* Views (Dashboard, Backlog, etc.) */
-.view-section {
-    position: absolute;
-    inset: 0;
-    padding: 30px;
-    overflow-y: auto;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(20px);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.view-section:not(.hidden) {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-}
-
-/* --- WIDGETS --- */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-template-rows: auto auto;
-    gap: 24px;
-}
-
-.widget-card {
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 20px;
-    padding: 24px;
-    border: 1px solid rgba(255,255,255,0.2);
-}
-.dark .widget-card { background: rgba(30, 41, 59, 0.4); border-color: rgba(255,255,255,0.05); }
-
-/* Sizes */
-.col-span-12 { grid-column: span 12; }
-.col-span-8 { grid-column: span 8; }
-.col-span-4 { grid-column: span 4; }
-
-@media (max-width: 1024px) {
-    .col-span-8, .col-span-4 { grid-column: span 12; }
-}
-
-/* --- PROGRESS BARS --- */
-.progress-track {
-    background: rgba(0,0,0,0.05);
-    height: 12px;
-    border-radius: 10px;
-    overflow: hidden;
-}
-.dark .progress-track { background: rgba(255,255,255,0.1); }
-.progress-fill {
-    height: 100%;
-    background: var(--brand-gradient);
-    border-radius: 10px;
-    transition: width 1s ease;
-}
-
-/* --- CUSTOM SCROLLBAR --- */
+/* 7. Scrollbars */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 .dark ::-webkit-scrollbar-thumb { background: #475569; }
 
-/* --- BACKLOG SPECIFIC --- */
-.phase-divider {
-    position: relative;
-    padding: 20px 0;
-    display: flex;
-    align-items: center;
-    color: #6366f1;
+/* 8. Animations */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-.phase-divider::before, .phase-divider::after {
-    content: ''; flex: 1; height: 1px; background: currentColor; opacity: 0.3;
+
+/* Apply animation to main views if they have IDs */
+#view-dashboard, #view-backlog, #view-main {
+    animation: fadeInUp 0.5s ease-out forwards;
 }
-.phase-tag {
-    background: #6366f1; color: white;
-    padding: 4px 12px; border-radius: 20px;
-    font-size: 0.75rem; font-weight: 700;
-    margin: 0 16px; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+
+/* 9. Specific Fix for Progress Bars */
+.bg-green-500, .bg-indigo-500 {
+    box-shadow: 0 0 10px currentColor;
 }
