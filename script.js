@@ -2289,6 +2289,7 @@ window.renderLeaderboardList = function() {
 // --- NEW: VIBRANT BALANCED MIX CARD ---
 let currentUnifiedSuggestion = [];
 
+
 window.checkStudyPace = function() {
     const container = document.getElementById('ai-strategy-container');
     if (!container) return;
@@ -2301,7 +2302,7 @@ window.checkStudyPace = function() {
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = state.tasks[k] || [];
     
-    // HISTORY CHECK (Granular Fix)
+    // HISTORY CHECK
     const allCompleted = new Set();
     Object.values(state.tasks).flat().forEach(t => { if (t.completed) allCompleted.add(t.text); });
 
@@ -2351,7 +2352,6 @@ window.checkStudyPace = function() {
             }
 
             chapter.dailyTests.forEach(dt => {
-                if (state.dailyTestsAttempted[dt.name]) return;
                 const remainingSubs = dt.subs.filter(sub => !allCompleted.has(`Study: ${chapter.topic} - ${sub}`));
                 if (remainingSubs.length === 0) return;
 
@@ -2383,17 +2383,32 @@ window.checkStudyPace = function() {
     const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
         calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : { pending: [], rate: 0 };
 
-    const totalDailyRate = Math.ceil((mainMetrics.rate + backlogMetrics.rate) * 1.1);
+    // FIX 1: INCREASED AGGRESSION (1.1 -> 1.25)
+    // This raises the "Minimum Daily Target" so even small deletions trigger the AI.
+    const totalDailyRate = Math.ceil((mainMetrics.rate + backlogMetrics.rate) * 1.25);
     
+    // FIX 2: COUNT ALL PLANNED TASKS (Correctly handles deletes)
     let manualPoints = 0;
-    todaysTasks.forEach(t => { if(!t.completed) manualPoints += getWeight(t.subject, t.chapter); });
+    todaysTasks.forEach(t => { 
+        manualPoints += getWeight(t.subject, t.chapter); 
+    });
 
     const deficit = totalDailyRate - manualPoints;
+    
+    // Only return if we have truly met the (now higher) target
     if (deficit <= 0 || (mainMetrics.pending.length === 0 && backlogMetrics.pending.length === 0)) return;
 
     const mainShare = mainMetrics.rate / (mainMetrics.rate + backlogMetrics.rate || 1);
     let pointsForMain = deficit * mainShare;
     let pointsForBacklog = deficit - pointsForMain;
+
+    // FIX 3: FORCE BACKLOG INCLUSION
+    // If we have backlog pending, ensure we allocate at least 2 points to it
+    // This prevents the "Physics (4pt)" tasks from eating the entire suggestion budget.
+    if (backlogMetrics.pending.length > 0 && pointsForBacklog < 2) {
+        pointsForBacklog = 2; // Force at least 2 points for backlog
+        pointsForMain = Math.max(0, deficit - pointsForBacklog); // Adjust main down
+    }
 
     mainMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
     backlogMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
@@ -2420,7 +2435,6 @@ window.checkStudyPace = function() {
         const mainCount = suggestions.filter(t => t.track === 'main').length;
         const backlogCount = suggestions.filter(t => t.track === 'backlog').length;
 
-        // NEW DESIGN HTML
         const html = `
         <div class="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-r from-blue-600 to-cyan-500 shadow-xl shadow-blue-500/20 text-white mb-6 group animate-in slide-in-from-top-2">
             <div class="absolute -right-10 -top-10 text-white opacity-10 group-hover:rotate-12 transition-transform duration-700">
@@ -2878,36 +2892,37 @@ window.assignChapterTime = function(chapName, inputId) {
         };
 
         
-function renderAll() {
-            renderHeader();
-            updateHeaderPrayerBtn();
-            renderStats();
-            
-            // Performance Optimization: Lazy Rendering
-            if (state.activeView === 'overview') {
-                renderTasks();
-                checkStudyPace(); // This activates the Smart Coach
-            } else if (state.activeView === 'target') {
-                renderSyllabus('main');
-            } else if (state.activeView === 'backlog') {
-                renderSyllabus('backlog');
-            } else if (state.activeView === 'mistakes') {
-                if(state.activeNotebook) {
-                    renderNotebookEntries();
-                } else {
-                    updateShelfCounts();
-                }
-            } else if (state.activeView === 'namaz') {
-                renderNamazView();
-            } else if (state.activeView === 'leaderboard') {
-                renderLeaderboardList();
-            }
-            
-            // Re-scan icons if library is loaded
-            if(window.lucide) lucide.createIcons();
+window.renderAll = function() {
+    renderHeader();
+    updateHeaderPrayerBtn();
+    renderStats();
+    
+    // Performance Optimization: Lazy Rendering
+    if (state.activeView === 'overview') {
+        renderTasks();
+        // FORCE UPDATE: Ensure AI checks pace every time the UI updates (e.g. deletions)
+        if (typeof checkStudyPace === 'function') {
+            checkStudyPace(); 
         }
-// FIX: Make all these functions global so HTML buttons can see them
-window.renderAll = renderAll;
+    } else if (state.activeView === 'target') {
+        renderSyllabus('main');
+    } else if (state.activeView === 'backlog') {
+        renderSyllabus('backlog');
+    } else if (state.activeView === 'mistakes') {
+        if(state.activeNotebook) {
+            renderNotebookEntries();
+        } else {
+            updateShelfCounts();
+        }
+    } else if (state.activeView === 'namaz') {
+        renderNamazView();
+    } else if (state.activeView === 'leaderboard') {
+        renderLeaderboardList();
+    }
+    
+    // Re-scan icons if library is loaded
+    if(window.lucide) lucide.createIcons();
+};
 window.renderTasks = renderTasks;
         function renderHeader() {
             const els = { date: document.getElementById('overview-date'), agendaDate: document.getElementById('agenda-date-display') };
