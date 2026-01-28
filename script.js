@@ -1812,28 +1812,28 @@ function renderDailyHadith() {
 window.switchView = function(view) {
     state.activeView = view;
 
-    // 1. Run View Logic
+    // 1. Run View-Specific Logic
     if(view === 'leaderboard') { fetchLeaderboard(); switchRankTab('overall'); }
     if(view === 'namaz') renderNamazView();
     if(view === 'planner') renderPlanner();
     if(view === 'mistakes') closeNotebook(); 
 
-    // 2. Define Colors for Active State
-    const styles = {
-        overview: 'bg-indigo-500 text-white shadow-indigo-500/50',
-        target: 'bg-blue-500 text-white shadow-blue-500/50',
-        backlog: 'bg-orange-500 text-white shadow-orange-500/50',
-        planner: 'bg-violet-500 text-white shadow-violet-500/50',
-        mistakes: 'bg-rose-500 text-white shadow-rose-500/50',
-        leaderboard: 'bg-yellow-500 text-white shadow-yellow-500/50',
-        namaz: 'bg-emerald-500 text-white shadow-emerald-500/50',
+    // 2. Define Colors for Active State (Backgrounds only)
+    const activeBgStyles = {
+        overview: 'bg-indigo-500 shadow-indigo-500/50',
+        target: 'bg-blue-500 shadow-blue-500/50',
+        backlog: 'bg-orange-500 shadow-orange-500/50',
+        planner: 'bg-violet-500 shadow-violet-500/50',
+        mistakes: 'bg-rose-500 shadow-rose-500/50',
+        leaderboard: 'bg-yellow-500 shadow-yellow-500/50',
+        namaz: 'bg-emerald-500 shadow-emerald-500/50',
     };
 
     // 3. Update Dock UI
     const views = ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'];
     
     views.forEach(v => {
-        // Toggle Pages
+        // Toggle Pages (Safe Check)
         const viewEl = document.getElementById(`view-${v}`);
         if(viewEl) {
             if(v === view) viewEl.classList.remove('hidden');
@@ -1844,20 +1844,38 @@ window.switchView = function(view) {
         const btn = document.getElementById(`dock-${v}`);
         if(btn) {
             const iconBg = btn.querySelector('.dock-icon-bg');
-            const icon = iconBg.querySelector('i');
+            // FIX: Search for 'i' OR 'svg' to handle Lucide transformation
+            const icon = iconBg ? iconBg.querySelector('i, svg') : null;
             const dot = btn.querySelector('.dock-dot');
 
             if(v === view) {
-                // ACTIVE: Pop up, colored background, white icon
+                // --- ACTIVE STATE ---
                 btn.classList.add('-translate-y-3'); 
-                iconBg.className = `p-3 rounded-2xl transition-all duration-300 shadow-lg scale-110 ${styles[v]} dock-icon-bg`;
-                icon.className = `w-6 h-6 text-white transition-colors`;
+                
+                // Update Background (Pop + Color)
+                if(iconBg) iconBg.className = `p-3 rounded-2xl transition-all duration-300 shadow-lg scale-110 text-white dock-icon-bg ${activeBgStyles[v]}`;
+                
+                // Update Icon Color (Safely)
+                if(icon) {
+                    icon.classList.remove('text-slate-500', 'dark:text-slate-400');
+                    icon.classList.add('text-white');
+                }
+
                 if(dot) dot.classList.remove('opacity-0');
+
             } else {
-                // INACTIVE: Reset position, gray icon
+                // --- INACTIVE STATE ---
                 btn.classList.remove('-translate-y-3');
-                iconBg.className = `p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors shadow-sm dock-icon-bg`;
-                icon.className = `w-6 h-6 text-slate-500 dark:text-slate-400 transition-colors`;
+                
+                // Reset Background (Gray/Slate)
+                if(iconBg) iconBg.className = `p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors shadow-sm dock-icon-bg`;
+                
+                // Reset Icon Color (Gray)
+                if(icon) {
+                    icon.classList.remove('text-white');
+                    icon.classList.add('text-slate-500', 'dark:text-slate-400');
+                }
+
                 if(dot) dot.classList.add('opacity-0');
             }
         }
@@ -1866,7 +1884,6 @@ window.switchView = function(view) {
     // 4. Refresh Components
     if(view !== 'leaderboard' && view !== 'planner') renderAll();
 };
-
 
         window.toggleMobileMenu = function(forceClose = false) {
             const body = document.getElementById('app-body');
