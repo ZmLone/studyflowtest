@@ -2285,38 +2285,58 @@ window.renderLeaderboardList = function() {
         renderHeader(); 
     };
 
+
 // ==========================================
-// 🧠 SMART MIX AI ENGINE (Final Fix)
+// 🧠 SMART MIX AI ENGINE (Strict Separation Logic)
 // ==========================================
 
-// 1. GLOBAL VARIABLE (Crucial for sharing data)
+// 1. GLOBAL VARIABLE
 window.currentUnifiedSuggestion = [];
 
 // 2. Define Base Points per DAILY TEST
 function getTestBasePoints(subject, topic) {
+    // PHYSICS: 4 Points
     if (subject === 'Physics') return 4;
+    
+    // CHEMISTRY: 3 Points (Physical/Organic) vs 2 Points (Inorganic)
     if (subject === 'Chemistry') {
         const t = (topic || '').toLowerCase();
-        // Hard Chemistry Topics (3 pts)
-        if (t.includes('organic') || t.includes('hydro') || t.includes('halo') || 
-            t.includes('alcohol') || t.includes('aldehyde') || t.includes('amine') || 
-            t.includes('thermo') || t.includes('equilibrium') || t.includes('electro') || 
-            t.includes('kinetics') || t.includes('bonding')) {
+        
+        // List of Physical & Organic Keywords
+        const highValueTopics = [
+            // Organic
+            'organic', 'hydrocarbon', 'halo', 'alcohol', 'phenol', 'ether', 
+            'aldehyde', 'ketone', 'carboxylic', 'amine', 'biomolecule', 'polymer',
+            // Physical
+            'solid state', 'solution', 'electro', 'kinetic', 'surface', 
+            'structure of atom', 'mole', 'redox', 'thermo', 'equilibrium', 'state of matter'
+        ];
+
+        // Check if topic matches high value list
+        if (highValueTopics.some(k => t.includes(k))) {
             return 3;
         }
-        // Easy/Inorganic Chemistry (2 pts)
+        
+        // Default to Inorganic (2 pts)
         return 2;
     }
-    // Biology (1 pt)
+    
+    // BIOLOGY (Botany/Zoology): 1 Point
     return 1;
 }
 
 // 3. Calculate the exact value of a specific sub-topic
+// Logic: (Base Points of DT) / (Number of Sub-topics in that DT)
 function getSpecificSubTopicValue(syllabusList, subject, topic, subTopicName) {
     if (!syllabusList) return 0;
 
     for (const chapter of syllabusList) {
-        if (chapter.subject === subject && (chapter.topic === topic || topic.includes(chapter.topic) || chapter.topic.includes(topic))) {
+        // Loose matching to handle "Physics" vs "Phy" etc
+        const subjMatch = chapter.subject === subject || 
+                         (subject === 'Botany' && chapter.subject === 'Biology') || 
+                         (subject === 'Zoology' && chapter.subject === 'Biology');
+
+        if (subjMatch && (chapter.topic === topic || topic.includes(chapter.topic) || chapter.topic.includes(topic))) {
             for (const dt of chapter.dailyTests) {
                 if (dt.subs.includes(subTopicName)) {
                     const basePoints = getTestBasePoints(chapter.subject, chapter.topic);
@@ -2346,13 +2366,14 @@ window.checkStudyPace = function() {
     const allCompleted = new Set();
     Object.values(state.tasks).flat().forEach(t => { if (t.completed) allCompleted.add(t.text); });
 
-    // --- CALCULATOR FUNCTION ---
+    // --- TRACK CALCULATOR ---
     function calculateTrackMetrics(syllabus, deadlineDate, trackType) {
-        if (!syllabus || !deadlineDate) return { pending: [], dailyRateRequired: 0 };
+        if (!syllabus || !deadlineDate) return { pending: [], dailyRateRequired: 0, totalPendingPoints: 0, daysLeft: 0 };
         
         let effectiveDeadline = new Date(deadlineDate);
         let activePhase = 1;
 
+        // Strict Deadline Separation
         if (trackType === 'backlog') {
             const planStart = backlogPlan.startDate || new Date();
             const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
@@ -2360,9 +2381,11 @@ window.checkStudyPace = function() {
             if(diff > 30) activePhase = 3;
             if(diff > 45) activePhase = 4;
             
+            // Backlog Deadline = End of Current Phase
             effectiveDeadline = new Date(planStart);
             effectiveDeadline.setDate(planStart.getDate() + (activePhase * 15));
         } else {
+            // Main Exam Deadline = The Exam Date itself (minus 1 day buffer)
             effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
         }
 
@@ -2388,6 +2411,7 @@ window.checkStudyPace = function() {
                 const remainingSubs = dt.subs.filter(sub => {
                     const taskName = `Study: ${chapter.topic} - ${sub}`;
                     const isDone = allCompleted.has(taskName);
+                    // Check if it's already on today's list (regardless of completion status)
                     const isOnList = todaysTasks.some(t => t.text === taskName);
                     return !isDone && !isOnList;
                 });
@@ -2410,19 +2434,25 @@ window.checkStudyPace = function() {
             });
         });
 
+        // 1.1 Aggression Factor is applied here per track
+        const dailyRateRequired = (totalPendingPoints / daysLeft) * 1.1;
+
         return { 
             pending: pendingTasks, 
-            dailyRateRequired: totalPendingPoints / daysLeft 
+            dailyRateRequired: dailyRateRequired,
+            totalPendingPoints: totalPendingPoints,
+            daysLeft: daysLeft
         };
     }
 
-    // --- EXECUTE CALCULATIONS ---
+    // --- GET METRICS ---
     const mainMetrics = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
     const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
         calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : { pending: [], dailyRateRequired: 0 };
 
-    // --- CALCULATE CURRENT SCORE ---
-    let currentScore = 0;
+    // --- CALCULATE SCORES (STRICTLY SEPARATED) ---
+    let currentScoreMain = 0;
+    let currentScoreBacklog = 0;
     
     todaysTasks.forEach(t => {
         if(t.text.startsWith("Study: ")) {
@@ -2430,105 +2460,127 @@ window.checkStudyPace = function() {
             if (parts.length > 1) {
                 const topic = parts[0];
                 const sub = parts[1];
-                let val = getSpecificSubTopicValue(state.nextExam.syllabus, t.subject, topic, sub);
-                if (val === 0 && typeof backlogPlan !== 'undefined') {
+                
+                // Determine Value
+                let val = 0;
+                
+                // STRICT CHECK: Is this a Main task or Backlog task?
+                // We use the 'type' field from the task object if available
+                if (t.type === 'main') {
+                    val = getSpecificSubTopicValue(state.nextExam.syllabus, t.subject, topic, sub);
+                    currentScoreMain += val;
+                } else if (t.type === 'backlog') {
                     val = getSpecificSubTopicValue(backlogPlan.syllabus, t.subject, topic, sub);
+                    currentScoreBacklog += val;
+                } else {
+                    // Fallback inference if type is missing (legacy data)
+                    let mainVal = getSpecificSubTopicValue(state.nextExam.syllabus, t.subject, topic, sub);
+                    if (mainVal > 0) currentScoreMain += mainVal;
+                    else {
+                        let blVal = getSpecificSubTopicValue(backlogPlan.syllabus, t.subject, topic, sub);
+                        currentScoreBacklog += blVal;
+                    }
                 }
-                currentScore += val;
             }
         }
     });
 
-    // --- DETERMINE SUGGESTIONS ---
-    const targetScore = (mainMetrics.dailyRateRequired + backlogMetrics.dailyRateRequired) * 1.1;
+    // --- DETERMINE DEFICITS ---
+    // We allow a tiny floating point tolerance (0.1)
+    const deficitMain = Math.max(0, mainMetrics.dailyRateRequired - currentScoreMain);
+    const deficitBacklog = Math.max(0, backlogMetrics.dailyRateRequired - currentScoreBacklog);
     
-    if (currentScore >= (targetScore - 0.1)) {
-        return; 
-    }
+    // IF NO DEFICIT IN EITHER TRACK, STOP
+    if (deficitMain < 0.1 && deficitBacklog < 0.1) return;
 
-    const deficit = targetScore - currentScore;
-    
+    // --- GENERATE SUGGESTIONS (FILLING SPECIFIC BUCKETS) ---
     mainMetrics.pending.sort((a,b) => b.valPerSub - a.valPerSub);
     backlogMetrics.pending.sort((a,b) => b.valPerSub - a.valPerSub);
 
     let suggestions = [];
-    let fill = 0;
-    const needsBacklog = backlogMetrics.pending.length > 0;
-    let backlogQuota = needsBacklog ? Math.max(2, deficit * 0.3) : 0; 
+    let fillMain = 0;
+    let fillBacklog = 0;
 
-    // A. Backlog
-    for (let task of backlogMetrics.pending) {
-        if (fill >= backlogQuota) break;
-        suggestions.push(task);
-        fill += task.points;
-    }
-    // B. Main
-    for (let task of mainMetrics.pending) {
-        if (fill >= deficit) break;
-        suggestions.push(task);
-        fill += task.points;
-    }
-    // C. Fill Remainder
-    if (fill < deficit && backlogMetrics.pending.length > 0) {
-        for (let task of backlogMetrics.pending) {
-            if (fill >= deficit) break;
-            if (!suggestions.includes(task)) {
-                suggestions.push(task);
-                fill += task.points;
-            }
+    // 1. Fill Main Deficit (Only with Main Tasks)
+    if (deficitMain > 0.1) {
+        for (let task of mainMetrics.pending) {
+            if (fillMain >= deficitMain) break;
+            suggestions.push(task);
+            fillMain += task.points;
         }
     }
 
-    // SAVE TO GLOBAL VARIABLE
+    // 2. Fill Backlog Deficit (Only with Backlog Tasks)
+    if (deficitBacklog > 0.1) {
+        for (let task of backlogMetrics.pending) {
+            if (fillBacklog >= deficitBacklog) break;
+            suggestions.push(task);
+            fillBacklog += task.points;
+        }
+    }
+
+    // Save for the button
     window.currentUnifiedSuggestion = suggestions;
 
     if (suggestions.length === 0) return;
 
     // --- RENDER UI ---
     container.classList.remove('hidden');
-    const totalPointsDisplay = Math.round(fill * 10) / 10; 
-    const mainCount = suggestions.filter(t => t.track === 'main').length;
-    const backlogCount = suggestions.filter(t => t.track === 'backlog').length;
+    
+    const mainAdded = Math.round(fillMain * 10) / 10;
+    const backlogAdded = Math.round(fillBacklog * 10) / 10;
+    
+    // Dynamic Message Logic
+    let message = "";
+    if (deficitMain > 0.1 && deficitBacklog > 0.1) message = `Short on <b>Main (${mainAdded}pts)</b> & <b>Backlog (${backlogAdded}pts)</b>`;
+    else if (deficitMain > 0.1) message = `Falling behind on <b>Main Exam (${mainAdded}pts)</b>`;
+    else message = `Falling behind on <b>Backlog (${backlogAdded}pts)</b>`;
 
     const html = `
-    <div class="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-r from-blue-600 to-cyan-500 shadow-xl shadow-blue-500/20 text-white mb-6 group animate-in slide-in-from-top-2">
+    <div class="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-r from-indigo-600 to-purple-600 shadow-xl shadow-indigo-500/20 text-white mb-6 group animate-in slide-in-from-top-2">
         <div class="absolute -right-10 -top-10 text-white opacity-10 group-hover:rotate-12 transition-transform duration-700">
-            <i data-lucide="sparkles" class="w-48 h-48"></i>
+            <i data-lucide="target" class="w-48 h-48"></i>
         </div>
 
         <div class="relative z-10 flex flex-col md:flex-row gap-6 items-center justify-between">
             <div class="flex-1">
                 <div class="flex items-center gap-2 mb-3">
                     <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-2">
-                        <i data-lucide="brain-circuit" class="w-3.5 h-3.5"></i>
-                        <span class="text-xs font-bold uppercase tracking-wider">Smart Mix Active</span>
+                        <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider">Pace Check</span>
                     </div>
-                    <span class="text-[10px] font-medium opacity-80 bg-black/20 px-2 py-0.5 rounded">Current: ${currentScore.toFixed(1)} / Target: ${targetScore.toFixed(1)}</span>
+                    <span class="text-[10px] font-medium opacity-80 bg-black/20 px-2 py-0.5 rounded">
+                        Main: ${currentScoreMain.toFixed(1)}/${mainMetrics.dailyRateRequired.toFixed(1)} | 
+                        Backlog: ${currentScoreBacklog.toFixed(1)}/${backlogMetrics.dailyRateRequired.toFixed(1)}
+                    </span>
                 </div>
                 
-                <h3 class="text-2xl font-bold leading-tight mb-1">
-                    Add +<span class="text-white drop-shadow-sm">${totalPointsDisplay} Pts</span> to hit target
+                <h3 class="text-xl font-bold leading-tight mb-2">
+                    ${message}
                 </h3>
                 
-                <p class="text-blue-100 text-sm font-medium opacity-90">
-                    Instantly calculated based on chapter weights and daily deadlines.
+                <p class="text-indigo-100 text-xs font-medium opacity-90 max-w-lg">
+                    Strict targets based on your different deadlines.
                 </p>
 
-                <div class="flex items-center gap-3 mt-4">
+                <div class="flex flex-wrap items-center gap-2 mt-4">
+                    ${fillMain > 0 ? `
                     <div class="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
-                        <i data-lucide="zap" class="w-3.5 h-3.5 text-yellow-300"></i> 
-                        <span class="text-xs font-bold">${mainCount} Main Chaps</span>
-                    </div>
+                        <i data-lucide="zap" class="w-3.5 h-3.5 text-cyan-300"></i> 
+                        <span class="text-xs font-bold">Add ${suggestions.filter(t=>t.track==='main').length} Main Topics</span>
+                    </div>` : ''}
+                    
+                    ${fillBacklog > 0 ? `
                     <div class="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
                         <i data-lucide="history" class="w-3.5 h-3.5 text-orange-300"></i> 
-                        <span class="text-xs font-bold">${backlogCount} Backlog Chaps</span>
-                    </div>
+                        <span class="text-xs font-bold">Add ${suggestions.filter(t=>t.track==='backlog').length} Backlog Topics</span>
+                    </div>` : ''}
                 </div>
             </div>
 
-            <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-8 py-4 bg-white text-blue-600 rounded-xl text-sm font-bold shadow-lg shadow-black/10 hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
-                <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                Accept Mix
+            <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-6 py-3 bg-white text-indigo-700 rounded-xl text-xs font-bold shadow-lg shadow-black/10 hover:bg-indigo-50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 whitespace-nowrap">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                Accept Balance
             </button>
         </div>
     </div>`;
@@ -2551,6 +2603,7 @@ window.acceptUnifiedPlan = function() {
             const exists = (state.tasks[key] || []).some(t => t.text === taskText);
             
             if (!exists) {
+                // IMPORTANT: Pass item.track so the system knows if it's Main or Backlog
                 addTask(taskText, item.track, item.subject, item.topic);
                 addedCount++;
             }
@@ -2566,7 +2619,6 @@ window.acceptUnifiedPlan = function() {
     
     showToast(`🚀 Added ${addedCount} optimized topics to your schedule!`);
 };
-
 // --- PLANNER FUNCTIONS ---
 
 
