@@ -2920,7 +2920,7 @@ window.renderStats = function() {
     const container = document.getElementById('stats-container');
     if (!container) return;
 
-    // 1. GATHER ALL COMPLETED TASKS (Granular History)
+    // 1. GATHER HISTORY
     const allCompleted = new Set();
     if (state.tasks) {
         Object.values(state.tasks).flat().forEach(t => {
@@ -2928,7 +2928,7 @@ window.renderStats = function() {
         });
     }
 
-    // --- CALCULATE PRIMARY EXAM DATA ---
+    // --- CALCULATE DATA ---
     const nextExam = state.nextExam;
     let daysLeft = 0;
     let primaryPercent = 0;
@@ -2947,16 +2947,13 @@ window.renderStats = function() {
                 const isTestDone = state.dailyTestsAttempted[dt.name];
                 dt.subs.forEach(sub => {
                     totalSubTopics++;
-                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) {
-                        doneSubTopics++;
-                    }
+                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) doneSubTopics++;
                 });
             });
         });
         primaryPercent = totalSubTopics === 0 ? 0 : Math.round((doneSubTopics / totalSubTopics) * 100);
     }
 
-    // --- CALCULATE BACKLOG DATA ---
     let currentPhase = 1;
     let totalPercent = 0;
     let phasePercent = 0;
@@ -2965,7 +2962,6 @@ window.renderStats = function() {
         const planStart = new Date(backlogPlan.startDate);
         const today = new Date();
         const diffDays = Math.ceil(Math.abs(today - planStart) / (1000 * 60 * 60 * 24)); 
-        
         if(diffDays > 15) currentPhase = 2;
         if(diffDays > 30) currentPhase = 3;
         if(diffDays > 45) currentPhase = 4;
@@ -2983,7 +2979,6 @@ window.renderStats = function() {
                 dt.subs.forEach(sub => {
                     totalBacklogSubs++;
                     if (isPhase) phaseTotalSubs++;
-                    
                     if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) {
                         doneBacklogSubs++;
                         if (isPhase) phaseDoneSubs++;
@@ -2996,107 +2991,89 @@ window.renderStats = function() {
         phasePercent = phaseTotalSubs === 0 ? 0 : Math.round((phaseDoneSubs / phaseTotalSubs) * 100);
     }
 
-    // --- RENDER ULTRA-MODERN CARDS ---
+    // --- RENDER BRIGHT & COMPACT UI ---
     container.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-5 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             
-            <div class="md:col-span-3 relative overflow-hidden rounded-[2.5rem] p-8 bg-[#0f172a] text-white group hover:scale-[1.01] transition-transform duration-500 border border-slate-800 shadow-2xl">
-                <div class="absolute inset-0 bg-gradient-to-br from-indigo-600/30 via-violet-600/10 to-blue-600/20 opacity-100 group-hover:opacity-100 transition-opacity"></div>
-                <div class="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/30 rounded-full blur-3xl group-hover:bg-indigo-500/40 transition-all duration-1000"></div>
+            <div class="md:col-span-3 relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-indigo-500 via-purple-600 to-blue-600 text-white shadow-2xl shadow-indigo-500/30 group hover:scale-[1.01] transition-transform duration-300">
+                <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+                <div class="absolute -left-8 -bottom-8 w-40 h-40 bg-cyan-400/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
                 
-                <div class="relative z-10 h-full flex flex-col justify-between">
+                <div class="relative z-10 flex flex-col h-full justify-between">
                     <div class="flex justify-between items-start">
                         <div>
-                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md mb-2">
-                                <span class="relative flex h-2 w-2">
-                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                  <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-400"></span>
-                                </span>
-                                Mission Target
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-wider mb-2 shadow-sm">
+                                <i data-lucide="crosshair" class="w-3 h-3 text-cyan-300"></i> Main Target
                             </div>
-                            <h2 class="text-3xl md:text-4xl font-black tracking-tight text-white mb-1 drop-shadow-md">
+                            <h2 class="text-2xl md:text-3xl font-black text-white drop-shadow-sm truncate pr-2">
                                 ${nextExam ? nextExam.name : 'No Exam'}
                             </h2>
                         </div>
                         <div class="text-right">
-                            <div class="text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-indigo-200 leading-none">
-                                ${daysLeft}
-                            </div>
-                            <div class="text-[10px] font-bold uppercase text-indigo-300 tracking-[0.2em] mt-1">Days Left</div>
+                            <span class="block text-4xl md:text-5xl font-black tracking-tighter leading-none">${daysLeft}</span>
+                            <span class="text-[9px] font-bold uppercase opacity-80 tracking-widest">Days Left</span>
                         </div>
                     </div>
 
-                    <div class="mt-8">
-                        <div class="flex justify-between items-end mb-4 px-1">
-                            <div class="flex flex-col">
-                                <span class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">Syllabus Completion</span>
-                                <span class="text-white/60 text-xs">Keep pushing forward</span>
-                            </div>
-                            <span class="text-4xl font-black text-white tracking-tight">${primaryPercent}%</span>
+                    <div class="mt-6">
+                        <div class="flex justify-between items-end mb-2 px-1">
+                            <span class="text-xs font-bold text-indigo-100 uppercase">Mission Progress</span>
+                            <span class="text-2xl font-black">${primaryPercent}%</span>
                         </div>
-                        
-                        <div class="h-6 w-full bg-slate-900/50 rounded-full p-1.5 border border-white/5 shadow-inner backdrop-blur-sm relative">
-                            <div class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 relative transition-all duration-1000 ease-out group-hover:shadow-[0_0_25px_rgba(99,102,241,0.5)] flex items-center justify-end" style="width: ${primaryPercent}%">
-                                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
-                                <div class="h-full w-2 bg-white/80 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)] mr-0.5"></div>
+                        <div class="h-5 w-full bg-black/20 rounded-full p-1 backdrop-blur-sm shadow-inner border border-white/10">
+                            <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 relative overflow-hidden shadow-lg shadow-cyan-400/30 transition-all duration-1000 ease-out" style="width: ${primaryPercent}%">
+                                <div class="absolute inset-0 bg-white/30 w-full -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="md:col-span-2 flex flex-col gap-4">
+            <div class="md:col-span-2 grid grid-cols-2 gap-4">
                 
-                <div class="flex-1 rounded-[2rem] p-6 bg-[#022c22] relative overflow-hidden group border border-emerald-900/50 shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-emerald-500/20 via-transparent to-transparent"></div>
-                    
-                    <div class="relative z-10 flex flex-col justify-between h-full">
-                        <div class="flex justify-between items-center mb-4">
+                <div class="relative overflow-hidden rounded-3xl p-4 bg-gradient-to-br from-emerald-400 to-cyan-600 text-white shadow-lg shadow-emerald-500/20 hover:-translate-y-1 transition-transform">
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-[10px] font-bold uppercase text-emerald-400 tracking-widest mb-1">Current Sprint</p>
-                                <h3 class="text-2xl font-bold text-white">Phase ${currentPhase}</h3>
+                                <p class="text-[9px] font-bold uppercase text-emerald-100 tracking-wider mb-0.5">Focus</p>
+                                <h3 class="text-lg font-bold leading-tight">Phase ${currentPhase}</h3>
                             </div>
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 text-emerald-400">
-                                <i data-lucide="zap" class="w-5 h-5"></i>
+                            <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+                                <i data-lucide="zap" class="w-4 h-4 text-white"></i>
                             </div>
                         </div>
-
-                        <div>
-                            <div class="flex justify-between text-xs font-bold text-emerald-200/80 mb-2">
-                                <span>Efficiency</span>
+                        
+                        <div class="mt-3">
+                            <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
+                                <span>Sprint</span>
                                 <span>${phasePercent}%</span>
                             </div>
-                            <div class="h-3 w-full bg-emerald-950 rounded-full overflow-hidden flex gap-0.5">
-                                <div class="h-full bg-emerald-400 w-full origin-left transition-transform duration-1000" style="transform: scaleX(${phasePercent / 100})"></div>
-                            </div>
-                            <div class="flex justify-between mt-1 px-0.5">
-                                ${Array(10).fill(0).map(() => `<div class="w-0.5 h-1 bg-emerald-900/50 rounded-full"></div>`).join('')}
+                            <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
+                                <div class="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] rounded-full transition-all duration-1000" style="width: ${phasePercent}%"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex-1 rounded-[2rem] p-6 bg-[#431407] relative overflow-hidden group border border-orange-900/50 shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-orange-500/20 via-transparent to-transparent"></div>
-
-                    <div class="relative z-10 flex flex-col justify-between h-full">
-                         <div class="flex justify-between items-center mb-4">
+                <div class="relative overflow-hidden rounded-3xl p-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-500/20 hover:-translate-y-1 transition-transform">
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div class="flex justify-between items-start">
                             <div>
-                                <p class="text-[10px] font-bold uppercase text-orange-400 tracking-widest mb-1">Global Status</p>
-                                <h3 class="text-2xl font-bold text-white">Total Backlog</h3>
+                                <p class="text-[9px] font-bold uppercase text-orange-100 tracking-wider mb-0.5">Total</p>
+                                <h3 class="text-lg font-bold leading-tight">Backlog</h3>
                             </div>
-                            <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center border border-orange-500/30 text-orange-400">
-                                <i data-lucide="layers" class="w-5 h-5"></i>
+                            <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+                                <i data-lucide="layers" class="w-4 h-4 text-white"></i>
                             </div>
                         </div>
 
-                        <div>
-                            <div class="flex justify-between text-xs font-bold text-orange-200/80 mb-2">
+                        <div class="mt-3">
+                            <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
                                 <span>Recovered</span>
                                 <span>${totalPercent}%</span>
                             </div>
-                            <div class="h-3 w-full bg-orange-950 rounded-full overflow-hidden p-0.5 border border-orange-900">
-                                <div class="h-full bg-gradient-to-r from-red-500 via-orange-500 to-amber-400 rounded-full shadow-[0_0_15px_rgba(249,115,22,0.6)] w-0 transition-all duration-1000" style="width: ${totalPercent}%"></div>
+                            <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-yellow-300 to-white shadow-[0_0_10px_rgba(255,200,0,0.6)] rounded-full transition-all duration-1000" style="width: ${totalPercent}%"></div>
                             </div>
                         </div>
                     </div>
@@ -3108,7 +3085,6 @@ window.renderStats = function() {
 
     if (window.lucide) lucide.createIcons({ root: container });
 };
-
  function createTaskElementHTML(t, isSubTask = false) {
             // Updated Styles for "Pill" look
             let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
