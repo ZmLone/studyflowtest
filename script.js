@@ -181,29 +181,27 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
             initLocalMode();
         };
 
-        // --- DARK MODE LOGIC ---
-        window.toggleTheme = function() {
-            const html = document.documentElement;
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-                document.getElementById('theme-text').textContent = 'Light Mode';
-            } else {
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-                document.getElementById('theme-text').textContent = 'Dark Mode';
-            }
-        };
+// --- DARK MODE LOGIC ---
+window.toggleTheme = function() {
+    const html = document.documentElement;
+    if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        // Removed 'theme-text' update since the element doesn't exist
+    } else {
+        html.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        // Removed 'theme-text' update
+    }
+};
 
-        // Initialize Theme (Default to Dark)
-        if (localStorage.theme === 'light') {
-            document.documentElement.classList.remove('dark');
-            document.getElementById('theme-text').textContent = 'Light Mode';
-        } else {
-            // Default path
-            document.documentElement.classList.add('dark');
-            document.getElementById('theme-text').textContent = 'Dark Mode';
-        }
+// Initialize Theme (Default to Dark)
+if (localStorage.theme === 'light') {
+    document.documentElement.classList.remove('dark');
+} else {
+    document.documentElement.classList.add('dark');
+}
+
 
         // --- DATA ---
 const mainSchedule = [
@@ -1282,7 +1280,7 @@ window.updateProfileUI = function(user) {
     const updateElements = (prefix) => {
         const card = document.getElementById(`${prefix}-user-card`);
         const avatarBg = document.getElementById(`${prefix}-user-avatar-bg`);
-        const avatarText = document.getElementById(`${prefix}-user-avatar-text`);
+        // Removed avatarText because new design puts text directly in avatarBg
         const nameEl = document.getElementById(`${prefix}-user-name`);
         const statusEl = document.getElementById(`${prefix}-sync-status`);
         const btn = document.getElementById(`${prefix}-auth-btn`);
@@ -1294,7 +1292,10 @@ window.updateProfileUI = function(user) {
         }
         
         avatarBg.className = `flex items-center justify-center font-bold shadow-sm transition-colors ${prefix === 'mobile' ? 'w-10 h-10 rounded-full text-sm' : 'w-9 h-9 rounded-xl text-xs'} ${currentStyle.avatarBg}`;
-        avatarText.textContent = isGuest ? "?" : initial;
+        
+        // FIX: Set text directly on the background element
+        avatarBg.textContent = isGuest ? "?" : initial;
+        
         nameEl.textContent = name;
         
         statusEl.innerHTML = isGuest 
@@ -1309,7 +1310,6 @@ window.updateProfileUI = function(user) {
             btn.className = `${prefix === 'mobile' ? 'p-2' : 'p-1.5'} rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all`;
         }
     };
-
     updateElements('mobile');
     updateElements('desktop');
     if(window.lucide) lucide.createIcons();
