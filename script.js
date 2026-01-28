@@ -2943,10 +2943,18 @@ window.renderTasks = renderTasks;
             if(els.agendaDate) els.agendaDate.textContent = dateStr;
         }
 
-// ✅ PASTE THIS NEW UI CODE ✅
 window.renderStats = function() {
     const container = document.getElementById('stats-container');
     if (!container) return;
+
+    // 1. GATHER ALL COMPLETED TASKS (From all dates)
+    // This creates a "Set" of every topic you have ever marked done.
+    const allCompleted = new Set();
+    if (state.tasks) {
+        Object.values(state.tasks).flat().forEach(t => {
+            if (t.completed) allCompleted.add(t.text);
+        });
+    }
 
     // --- 1. CALCULATE PRIMARY EXAM DATA ---
     const nextExam = state.nextExam;
@@ -2959,16 +2967,32 @@ window.renderStats = function() {
         const examDate = new Date(nextExam.date);
         daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
         
-        // Calculate Syllabus Completion for Next Exam
-        let totalTopics = 0;
-        let doneTopics = 0;
-        nextExam.syllabus.forEach(s => {
-            s.dailyTests.forEach(dt => {
-                totalTopics++;
-                if (state.dailyTestsAttempted[dt.name]) doneTopics++;
+        // NEW GRANULAR CALCULATION
+        let totalSubTopics = 0;
+        let doneSubTopics = 0;
+        
+        nextExam.syllabus.forEach(chapter => {
+            chapter.dailyTests.forEach(dt => {
+                // Check if the FULL test was marked done (via the Green Card)
+                const isTestDone = state.dailyTestsAttempted[dt.name];
+                
+                dt.subs.forEach(sub => {
+                    totalSubTopics++;
+                    
+                    // The standard name for a task
+                    const taskName = `Study: ${chapter.topic} - ${sub}`;
+                    
+                    // Count as done if:
+                    // 1. The whole test is marked done OR
+                    // 2. The specific task checkbox is checked
+                    if (isTestDone || allCompleted.has(taskName)) {
+                        doneSubTopics++;
+                    }
+                });
             });
         });
-        const primaryPercent = totalTopics === 0 ? 0 : Math.round((doneTopics / totalTopics) * 100);
+
+        const primaryPercent = totalSubTopics === 0 ? 0 : Math.round((doneSubTopics / totalSubTopics) * 100);
 
         primaryHtml = `
             <div class="relative overflow-hidden rounded-2xl p-5 md:p-6 bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-indigo-500/30 text-white flex flex-col justify-between h-full group transition-all hover:scale-[1.01]">
@@ -3008,11 +3032,7 @@ window.renderStats = function() {
     let backlogHtml = '';
     
     if (typeof backlogPlan !== 'undefined') {
-        // A. Total Backlog Calc
-        let totalBacklog = 0;
-        let doneBacklog = 0;
-        
-        // B. Active Phase Calc
+        // A. Active Phase Calc
         const planStart = new Date(backlogPlan.startDate);
         const today = new Date();
         const diffTime = Math.abs(today - planStart);
@@ -3022,28 +3042,37 @@ window.renderStats = function() {
         if(diffDays > 15) currentPhase = 2;
         if(diffDays > 30) currentPhase = 3;
         if(diffDays > 45) currentPhase = 4;
-        if(diffDays > 60) currentPhase = 4; // Cap at 4
+        if(diffDays > 60) currentPhase = 4; 
 
-        let phaseTotal = 0;
-        let phaseDone = 0;
+        // NEW GRANULAR CALCULATION FOR BACKLOG
+        let totalBacklogSubs = 0;
+        let doneBacklogSubs = 0;
+        let phaseTotalSubs = 0;
+        let phaseDoneSubs = 0;
 
-        backlogPlan.syllabus.forEach(s => {
-            // Check Phase
-            const isPhase = s.phase === currentPhase;
+        backlogPlan.syllabus.forEach(chapter => {
+            // Check if this chapter belongs to current phase
+            const isPhase = chapter.phase === currentPhase;
             
-            s.dailyTests.forEach(dt => {
-                totalBacklog++;
-                if (state.dailyTestsAttempted[dt.name]) doneBacklog++;
+            chapter.dailyTests.forEach(dt => {
+                const isTestDone = state.dailyTestsAttempted[dt.name];
+                
+                dt.subs.forEach(sub => {
+                    totalBacklogSubs++;
+                    if (isPhase) phaseTotalSubs++;
 
-                if (isPhase) {
-                    phaseTotal++;
-                    if (state.dailyTestsAttempted[dt.name]) phaseDone++;
-                }
+                    const taskName = `Study: ${chapter.topic} - ${sub}`;
+                    
+                    if (isTestDone || allCompleted.has(taskName)) {
+                        doneBacklogSubs++;
+                        if (isPhase) phaseDoneSubs++;
+                    }
+                });
             });
         });
 
-        const totalPercent = totalBacklog === 0 ? 0 : Math.round((doneBacklog / totalBacklog) * 100);
-        const phasePercent = phaseTotal === 0 ? 0 : Math.round((phaseDone / phaseTotal) * 100);
+        const totalPercent = totalBacklogSubs === 0 ? 0 : Math.round((doneBacklogSubs / totalBacklogSubs) * 100);
+        const phasePercent = phaseTotalSubs === 0 ? 0 : Math.round((phaseDoneSubs / phaseTotalSubs) * 100);
 
         // --- Backlog HTML (Stacked Small Cards) ---
         backlogHtml = `
@@ -3054,7 +3083,7 @@ window.renderStats = function() {
                     </div>
                     <div class="flex justify-between items-start relative z-10">
                         <div>
-                            <div class="text-[10px] uppercase font-bold opacity-80 mb-0.5 tracking-wide">Current Backlog Focus</div>
+                            <div class="text-[10px] uppercase font-bold opacity-80 mb-0.5 tracking-wide">Current Focus</div>
                             <h3 class="text-lg font-bold">Phase ${currentPhase}</h3>
                         </div>
                         <div class="text-right">
@@ -3088,7 +3117,6 @@ window.renderStats = function() {
     }
 
     // --- 3. FINAL LAYOUT COMPOSITION ---
-    // Grid Layout: Mobile = Stacked, Desktop = 2 Columns (Primary gets 60%, Backlog gets 40%)
     container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             <div class="md:col-span-3 h-full">
@@ -3103,7 +3131,6 @@ window.renderStats = function() {
     // Initialize Icons
     if (window.lucide) lucide.createIcons({ root: container });
 };
-
 
  function createTaskElementHTML(t, isSubTask = false) {
             // Updated Styles for "Pill" look
@@ -3847,5 +3874,4 @@ document.addEventListener('mousemove', (e) => {
         const y = (window.innerHeight - e.pageY * speed) / 100;
         layer.style.transform = `translateX(${x}px) translateY(${y}px)`;
     });
-
 });
