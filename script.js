@@ -2286,10 +2286,13 @@ window.renderLeaderboardList = function() {
     };
 
 // ==========================================
-// 🧠 SMART MIX AI ENGINE (Granular Logic)
+// 🧠 SMART MIX AI ENGINE (Final Fix)
 // ==========================================
 
-// 1. Define Base Points per DAILY TEST (Not just per chapter)
+// 1. GLOBAL VARIABLE (Crucial for sharing data)
+window.currentUnifiedSuggestion = [];
+
+// 2. Define Base Points per DAILY TEST
 function getTestBasePoints(subject, topic) {
     if (subject === 'Physics') return 4;
     if (subject === 'Chemistry') {
@@ -2308,16 +2311,12 @@ function getTestBasePoints(subject, topic) {
     return 1;
 }
 
-// 2. Calculate the exact value of a specific sub-topic
-// Logic: (Base Points of DT) / (Number of Sub-topics in that DT)
+// 3. Calculate the exact value of a specific sub-topic
 function getSpecificSubTopicValue(syllabusList, subject, topic, subTopicName) {
     if (!syllabusList) return 0;
 
     for (const chapter of syllabusList) {
-        // Loose matching for chapter to handle variations
         if (chapter.subject === subject && (chapter.topic === topic || topic.includes(chapter.topic) || chapter.topic.includes(topic))) {
-            
-            // Find the Daily Test containing this sub-topic
             for (const dt of chapter.dailyTests) {
                 if (dt.subs.includes(subTopicName)) {
                     const basePoints = getTestBasePoints(chapter.subject, chapter.topic);
@@ -2327,33 +2326,30 @@ function getSpecificSubTopicValue(syllabusList, subject, topic, subTopicName) {
             }
         }
     }
-    return 0; // Not found in syllabus (Custom task)
+    return 0; 
 }
 
+// 4. Main Check Function
 window.checkStudyPace = function() {
     const container = document.getElementById('ai-strategy-container');
     if (!container) return;
     
     // Reset Container
     container.innerHTML = ''; 
-    container.classList.add('hidden'); // Hide initially
+    container.classList.add('hidden'); 
     
-    // --- 1. SETUP DATA ---
     const today = new Date(); 
     today.setHours(0,0,0,0);
     const k = formatDateKey(state.selectedDate);
-    const todaysTasks = state.tasks[k] || []; // Tasks currently on the list
+    const todaysTasks = state.tasks[k] || []; 
     
-    // Get History (All completed tasks ever)
     const allCompleted = new Set();
     Object.values(state.tasks).flat().forEach(t => { if (t.completed) allCompleted.add(t.text); });
 
-    // --- 2. CALCULATOR: REMAINING POINTS & DAILY RATE ---
-    // FIXED NAME: Changed from calculateTrackLoad to calculateTrackMetrics to match usage
+    // --- CALCULATOR FUNCTION ---
     function calculateTrackMetrics(syllabus, deadlineDate, trackType) {
         if (!syllabus || !deadlineDate) return { pending: [], dailyRateRequired: 0 };
         
-        // Determine Deadline
         let effectiveDeadline = new Date(deadlineDate);
         let activePhase = 1;
 
@@ -2364,22 +2360,19 @@ window.checkStudyPace = function() {
             if(diff > 30) activePhase = 3;
             if(diff > 45) activePhase = 4;
             
-            // Backlog deadline is the end of the current 15-day phase
             effectiveDeadline = new Date(planStart);
             effectiveDeadline.setDate(planStart.getDate() + (activePhase * 15));
         } else {
-            // Main exam deadline is 1 day before exam
             effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
         }
 
         let daysLeft = Math.ceil((effectiveDeadline - today) / (1000 * 60 * 60 * 24));
-        if (daysLeft < 1) daysLeft = 1; // Prevent division by zero
+        if (daysLeft < 1) daysLeft = 1;
 
         let totalPendingPoints = 0;
         let pendingTasks = [];
 
         syllabus.forEach(chapter => {
-            // Filter Backlog by Phase
             if (trackType === 'backlog') {
                 if (chapter.phase && chapter.phase !== activePhase) return;
             }
@@ -2390,12 +2383,10 @@ window.checkStudyPace = function() {
                 const subCount = dt.subs.length;
                 if (subCount === 0) return;
                 
-                const valPerSub = basePoints / subCount; // DIVIDE POINTS EQUALLY
+                const valPerSub = basePoints / subCount; 
 
-                // Identify which subs are strictly remaining
                 const remainingSubs = dt.subs.filter(sub => {
                     const taskName = `Study: ${chapter.topic} - ${sub}`;
-                    // It is pending if NOT done AND NOT currently on today's list
                     const isDone = allCompleted.has(taskName);
                     const isOnList = todaysTasks.some(t => t.text === taskName);
                     return !isDone && !isOnList;
@@ -2411,8 +2402,8 @@ window.checkStudyPace = function() {
                         topic: chapter.topic,
                         subCount: remainingSubs.length,
                         points: pointsForTheseSubs,
-                        valPerSub: valPerSub, // Store unit value for logic
-                        rawBase: basePoints,  // Store base for sorting
+                        valPerSub: valPerSub,
+                        rawBase: basePoints,
                         subs: remainingSubs
                     });
                 }
@@ -2425,12 +2416,12 @@ window.checkStudyPace = function() {
         };
     }
 
-    // Call the function using the corrected name
+    // --- EXECUTE CALCULATIONS ---
     const mainMetrics = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
     const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
         calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : { pending: [], dailyRateRequired: 0 };
 
-    // --- 3. CALCULATE CURRENT SCORE (What user has added today) ---
+    // --- CALCULATE CURRENT SCORE ---
     let currentScore = 0;
     
     todaysTasks.forEach(t => {
@@ -2439,9 +2430,6 @@ window.checkStudyPace = function() {
             if (parts.length > 1) {
                 const topic = parts[0];
                 const sub = parts[1];
-                
-                // We must find which track this task belongs to to get accurate value
-                // Try Main first, then Backlog
                 let val = getSpecificSubTopicValue(state.nextExam.syllabus, t.subject, topic, sub);
                 if (val === 0 && typeof backlogPlan !== 'undefined') {
                     val = getSpecificSubTopicValue(backlogPlan.syllabus, t.subject, topic, sub);
@@ -2451,63 +2439,54 @@ window.checkStudyPace = function() {
         }
     });
 
-    // --- 4. DETERMINE DEFICIT ---
-    // Aggression Factor: 1.1 (Buffer to ensure we stay slightly ahead)
+    // --- DETERMINE SUGGESTIONS ---
     const targetScore = (mainMetrics.dailyRateRequired + backlogMetrics.dailyRateRequired) * 1.1;
     
-    // If the user has planned enough points, STOP here.
     if (currentScore >= (targetScore - 0.1)) {
         return; 
     }
 
     const deficit = targetScore - currentScore;
-
-    // --- 5. GENERATE SUGGESTIONS TO FILL DEFICIT ---
     
-    // Sort logic: High value items first
     mainMetrics.pending.sort((a,b) => b.valPerSub - a.valPerSub);
     backlogMetrics.pending.sort((a,b) => b.valPerSub - a.valPerSub);
 
     let suggestions = [];
     let fill = 0;
-
-    // Distribution Logic: 
-    // If we have both tracks, try to give 70% main, 30% backlog
     const needsBacklog = backlogMetrics.pending.length > 0;
-    let backlogQuota = needsBacklog ? Math.max(2, deficit * 0.3) : 0; // Force at least 2 pts if backlog exists
+    let backlogQuota = needsBacklog ? Math.max(2, deficit * 0.3) : 0; 
 
-    // A. Fill Backlog Quota
+    // A. Backlog
     for (let task of backlogMetrics.pending) {
         if (fill >= backlogQuota) break;
         suggestions.push(task);
         fill += task.points;
     }
-
-    // B. Fill Remainder with Main
+    // B. Main
     for (let task of mainMetrics.pending) {
         if (fill >= deficit) break;
         suggestions.push(task);
         fill += task.points;
     }
-    
-    // C. If still under deficit (e.g. ran out of Main), add more Backlog
+    // C. Fill Remainder
     if (fill < deficit && backlogMetrics.pending.length > 0) {
         for (let task of backlogMetrics.pending) {
             if (fill >= deficit) break;
-            if (!suggestions.includes(task)) { // Avoid dupes
+            if (!suggestions.includes(task)) {
                 suggestions.push(task);
                 fill += task.points;
             }
         }
     }
 
-    currentUnifiedSuggestion = suggestions;
+    // SAVE TO GLOBAL VARIABLE
+    window.currentUnifiedSuggestion = suggestions;
+
     if (suggestions.length === 0) return;
 
-    // --- 6. RENDER UI (Instantly Visible) ---
+    // --- RENDER UI ---
     container.classList.remove('hidden');
-
-    const totalPointsDisplay = Math.round(fill * 10) / 10; // Round to 1 decimal
+    const totalPointsDisplay = Math.round(fill * 10) / 10; 
     const mainCount = suggestions.filter(t => t.track === 'main').length;
     const backlogCount = suggestions.filter(t => t.track === 'backlog').length;
 
@@ -2558,14 +2537,14 @@ window.checkStudyPace = function() {
     if (window.lucide) lucide.createIcons({ root: container });
 };
 
-// 7. Accept Plan Button Logic
+// 5. Accept Plan Button Logic
 window.acceptUnifiedPlan = function() {
-    if (!currentUnifiedSuggestion || currentUnifiedSuggestion.length === 0) return;
+    if (!window.currentUnifiedSuggestion || window.currentUnifiedSuggestion.length === 0) return;
 
     let addedCount = 0;
     const key = formatDateKey(state.selectedDate);
 
-    currentUnifiedSuggestion.forEach(item => {
+    window.currentUnifiedSuggestion.forEach(item => {
         item.subs.forEach(sub => {
             const taskText = `Study: ${item.topic} - ${sub}`;
             // Check dupes
@@ -2579,7 +2558,7 @@ window.acceptUnifiedPlan = function() {
     });
 
     saveData();
-    renderAll(); // This will re-run checkStudyPace, see the score is met, and hide the container.
+    renderAll(); 
 
     if (window.confetti) {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#6366f1', '#f97316'] });
@@ -2587,7 +2566,6 @@ window.acceptUnifiedPlan = function() {
     
     showToast(`🚀 Added ${addedCount} optimized topics to your schedule!`);
 };
-
 
 // --- PLANNER FUNCTIONS ---
 
