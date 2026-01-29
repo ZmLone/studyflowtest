@@ -2487,6 +2487,50 @@ window.checkStudyPace = function() {
         if(window.lucide) lucide.createIcons({ root: container });
     }
 };
+// ==========================================
+// ✅ SMART MIX ACTION HANDLER
+// ==========================================
+window.acceptSuggestions = function(track) {
+    // 1. Get the correct suggestion pool based on the track
+    const suggestions = (track === 'main') 
+        ? window.currentMainSuggestions 
+        : window.currentBacklogSuggestions;
+
+    if (!suggestions || suggestions.length === 0) return;
+
+    // 2. Add each sub-topic as a new task
+    suggestions.forEach(item => {
+        item.subs.forEach(sub => {
+            const taskText = `Study: ${item.topic} - ${sub}`;
+            
+            // Avoid duplicates: Check if task already exists for today
+            const k = formatDateKey(state.selectedDate);
+            const exists = (state.tasks[k] || []).some(t => t.text === taskText);
+            
+            if (!exists) {
+                // Uses your existing addTask helper
+                addTask(taskText, track, item.subject, item.topic);
+            }
+        });
+    });
+
+    // 3. Success Feedback
+    if (typeof confetti === 'function') {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: track === 'main' ? ['#0284c7', '#38bdf8'] : ['#ea580c', '#f97316']
+        });
+    }
+
+    if (typeof showToast === 'function') {
+        showToast(`Added ${suggestions.length} topics to your mission!`);
+    }
+    
+    // 4. Refresh UI to hide the mix and show new tasks
+    renderAll();
+};
 
 // --- PLANNER FUNCTIONS ---
 
