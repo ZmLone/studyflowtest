@@ -2347,10 +2347,23 @@ window.checkStudyPace = function() {
     function calculateTrackMetrics(syllabus, baseDate, trackType) {
         if (!syllabus || !baseDate) return null;
         
-        // ... (Date and Phase Logic Same as Before) ...
-        let targetDate = new Date(baseDate); 
-        // ...
-        
+        // 1. SETUP DEADLINE & PHASE
+    let targetDate = new Date(baseDate);
+    targetDate.setHours(0,0,0,0);
+    let activePhase = 1;
+        // --- ADD THIS SECTION START ---
+    // Calculate days remaining until the target date
+    const msDiff = targetDate - simulationDate;
+    let studyDays = Math.ceil(msDiff / (1000 * 60 * 60 * 24));
+
+// Safety: Ensure we don't divide by zero if the exam is today
+    if (studyDays < 1) studyDays = 1; 
+    // --- ADD THIS SECTION END ---
+
+if (trackType === 'backlog') {
+        const planStart = backlogPlan.startDate ? new Date(backlogPlan.startDate) : new Date();
+        // ... rest of your backlog phase logic
+
         // 3. AGGREGATE POINTS
         let grandTotalPoints = 0;
         let assumedDonePoints = 0;
