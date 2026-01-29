@@ -2286,250 +2286,229 @@ window.renderLeaderboardList = function() {
     };
 
 
-
-// ==========================================
-// 🧠 SMART MIX AI ENGINE (Stability Fix)
-// ==========================================
-
-// 1. GLOBAL VARIABLES
-window.currentMainSuggestions = [];
-window.currentBacklogSuggestions = [];
-
-
-window.getTestPointValue = function(subject, topic) {
-    const s = (subject || '').toLowerCase();
-    const t = (topic || '').toLowerCase();
-
-    // PHYSICS (4 Points)
-    if (s.includes('physics') || s.includes('phy')) return 4; 
-
-    // CHEMISTRY (Split: Org/Phys = 3, Inorg = 2)
-    if (s.includes('chem')) {
-        // Keywords for Physical & Organic Chemistry (3 Points)
-        const highValueChem = [
-            // Physical
-            "atom", "equilibrium", "thermo", "states of matter", "solid state", 
-            "solution", "electro", "kinetics", "surface", "bonding", "redox", "mole",
-            // Organic
-            "goc", "organic", "hydrocarbon", "halo", "alcohol", "phenol", "ether",
-            "aldehyde", "ketone", "acid", "amine", "biomolecule", "polymer", "chem in everyday"
-        ];
-
-        // If topic matches High Value list -> 3 Points
-        if (highValueChem.some(k => t.includes(k))) return 3;
-        
-        // Otherwise (Inorganic: p-block, d-block, coordination, periodic, s-block) -> 2 Points
-        return 2;
-    }
-
-    // BIOLOGY (1 Point)
-    if (s.includes('bot') || s.includes('zoo') || s.includes('bio')) return 1;
-
-    // Fallback
-    return 1;
-};
-
+// --- NEW: VIBRANT BALANCED MIX CARD ---
+let currentUnifiedSuggestion = [];
 
 
 window.checkStudyPace = function() {
     const container = document.getElementById('ai-strategy-container');
     if (!container) return;
     
-    // 1. INSTANT RESET
     container.innerHTML = ''; 
-    container.classList.add('hidden'); 
-    
-    const simulationDate = state.selectedDate ? new Date(state.selectedDate) : new Date();
-    simulationDate.setHours(0,0,0,0);
-    const dateKey = formatDateKey(state.selectedDate);
-    
-    // --- CALCULATOR ---
-    function calculateTrackMetrics(syllabus, baseDate, trackType) {
-        if (!syllabus || !baseDate) return null;
-        
-        let targetDate = new Date(baseDate);
-        targetDate.setHours(0,0,0,0);
-        
-        const msDiff = targetDate - simulationDate;
-        let studyDays = Math.ceil(msDiff / (1000 * 60 * 60 * 24));
+    container.classList.remove('hidden');
 
-        // FIXED: Corrected comment syntax
-        // Safety: Ensure we don't divide by zero if the exam is today
-        if (studyDays < 1) studyDays = 1; 
+    const today = new Date(); 
+    today.setHours(0,0,0,0);
+    const k = formatDateKey(state.selectedDate);
+    const todaysTasks = state.tasks[k] || [];
+    
+    // HISTORY CHECK
+    const allCompleted = new Set();
+    Object.values(state.tasks).flat().forEach(t => { if (t.completed) allCompleted.add(t.text); });
 
-        let grandTotalPoints = 0;
-        let assumedDonePoints = 0;
-        let pendingQueue = [];
+    function getWeight(subject, topic) {
+        if (subject === 'Physics') return 4; 
+        if (subject === 'Chemistry') {
+            const t = (topic || '').toLowerCase();
+            if (t.includes('organic') || t.includes('hydro') || t.includes('halo') || 
+                t.includes('alcohol') || t.includes('aldehyde') || t.includes('amine') || 
+                t.includes('thermo') || t.includes('equilibrium') || t.includes('electro')) return 3;
+            return 2; 
+        }
+        return 1; 
+    }
+
+    function calculateTrackMetrics(syllabus, deadlineDate, trackType) {
+        if (!syllabus || !deadlineDate) return { pending: [], rate: 0, days: 1 };
         
+        let effectiveDeadline = new Date(deadlineDate);
+        if (trackType === 'main') effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
+        else {
+            const planStart = backlogPlan.startDate || new Date();
+            const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+            let currentPhase = 1;
+            if(diff > 15) currentPhase = 2;
+            if(diff > 30) currentPhase = 3;
+            if(diff > 45) currentPhase = 4;
+            effectiveDeadline = new Date(planStart);
+            effectiveDeadline.setDate(planStart.getDate() + (currentPhase * 15));
+        }
+
+        let daysLeft = Math.ceil((effectiveDeadline - today) / (1000 * 60 * 60 * 24));
+        if (daysLeft < 1) daysLeft = 1; 
+
+        let totalPoints = 0;
+        let pendingTasks = [];
+
         syllabus.forEach(chapter => {
-            const ptsPerDT = getTestPointValue(chapter.subject, chapter.topic);
-            
+            if (trackType === 'backlog') {
+                const planStart = backlogPlan.startDate || new Date();
+                const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+                let phase = 1;
+                if(diff > 15) phase = 2;
+                if(diff > 30) phase = 3;
+                if(diff > 45) phase = 4;
+                if (chapter.phase && chapter.phase !== phase) return;
+            }
+
             chapter.dailyTests.forEach(dt => {
-                const subCount = dt.subs.length;
-                if (subCount === 0) return;
+                const remainingSubs = dt.subs.filter(sub => !allCompleted.has(`Study: ${chapter.topic} - ${sub}`));
+                if (remainingSubs.length === 0) return;
 
-                const valPerSub = ptsPerDT / subCount;
-                grandTotalPoints += ptsPerDT;
+                const isPlannedToday = remainingSubs.some(sub => todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`));
 
-                const isWholeTestDone = state.dailyTestsAttempted && state.dailyTestsAttempted[dt.name];
-                
-                if (isWholeTestDone) {
-                    assumedDonePoints += ptsPerDT;
-                    return; 
-                }
+                if (!isPlannedToday) {
+                    const w = getWeight(chapter.subject, chapter.topic);
+                    const ratio = remainingSubs.length / dt.subs.length;
+                    const adjustedPoints = w * ratio;
 
-                let subsCovered = 0;
-                let pendingSubs = [];
-
-                dt.subs.forEach(sub => {
-                    let covered = false;
-                    const taskSignature = `Study: ${chapter.topic} - ${sub}`;
-
-                    for (const [dKey, tasks] of Object.entries(state.tasks)) {
-                        const match = tasks.find(t => t.text === taskSignature);
-                        if (match && match.completed) { covered = true; break; }
-                        // Only count past tasks as covered for pacing
-                        const taskDate = new Date(dKey);
-                        if (match && taskDate < simulationDate) { covered = true; break; }
-                    }
-
-                    const onSimulationList = (state.tasks[dateKey] || []).some(t => t.text === taskSignature);
-
-                    if (covered) subsCovered++;
-                    else if (!onSimulationList) pendingSubs.push(sub);
-                });
-
-                assumedDonePoints += (subsCovered * valPerSub);
-
-                if (pendingSubs.length > 0) {
-                    pendingQueue.push({
-                        track: trackType,
+                    pendingTasks.push({
+                        name: dt.name,
                         subject: chapter.subject,
                         topic: chapter.topic,
-                        valPerSub: valPerSub,
-                        points: pendingSubs.length * valPerSub,
-                        subs: pendingSubs
+                        points: adjustedPoints,
+                        rawPoints: w,
+                        track: trackType,
+                        subs: remainingSubs
                     });
+                    totalPoints += adjustedPoints;
                 }
             });
         });
 
-        let currentScore = 0;
-        (state.tasks[dateKey] || []).forEach(t => {
-             if(t.text.startsWith("Study: ")) {
-                 const parts = t.text.replace("Study: ", "").split(" - ");
-                 if(parts.length >= 2) {
-                     const sylItem = syllabus.find(c => c.topic === parts[0]);
-                     if(sylItem) {
-                         const pts = getTestPointValue(sylItem.subject, sylItem.topic);
-                         const dt = sylItem.dailyTests.find(d => d.subs.includes(parts[1]));
-                         if(dt) currentScore += (pts / dt.subs.length);
-                     }
-                 }
-             }
-        });
-
-        const netRemaining = grandTotalPoints - assumedDonePoints;
-        const dailyRate = netRemaining <= 0 ? 0 : netRemaining / studyDays;
-
-        return { track: trackType, dailyTarget: dailyRate, currentScore: currentScore, pending: pendingQueue };
-    } // FIXED: Closed calculateTrackMetrics function
-
-    // --- EXECUTE & RENDER ---
-    const main = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
-    const backlog = typeof backlogPlan !== 'undefined' ? 
-                    calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : null;
-
-    function renderCard(m, color) {
-        if(!m) return '';
-        const diff = m.currentScore - m.dailyTarget;
-        if(diff >= -0.1) return ''; 
-
-        let suggestions = [];
-        let needed = Math.abs(diff);
-        const pool = m.pending.sort((a,b) => b.valPerSub - a.valPerSub);
-        
-        for(let item of pool) {
-            if(needed <= 0) break;
-            suggestions.push(item);
-            needed -= item.points;
-        }
-        
-        if(m.track === 'main') window.currentMainSuggestions = suggestions;
-        else window.currentBacklogSuggestions = suggestions;
-
-        return `
-        <div class="rounded-2xl p-4 mb-4 text-white shadow-lg bg-gradient-to-r ${color === 'main' ? 'from-blue-600 to-indigo-700' : 'from-orange-500 to-red-600'} animate-in fade-in slide-in-from-top-2">
-            <div class="flex justify-between items-start mb-2">
-                <div>
-                    <h3 class="text-lg font-bold uppercase flex items-center gap-2">
-                        <i data-lucide="zap" class="w-4 h-4 text-yellow-300"></i> ${m.track} Smart Mix
-                    </h3>
-                    <div class="text-[10px] opacity-90 mt-0.5">Target: ${m.dailyTarget.toFixed(2)} pts/day</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-2xl font-black">${diff.toFixed(2)}</div>
-                    <div class="text-[9px] uppercase opacity-75">Pts Behind</div>
-                </div>
-            </div>
-            <button onclick="acceptSuggestions('${m.track}')" class="w-full py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs shadow-md mt-3 hover:bg-slate-50 transition-all">
-                Add Tasks to Close Gap
-            </button>
-        </div>`;
+        return { pending: pendingTasks, rate: totalPoints / daysLeft, days: daysLeft };
     }
 
-    const mainHTML = renderCard(main, 'main');
-    const backlogHTML = renderCard(backlog, 'backlog');
+    const mainMetrics = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
+    const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
+        calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : { pending: [], rate: 0 };
 
-    if (mainHTML || backlogHTML) {
-        container.innerHTML = mainHTML + backlogHTML;
-        container.classList.remove('hidden');
-        if(window.lucide) lucide.createIcons({ root: container });
+    // FIX 1: INCREASED AGGRESSION (1.1 -> 1.25)
+    // This raises the "Minimum Daily Target" so even small deletions trigger the AI.
+    const totalDailyRate = Math.ceil((mainMetrics.rate + backlogMetrics.rate) * 1.25);
+    
+    // FIX 2: COUNT ALL PLANNED TASKS (Correctly handles deletes)
+    let manualPoints = 0;
+    todaysTasks.forEach(t => { 
+        manualPoints += getWeight(t.subject, t.chapter); 
+    });
+
+    const deficit = totalDailyRate - manualPoints;
+    
+    // Only return if we have truly met the (now higher) target
+    if (deficit <= 0 || (mainMetrics.pending.length === 0 && backlogMetrics.pending.length === 0)) return;
+
+    const mainShare = mainMetrics.rate / (mainMetrics.rate + backlogMetrics.rate || 1);
+    let pointsForMain = deficit * mainShare;
+    let pointsForBacklog = deficit - pointsForMain;
+
+    // FIX 3: FORCE BACKLOG INCLUSION
+    // If we have backlog pending, ensure we allocate at least 2 points to it
+    // This prevents the "Physics (4pt)" tasks from eating the entire suggestion budget.
+    if (backlogMetrics.pending.length > 0 && pointsForBacklog < 2) {
+        pointsForBacklog = 2; // Force at least 2 points for backlog
+        pointsForMain = Math.max(0, deficit - pointsForBacklog); // Adjust main down
+    }
+
+    mainMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
+    backlogMetrics.pending.sort((a,b) => b.rawPoints - a.rawPoints);
+
+    let suggestions = [];
+    let currentFill = 0;
+
+    for (let task of mainMetrics.pending) {
+        if (currentFill >= pointsForMain) break;
+        suggestions.push(task);
+        currentFill += task.points;
+    }
+    currentFill = 0;
+    for (let task of backlogMetrics.pending) {
+        if (currentFill >= pointsForBacklog) break;
+        suggestions.push(task);
+        currentFill += task.points;
+    }
+
+    currentUnifiedSuggestion = suggestions;
+
+    if (suggestions.length > 0) {
+        const totalPointsDisplay = Math.round(suggestions.reduce((sum, t) => sum + t.points, 0));
+        const mainCount = suggestions.filter(t => t.track === 'main').length;
+        const backlogCount = suggestions.filter(t => t.track === 'backlog').length;
+
+        const html = `
+        <div class="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-r from-blue-600 to-cyan-500 shadow-xl shadow-blue-500/20 text-white mb-6 group animate-in slide-in-from-top-2">
+            <div class="absolute -right-10 -top-10 text-white opacity-10 group-hover:rotate-12 transition-transform duration-700">
+                <i data-lucide="sparkles" class="w-48 h-48"></i>
+            </div>
+
+            <div class="relative z-10 flex flex-col md:flex-row gap-6 items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 flex items-center gap-2">
+                            <i data-lucide="brain-circuit" class="w-3.5 h-3.5"></i>
+                            <span class="text-xs font-bold uppercase tracking-wider">AI Recommendation</span>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-2xl font-bold leading-tight mb-1">
+                        Load Balance: <span class="text-white drop-shadow-sm">${totalPointsDisplay} Points</span>
+                    </h3>
+                    
+                    <p class="text-blue-100 text-sm font-medium opacity-90">
+                        Optimized mix to hit your <strong>Feb 7</strong> and <strong>Phase 1</strong> deadlines.
+                    </p>
+
+                    <div class="flex items-center gap-3 mt-4">
+                        <div class="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-yellow-300"></i> 
+                            <span class="text-xs font-bold">${mainCount} Main</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
+                            <i data-lucide="history" class="w-3.5 h-3.5 text-orange-300"></i> 
+                            <span class="text-xs font-bold">${backlogCount} Backlog</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-8 py-4 bg-white text-blue-600 rounded-xl text-sm font-bold shadow-lg shadow-black/10 hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    Add to Today
+                </button>
+            </div>
+        </div>`;
+
+        container.innerHTML = html;
+        if (window.lucide) lucide.createIcons({ root: container });
     }
 };
-// ==========================================
-// ✅ SMART MIX ACTION HANDLER
-// ==========================================
-window.acceptSuggestions = function(track) {
-    // 1. Get the correct suggestion pool based on the track
-    const suggestions = (track === 'main') 
-        ? window.currentMainSuggestions 
-        : window.currentBacklogSuggestions;
+window.acceptUnifiedPlan = function() {
+    if (!currentUnifiedSuggestion || currentUnifiedSuggestion.length === 0) return;
 
-    if (!suggestions || suggestions.length === 0) return;
+    let addedCount = 0;
+    const key = formatDateKey(state.selectedDate);
 
-    // 2. Add each sub-topic as a new task
-    suggestions.forEach(item => {
+    currentUnifiedSuggestion.forEach(item => {
         item.subs.forEach(sub => {
             const taskText = `Study: ${item.topic} - ${sub}`;
-            
-            // Avoid duplicates: Check if task already exists for today
-            const k = formatDateKey(state.selectedDate);
-            const exists = (state.tasks[k] || []).some(t => t.text === taskText);
+            // Check dupes
+            const exists = (state.tasks[key] || []).some(t => t.text === taskText);
             
             if (!exists) {
-                // Uses your existing addTask helper
-                addTask(taskText, track, item.subject, item.topic);
+                addTask(taskText, item.track, item.subject, item.topic);
+                addedCount++;
             }
         });
     });
 
-    // 3. Success Feedback
-    if (typeof confetti === 'function') {
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: track === 'main' ? ['#0284c7', '#38bdf8'] : ['#ea580c', '#f97316']
-        });
-    }
+    saveData();
+    renderAll();
 
-    if (typeof showToast === 'function') {
-        showToast(`Added ${suggestions.length} topics to your mission!`);
+    // Celebration
+    if (window.confetti) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#6366f1', '#f97316'] });
     }
     
-    // 4. Refresh UI to hide the mix and show new tasks
-    renderAll();
+    showToast(`🚀 Balanced Plan Activated! Added ${addedCount} topics to your list.`);
 };
 
 // --- PLANNER FUNCTIONS ---
@@ -2912,7 +2891,8 @@ window.assignChapterTime = function(chapName, inputId) {
             debouncedRender(query, type);
         };
 
-   window.renderAll = function() {
+        
+window.renderAll = function() {
     renderHeader();
     updateHeaderPrayerBtn();
     renderStats();
@@ -2920,16 +2900,29 @@ window.assignChapterTime = function(chapName, inputId) {
     // Performance Optimization: Lazy Rendering
     if (state.activeView === 'overview') {
         renderTasks();
-        
-        // FORCE UPDATE: Ensure AI checks pace every time the UI updates (e.g., deletions)
+        // FORCE UPDATE: Ensure AI checks pace every time the UI updates (e.g. deletions)
         if (typeof checkStudyPace === 'function') {
             checkStudyPace(); 
         }
-    } 
-    // ... rest of the function (target, backlog, etc.)
-};     
-
-
+    } else if (state.activeView === 'target') {
+        renderSyllabus('main');
+    } else if (state.activeView === 'backlog') {
+        renderSyllabus('backlog');
+    } else if (state.activeView === 'mistakes') {
+        if(state.activeNotebook) {
+            renderNotebookEntries();
+        } else {
+            updateShelfCounts();
+        }
+    } else if (state.activeView === 'namaz') {
+        renderNamazView();
+    } else if (state.activeView === 'leaderboard') {
+        renderLeaderboardList();
+    }
+    
+    // Re-scan icons if library is loaded
+    if(window.lucide) lucide.createIcons();
+};
 window.renderTasks = renderTasks;
         function renderHeader() {
             const els = { date: document.getElementById('overview-date'), agendaDate: document.getElementById('agenda-date-display') };
@@ -2938,16 +2931,11 @@ window.renderTasks = renderTasks;
             if(els.agendaDate) els.agendaDate.textContent = dateStr;
         }
 
-// ==========================================
-// 📊 STATS CALIBRATION ENGINE (100% Accuracy Fix)
-// ==========================================
+window.renderStats = function() {
+    const container = document.getElementById('stats-container');
+    if (!container) return;
 
-// 1. UNIFIED CALCULATION HELPER
-// This ensures Main, Backlog, and Phase cards use the EXACT same logic.
-function calculateSyllabusProgress(syllabus, filterFn = null) {
-    if (!syllabus) return { total: 0, done: 0, percent: 0 };
-
-    // A. Gather All Completed Tasks (History)
+    // 1. GATHER HISTORY
     const allCompleted = new Set();
     if (state.tasks) {
         Object.values(state.tasks).flat().forEach(t => {
@@ -2955,83 +2943,70 @@ function calculateSyllabusProgress(syllabus, filterFn = null) {
         });
     }
 
-    let totalPoints = 0;
-    let donePoints = 0;
-
-    syllabus.forEach(chapter => {
-        // Apply Filter (e.g., for Phase specific stats)
-        if (filterFn && !filterFn(chapter)) return;
-
-        chapter.dailyTests.forEach(dt => {
-            // Check if the WHOLE test is marked as attempted
-            const isTestDone = state.dailyTestsAttempted[dt.name];
-
-            dt.subs.forEach(sub => {
-                totalPoints++;
-                
-                // It counts as done if:
-                // 1. The specific task "Study: Topic - Sub" is checked in the list
-                // 2. OR The parent Daily Test checkbox is checked
-                const taskName = `Study: ${chapter.topic} - ${sub}`;
-                if (isTestDone || allCompleted.has(taskName)) {
-                    donePoints++;
-                }
-            });
-        });
-    });
-
-    const percent = totalPoints === 0 ? 0 : Math.round((donePoints / totalPoints) * 100);
-    return { total: totalPoints, done: donePoints, percent: percent };
-}
-
-// 2. RENDER STATS UI
-window.renderStats = function() {
-    const container = document.getElementById('stats-container');
-    if (!container) return;
-
-    // --- A. CALCULATE MAIN EXAM STATS ---
-    const mainStats = calculateSyllabusProgress(
-        state.nextExam ? state.nextExam.syllabus : null
-    );
-    
-    // Days Left Calculation
+    // --- CALCULATE DATA ---
+    const nextExam = state.nextExam;
     let daysLeft = 0;
-    if (state.nextExam) {
+    let primaryPercent = 0;
+
+    if (nextExam) {
         const today = new Date();
         today.setHours(0,0,0,0);
-        const examDate = new Date(state.nextExam.date);
+        const examDate = new Date(nextExam.date);
         daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+        
+        let totalSubTopics = 0;
+        let doneSubTopics = 0;
+        
+        nextExam.syllabus.forEach(chapter => {
+            chapter.dailyTests.forEach(dt => {
+                const isTestDone = state.dailyTestsAttempted[dt.name];
+                dt.subs.forEach(sub => {
+                    totalSubTopics++;
+                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) doneSubTopics++;
+                });
+            });
+        });
+        primaryPercent = totalSubTopics === 0 ? 0 : Math.round((doneSubTopics / totalSubTopics) * 100);
     }
 
-    // --- B. CALCULATE BACKLOG STATS ---
-    let backlogTotalStats = { total: 0, done: 0, percent: 0 };
-    let backlogPhaseStats = { total: 0, done: 0, percent: 0 };
     let currentPhase = 1;
+    let totalPercent = 0;
+    let phasePercent = 0;
 
     if (typeof backlogPlan !== 'undefined') {
         const planStart = new Date(backlogPlan.startDate);
         const today = new Date();
-        today.setHours(0,0,0,0);
-        
-        // Calculate Phase based on days passed since start
-        const diffTime = today - planStart;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+        const diffDays = Math.ceil(Math.abs(today - planStart) / (1000 * 60 * 60 * 24)); 
         if(diffDays > 15) currentPhase = 2;
         if(diffDays > 30) currentPhase = 3;
         if(diffDays > 45) currentPhase = 4;
-        
-        // 1. Total Backlog Progress
-        backlogTotalStats = calculateSyllabusProgress(backlogPlan.syllabus);
+        if(diffDays > 60) currentPhase = 4; 
 
-        // 2. Current Phase Progress (Sprint)
-        backlogPhaseStats = calculateSyllabusProgress(
-            backlogPlan.syllabus, 
-            (chapter) => chapter.phase === currentPhase // Filter Function
-        );
+        let totalBacklogSubs = 0;
+        let doneBacklogSubs = 0;
+        let phaseTotalSubs = 0;
+        let phaseDoneSubs = 0;
+
+        backlogPlan.syllabus.forEach(chapter => {
+            const isPhase = chapter.phase === currentPhase;
+            chapter.dailyTests.forEach(dt => {
+                const isTestDone = state.dailyTestsAttempted[dt.name];
+                dt.subs.forEach(sub => {
+                    totalBacklogSubs++;
+                    if (isPhase) phaseTotalSubs++;
+                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) {
+                        doneBacklogSubs++;
+                        if (isPhase) phaseDoneSubs++;
+                    }
+                });
+            });
+        });
+
+        totalPercent = totalBacklogSubs === 0 ? 0 : Math.round((doneBacklogSubs / totalBacklogSubs) * 100);
+        phasePercent = phaseTotalSubs === 0 ? 0 : Math.round((phaseDoneSubs / phaseTotalSubs) * 100);
     }
 
-    // --- C. RENDER UI ---
+    // --- RENDER BRIGHT & COMPACT UI ---
     container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
             
@@ -3046,7 +3021,7 @@ window.renderStats = function() {
                                 <i data-lucide="crosshair" class="w-3 h-3 text-cyan-300"></i> Main Target
                             </div>
                             <h2 class="text-2xl md:text-3xl font-black text-white drop-shadow-sm truncate pr-2">
-                                ${state.nextExam ? state.nextExam.name : 'No Exam'}
+                                ${nextExam ? nextExam.name : 'No Exam'}
                             </h2>
                         </div>
                         <div class="text-right">
@@ -3057,15 +3032,14 @@ window.renderStats = function() {
 
                     <div class="mt-6">
                         <div class="flex justify-between items-end mb-2 px-1">
-                            <span class="text-xs font-bold text-indigo-100 uppercase">Syllabus Completion</span>
-                            <span class="text-2xl font-black">${mainStats.percent}%</span>
+                            <span class="text-xs font-bold text-indigo-100 uppercase">Mission Progress</span>
+                            <span class="text-2xl font-black">${primaryPercent}%</span>
                         </div>
                         <div class="h-5 w-full bg-black/20 rounded-full p-1 backdrop-blur-sm shadow-inner border border-white/10">
-                            <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 relative overflow-hidden shadow-lg shadow-cyan-400/30 transition-all duration-1000 ease-out" style="width: ${mainStats.percent}%">
+                            <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 relative overflow-hidden shadow-lg shadow-cyan-400/30 transition-all duration-1000 ease-out" style="width: ${primaryPercent}%">
                                 <div class="absolute inset-0 bg-white/30 w-full -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
                             </div>
                         </div>
-                        <p class="text-[10px] text-center mt-1 opacity-70 font-mono">${mainStats.done} / ${mainStats.total} Sub-topics</p>
                     </div>
                 </div>
             </div>
@@ -3086,11 +3060,11 @@ window.renderStats = function() {
                         
                         <div class="mt-3">
                             <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
-                                <span>Sprint Progress</span>
-                                <span>${backlogPhaseStats.percent}%</span>
+                                <span>Sprint</span>
+                                <span>${phasePercent}%</span>
                             </div>
                             <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
-                                <div class="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] rounded-full transition-all duration-1000" style="width: ${backlogPhaseStats.percent}%"></div>
+                                <div class="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] rounded-full transition-all duration-1000" style="width: ${phasePercent}%"></div>
                             </div>
                         </div>
                     </div>
@@ -3111,10 +3085,10 @@ window.renderStats = function() {
                         <div class="mt-3">
                             <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
                                 <span>Recovered</span>
-                                <span>${backlogTotalStats.percent}%</span>
+                                <span>${totalPercent}%</span>
                             </div>
                             <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-yellow-300 to-white shadow-[0_0_10px_rgba(255,200,0,0.6)] rounded-full transition-all duration-1000" style="width: ${backlogTotalStats.percent}%"></div>
+                                <div class="h-full bg-gradient-to-r from-yellow-300 to-white shadow-[0_0_10px_rgba(255,200,0,0.6)] rounded-full transition-all duration-1000" style="width: ${totalPercent}%"></div>
                             </div>
                         </div>
                     </div>
@@ -3126,8 +3100,6 @@ window.renderStats = function() {
 
     if (window.lucide) lucide.createIcons({ root: container });
 };
-
-
  function createTaskElementHTML(t, isSubTask = false) {
             // Updated Styles for "Pill" look
             let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
