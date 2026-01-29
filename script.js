@@ -2289,157 +2289,274 @@ window.renderLeaderboardList = function() {
 // --- NEW: VIBRANT BALANCED MIX CARD ---
 let currentUnifiedSuggestion = [];
 
+
+
+// --- AI STRATEGY: BALANCED MIX LOGIC ---
+
+// 1. Helper: Define Difficulty Categories & Points
+function getTopicDetails(subject, topic) {
+    const t = (topic || '').toLowerCase();
+    const s = subject;
+
+    // Default: Easy / 1 Point
+    let category = 'Easy';
+    let points = 1;
+
+    // --- HARD (Physics, Organic Chem) - 4 Points ---
+    const isPhysics = s === 'Physics';
+    const isOrganic = s === 'Chemistry' && (t.includes('organic') || t.includes('hydro') || t.includes('halo') || t.includes('alcohol') || t.includes('aldehyde') || t.includes('amine') || t.includes('goc'));
+    
+    // Exception: EMI is Medium
+    const isEMI = t.includes('emi') || t.includes('electromagnetic') || t.includes('induction');
+
+    if ((isPhysics && !isEMI) || isOrganic) {
+        category = 'Hard';
+        points = 4;
+    }
+
+    // --- MEDIUM (Phys Chem, EMI, Bio Genetics/Repro) - 2.5 Points ---
+    const isPhysChem = s === 'Chemistry' && (t.includes('equilibrium') || t.includes('thermo') || t.includes('electro') || t.includes('kinetics') || t.includes('solution'));
+    const isBioGenetics = s === 'Biology' && (t.includes('inheritance') || t.includes('molecular') || t.includes('genetic') || t.includes('dna'));
+    const isBioRepro = s === 'Biology' && (t.includes('sexual reproduction') || t.includes('flowering'));
+
+    if (isEMI || isPhysChem || isBioGenetics || isBioRepro) {
+        category = 'Medium';
+        points = 2.5; // Slightly higher than easy, lower than hard
+    }
+
+    return { category, points };
+}
+
 window.checkStudyPace = function() {
     const container = document.getElementById('ai-strategy-container');
     if (!container) return;
     
+    container.innerHTML = ''; 
+    container.classList.remove('hidden');
+
     const today = new Date(); 
     today.setHours(0,0,0,0);
     const k = formatDateKey(state.selectedDate);
     const todaysTasks = state.tasks[k] || [];
     
+    // HISTORY CHECK
     const allCompleted = new Set();
     Object.values(state.tasks).flat().forEach(t => { if (t.completed) allCompleted.add(t.text); });
 
-    // 1. GRANULAR POINT CALCULATOR
-    function getSubjectWeight(subject, topic) {
-        if (subject === 'Physics') return 4; 
-        if (subject === 'Chemistry') {
-            const t = (topic || '').toLowerCase();
-            const heavy = ['organic', 'hydro', 'halo', 'alcohol', 'aldehyde', 'amine', 'thermo', 'equilibrium', 'electro', 'kinetics'];
-            return heavy.some(h => t.includes(h)) ? 3 : 2; 
-        }
-        return 1; // Biology
-    }
-
+    // --- STEP 1: CALCULATE DEADLINES & RATES ---
     function calculateTrackMetrics(syllabus, deadlineDate, trackType) {
         if (!syllabus || !deadlineDate) return { pending: [], rate: 0 };
         
-        let daysLeft = Math.ceil((new Date(deadlineDate) - today) / (1000 * 60 * 60 * 24));
+        let effectiveDeadline = new Date(deadlineDate);
+        
+        // RULE: Main Test must be completed 1 day BEFORE exam
+        if (trackType === 'main') {
+            effectiveDeadline.setDate(effectiveDeadline.getDate() - 1);
+        } else {
+            // RULE: Backlog follows Phase deadlines
+            const planStart = backlogPlan.startDate || new Date();
+            const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+            let currentPhase = 1;
+            if(diff > 15) currentPhase = 2;
+            if(diff > 30) currentPhase = 3;
+            if(diff > 45) currentPhase = 4;
+            
+            // Set deadline to end of current phase
+            effectiveDeadline = new Date(planStart);
+            effectiveDeadline.setDate(planStart.getDate() + (currentPhase * 15));
+        }
+
+        let daysLeft = Math.ceil((effectiveDeadline - today) / (1000 * 60 * 60 * 24));
         if (daysLeft < 1) daysLeft = 1; 
 
-        let totalRemainingPoints = 0;
-        let suggestions = [];
+        let totalPoints = 0;
+        let pendingTasks = [];
 
         syllabus.forEach(chapter => {
-            // Backlog Phase Filtering
+            // Filter Backlog Phase
             if (trackType === 'backlog') {
                 const planStart = backlogPlan.startDate || new Date();
-                const d = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
-                const phase = d <= 15 ? 1 : d <= 30 ? 2 : d <= 45 ? 3 : 4;
+                const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+                let phase = 1;
+                if(diff > 15) phase = 2;
+                if(diff > 30) phase = 3;
+                if(diff > 45) phase = 4;
                 if (chapter.phase && chapter.phase !== phase) return;
             }
 
-            const subjectWeight = getSubjectWeight(chapter.subject, chapter.topic);
+            const { category, points } = getTopicDetails(chapter.subject, chapter.topic);
 
             chapter.dailyTests.forEach(dt => {
-                const totalSubsInTest = dt.subs.length;
-                const pointPerSub = subjectWeight / totalSubsInTest;
-
                 const remainingSubs = dt.subs.filter(sub => !allCompleted.has(`Study: ${chapter.topic} - ${sub}`));
-                
-                // Add to total pool of remaining points for the "Ideal Rate"
-                totalRemainingPoints += (remainingSubs.length * pointPerSub);
+                if (remainingSubs.length === 0) return;
 
-                // Check if NOT already in today's list
-                const missingFromToday = remainingSubs.filter(sub => 
-                    !todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`)
-                );
+                const isPlannedToday = remainingSubs.some(sub => todaysTasks.some(t => t.text === `Study: ${chapter.topic} - ${sub}`));
 
-                if (missingFromToday.length > 0) {
-                    suggestions.push({
+                if (!isPlannedToday) {
+                    // Normalize points based on how much of the Daily Test is left
+                    const ratio = remainingSubs.length / dt.subs.length;
+                    const adjustedPoints = points * ratio;
+
+                    pendingTasks.push({
                         name: dt.name,
                         subject: chapter.subject,
                         topic: chapter.topic,
-                        points: missingFromToday.length * pointPerSub,
-                        pointPerSub: pointPerSub,
+                        category: category, // Hard, Medium, or Easy
+                        points: adjustedPoints,
+                        rawPoints: points,
                         track: trackType,
-                        subs: missingFromToday
+                        subs: remainingSubs
                     });
+                    totalPoints += adjustedPoints;
                 }
             });
         });
 
-        return { pending: suggestions, rate: totalRemainingPoints / daysLeft };
+        return { pending: pendingTasks, rate: totalPoints / daysLeft };
     }
 
     const mainMetrics = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
-    const backlogMetrics = calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog');
+    const backlogMetrics = typeof backlogPlan !== 'undefined' ? 
+        calculateTrackMetrics(backlogPlan.syllabus, backlogPlan.date, 'backlog') : { pending: [], rate: 0 };
 
-    // 2. TARGET CALCULATION WITH 15% HUMAN BUFFER
-    const theoreticalRate = mainMetrics.rate + backlogMetrics.rate;
-    const bufferRate = theoreticalRate * 0.85; // 15% Buffer
+    // --- STEP 2: CALCULATE DEFICIT ---
+    // Aggression factor 1.1 ensures we stay slightly ahead
+    const totalDailyRate = (mainMetrics.rate + backlogMetrics.rate) * 1.1;
     
-    // Calculate what is currently planned for today
-    let currentPlannedPoints = 0;
-    todaysTasks.forEach(t => {
-        // Find the weight of what the user manually added
-        const w = getSubjectWeight(t.subject, t.chapter);
-        // We estimate the per-topic weight based on subject average (standardized to 2 subtopics avg)
-        currentPlannedPoints += (w / 2); 
+    let manualPoints = 0;
+    todaysTasks.forEach(t => { 
+        manualPoints += getTopicDetails(t.subject, t.chapter).points; 
     });
 
-    const deficit = bufferRate - currentPlannedPoints;
+    const deficit = totalDailyRate - manualPoints;
     
-    if (deficit <= 0 || (mainMetrics.pending.length === 0 && backlogMetrics.pending.length === 0)) {
-        container.classList.add('hidden');
-        return;
+    // Only suggest if we have a real deficit
+    if (deficit <= 0.5 || (mainMetrics.pending.length === 0 && backlogMetrics.pending.length === 0)) return;
+
+    // --- STEP 3: THE SMART MIX ALGORITHM (60/25/15) ---
+    
+    // Combine all pending tasks
+    let allPending = [...mainMetrics.pending, ...backlogMetrics.pending];
+    
+    // Buckets
+    const buckets = {
+        Hard: allPending.filter(t => t.category === 'Hard'),
+        Medium: allPending.filter(t => t.category === 'Medium'),
+        Easy: allPending.filter(t => t.category === 'Easy')
+    };
+
+    // Sort buckets by Track Priority (Main > Backlog) then Points
+    const sortFn = (a, b) => {
+        if (a.track === 'main' && b.track !== 'main') return -1;
+        if (a.track !== 'main' && b.track === 'main') return 1;
+        return b.points - a.points;
+    };
+    buckets.Hard.sort(sortFn);
+    buckets.Medium.sort(sortFn);
+    buckets.Easy.sort(sortFn);
+
+    // Targets based on Deficit
+    // 60% Hard, 25% Medium, 15% Easy
+    let targets = {
+        Hard: deficit * 0.60,
+        Medium: deficit * 0.25,
+        Easy: deficit * 0.15
+    };
+
+    let suggestions = [];
+    let currentFill = { Hard: 0, Medium: 0, Easy: 0 };
+
+    // Helper to fill a specific bucket
+    function fillBucket(type, targetAmount) {
+        for (let task of buckets[type]) {
+            if (currentFill[type] >= targetAmount) break;
+            if (suggestions.includes(task)) continue; // Avoid dupes
+
+            suggestions.push(task);
+            currentFill[type] += task.points;
+        }
     }
 
-    // 3. SELECTION LOGIC
-    let finalSuggestions = [];
-    let addedPoints = 0;
-    let breakdown = { Physics: 0, Chemistry: 0, Biology: 0 };
+    // 1. First Pass: Try to fill exact percentages
+    fillBucket('Hard', targets.Hard);
+    fillBucket('Medium', targets.Medium);
+    fillBucket('Easy', targets.Easy);
 
-    // Mix Priority: Main Target first, then Backlog
-    const combinedPool = [...mainMetrics.pending, ...backlogMetrics.pending];
-    combinedPool.sort((a, b) => b.pointPerSub - a.pointPerSub); // High yield first
+    // 2. Overflow Handling (Waterfalls down)
+    // If we ran out of Hard tasks, move credit to Medium. If out of Medium, move to Easy.
+    // And vice versa to ensure TOTAL points are met.
+    
+    const totalFilled = currentFill.Hard + currentFill.Medium + currentFill.Easy;
+    const remainingDeficit = deficit - totalFilled;
 
-    for (let task of combinedPool) {
-        if (addedPoints >= deficit) break;
-        finalSuggestions.push(task);
-        addedPoints += task.points;
-        breakdown[task.subject === 'Botany' || task.subject === 'Zoology' ? 'Biology' : task.subject] += task.points;
+    if (remainingDeficit > 0.5) {
+        // Just fill the rest with whatever is available, prioritizing Main track
+        const remainingTasks = allPending.filter(t => !suggestions.includes(t)).sort(sortFn);
+        for (let task of remainingTasks) {
+            if ((currentFill.Hard + currentFill.Medium + currentFill.Easy) >= deficit) break;
+            suggestions.push(task);
+            currentFill[task.category] += task.points;
+        }
     }
 
-    currentUnifiedSuggestion = finalSuggestions;
+    currentUnifiedSuggestion = suggestions;
 
-    // 4. UI RENDER WITH MATH BREAKDOWN
-    container.classList.remove('hidden');
-    container.innerHTML = `
-    <div class="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-br from-slate-900 to-indigo-950 border border-indigo-500/30 shadow-2xl text-white mb-6 animate-in slide-in-from-top-2">
-        <div class="flex flex-col md:flex-row gap-6 justify-between items-center">
-            <div class="flex-1">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-indigo-500/30">Smart Mix 85% Pace</span>
-                </div>
-                <h3 class="text-2xl font-black mb-1">Deficit: <span class="text-indigo-400">${deficit.toFixed(1)} Pts</span></h3>
-                <p class="text-slate-400 text-xs font-medium mb-4 italic">Dividing Test points by sub-topics for accuracy.</p>
-                
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="bg-blue-500/10 border border-blue-500/20 p-2 rounded-xl text-center">
-                        <p class="text-[9px] uppercase font-bold text-blue-400">Physics</p>
-                        <p class="text-sm font-bold">${breakdown.Physics.toFixed(1)}</p>
-                    </div>
-                    <div class="bg-orange-500/10 border border-orange-500/20 p-2 rounded-xl text-center">
-                        <p class="text-[9px] uppercase font-bold text-orange-400">Chem</p>
-                        <p class="text-sm font-bold">${breakdown.Chemistry.toFixed(1)}</p>
-                    </div>
-                    <div class="bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-xl text-center">
-                        <p class="text-[9px] uppercase font-bold text-emerald-400">Bio</p>
-                        <p class="text-sm font-bold">${breakdown.Biology.toFixed(1)}</p>
-                    </div>
-                </div>
+    if (suggestions.length > 0) {
+        const totalPointsDisplay = Math.round(suggestions.reduce((sum, t) => sum + t.points, 0));
+        
+        // Count for UI Badge
+        const hardCount = suggestions.filter(t => t.category === 'Hard').length;
+        const medCount = suggestions.filter(t => t.category === 'Medium').length;
+        const easyCount = suggestions.filter(t => t.category === 'Easy').length;
+
+        const html = `
+        <div class="relative overflow-hidden rounded-[2rem] p-6 bg-gradient-to-br from-indigo-900 via-slate-900 to-black border border-indigo-500/30 shadow-2xl text-white mb-6 group animate-in slide-in-from-top-2">
+            <div class="absolute top-0 right-0 p-8 opacity-20">
+                <i data-lucide="bar-chart-2" class="w-32 h-32 text-indigo-400"></i>
             </div>
-            <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-8 py-4 bg-indigo-500 hover:bg-indigo-600 rounded-2xl font-bold shadow-lg shadow-indigo-500/40 transition-all flex items-center justify-center gap-2 group">
-                <span>Add ${addedPoints.toFixed(1)} Points</span>
-                <i data-lucide="plus-circle" class="w-5 h-5 group-hover:rotate-90 transition-transform"></i>
-            </button>
-        </div>
-    </div>`;
-    if (window.lucide) lucide.createIcons({ root: container });
-};
 
+            <div class="relative z-10 flex flex-col md:flex-row gap-6 items-center justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">Smart Study Mix</span>
+                        <div class="h-px bg-indigo-500/50 flex-1"></div>
+                    </div>
+                    
+                    <h3 class="text-xl md:text-2xl font-bold leading-tight mb-2">
+                        Today's Balanced Plan
+                    </h3>
+                    
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        ${hardCount > 0 ? `<div class="flex items-center gap-1.5 bg-red-500/20 border border-red-500/30 px-2.5 py-1 rounded-lg">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            <span class="text-xs font-bold text-red-100">${hardCount} Hard</span>
+                        </div>` : ''}
+                        ${medCount > 0 ? `<div class="flex items-center gap-1.5 bg-yellow-500/20 border border-yellow-500/30 px-2.5 py-1 rounded-lg">
+                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                            <span class="text-xs font-bold text-yellow-100">${medCount} Med</span>
+                        </div>` : ''}
+                        ${easyCount > 0 ? `<div class="flex items-center gap-1.5 bg-green-500/20 border border-green-500/30 px-2.5 py-1 rounded-lg">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span class="text-xs font-bold text-green-100">${easyCount} Easy</span>
+                        </div>` : ''}
+                    </div>
+                    
+                    <p class="text-slate-400 text-xs mt-3 italic">
+                        "60% Heavy lifting, 40% Momentum."
+                    </p>
+                </div>
+
+                <button onclick="acceptUnifiedPlan()" class="w-full md:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 active:scale-95">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    Add These ${suggestions.length} Tasks
+                </button>
+            </div>
+        </div>`;
+
+        container.innerHTML = html;
+        if (window.lucide) lucide.createIcons({ root: container });
+    }
+};
 
 window.acceptUnifiedPlan = function() {
     if (!currentUnifiedSuggestion || currentUnifiedSuggestion.length === 0) return;
