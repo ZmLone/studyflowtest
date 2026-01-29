@@ -2288,27 +2288,28 @@ window.renderLeaderboardList = function() {
 
 
 // ==========================================
-// 🧠 SMART MIX AI ENGINE (Total Aggregate Method)
+// 🧠 SMART MIX AI ENGINE (Auto-Updating & Calendar Aware)
 // ==========================================
 
 // 1. GLOBAL VARIABLES
 window.currentMainSuggestions = [];
 window.currentBacklogSuggestions = [];
 
-// 2. STRICT POINT VALUES
+// 2. STRICT POINT VALUES (The 4-3-2 Rule)
 function getTestPointValue(subject, topic) {
     const s = (subject || '').toLowerCase();
     const t = (topic || '').toLowerCase();
 
     // --- 4 POINTS (Physics & High Yield) ---
+    // Multiplies every Physics Daily Test by 4
     if (s.includes('phy')) return 4; 
     if (t.includes('organic') || t.includes('equilibrium') || t.includes('electro') || t.includes('genetics')) return 4;
 
-    // --- 3 POINTS (Rest of Chem & Hard Bio) ---
+    // --- 3 POINTS (Medium Yield) ---
     if (s.includes('chem')) return 3;
     if (t.includes('reproduction') || t.includes('health')) return 3;
 
-    // --- 2 POINTS (Rest of Bio) ---
+    // --- 2 POINTS (Standard) ---
     return 2;
 }
 
@@ -2320,8 +2321,14 @@ window.checkStudyPace = function() {
     container.innerHTML = ''; 
     container.classList.add('hidden'); 
     
-    const today = new Date(); 
-    today.setHours(0,0,0,0);
+    // ---------------------------------------------------------
+    // 📅 DATE LOGIC: Handles both "Daily Study" and "Testing"
+    // ---------------------------------------------------------
+    // If you select TODAY: It calculates based on real time left.
+    // If you select FUTURE: It simulates "What if I start then?"
+    const simulationDate = state.selectedDate ? new Date(state.selectedDate) : new Date();
+    simulationDate.setHours(0,0,0,0);
+    
     const dateKey = formatDateKey(state.selectedDate);
     
     // --- CALCULATOR ---
@@ -2336,7 +2343,11 @@ window.checkStudyPace = function() {
         if (trackType === 'backlog') {
             const planStart = backlogPlan.startDate ? new Date(backlogPlan.startDate) : new Date();
             planStart.setHours(0,0,0,0);
-            const diffDays = Math.floor((today - planStart) / (1000 * 60 * 60 * 24));
+            
+            // Calculate phase relative to your SELECTED DATE
+            // This ensures "Testing" future dates shows correct phase
+            const diffDays = Math.floor((simulationDate - planStart) / (1000 * 60 * 60 * 24));
+            
             if(diffDays >= 15) activePhase = 2;
             if(diffDays >= 30) activePhase = 3;
             if(diffDays >= 45) activePhase = 4;
@@ -2345,12 +2356,18 @@ window.checkStudyPace = function() {
             targetDate.setDate(planStart.getDate() + (activePhase * 15)); 
         } 
         
-        // 2. CALCULATE DAYS (Strict -1 Day Buffer)
-        const msDiff = targetDate - today;
-        let studyDays = Math.ceil(msDiff / (1000 * 60 * 60 * 24)) - 1;
+        // 2. CALCULATE DAYS REMAINING
+        // Math: Deadline - SelectedDate
+        const msDiff = targetDate - simulationDate;
+        let studyDays = Math.ceil(msDiff / (1000 * 60 * 60 * 24));
+        
+        // BUFFER: Strict -1 Day Rule (Finish 24hrs early)
+        studyDays = studyDays - 1;
+        
+        // Safety: Minimum 1 day divider to prevent crash
         if (studyDays < 1) studyDays = 1;
 
-        // 3. AGGREGATE TOTAL SYLLABUS POINTS (The "Grand Total")
+        // 3. AGGREGATE TOTAL SYLLABUS POINTS
         let grandTotalPoints = 0;
         let completedPoints = 0;
         let pendingQueue = [];
@@ -2364,28 +2381,27 @@ window.checkStudyPace = function() {
             // Filter Backlog by Phase
             if (trackType === 'backlog' && chapter.phase && chapter.phase !== activePhase) return;
 
-            // Get Value for this Chapter's Tests
+            // Get Value (e.g., 4 points for Physics)
             const pts = getTestPointValue(chapter.subject, chapter.topic);
             
             chapter.dailyTests.forEach(dt => {
-                // ADD TO GRAND TOTAL (Strict Math)
+                // A. ADD TO GRAND TOTAL (Strict Math)
                 grandTotalPoints += pts;
                 
-                // Update Debug Counts
                 if (pts === 4) countPhy++;
                 else if (pts === 3) countChem++;
                 else countBio++;
 
-                // CHECK COMPLETION
-                // A. Is whole test marked done?
+                // B. CHECK COMPLETION
+                // 1. Is whole test marked done in history?
                 if (state.dailyTestsAttempted && state.dailyTestsAttempted[dt.name]) {
                     completedPoints += pts;
                     return;
                 }
 
-                // B. Check Sub-topics individually
+                // 2. Check Sub-topics
                 const subCount = dt.subs.length;
-                if (subCount === 0) return; // Should not happen
+                if (subCount === 0) return;
                 
                 const valPerSub = pts / subCount;
                 let subsDoneCount = 0;
@@ -2393,13 +2409,14 @@ window.checkStudyPace = function() {
 
                 dt.subs.forEach(sub => {
                     const taskName = `Study: ${chapter.topic} - ${sub}`;
-                    // Check History
+                    
+                    // Check History (Is it checked off?)
                     let isDone = false;
                     Object.values(state.tasks).flat().forEach(t => { 
                         if (t.completed && t.text.includes(sub) && t.text.includes(chapter.topic)) isDone = true; 
                     });
                     
-                    // Check Today's List (Active)
+                    // Check Today's List (Is it planned/done today?)
                     const onList = (state.tasks[dateKey] || []).some(t => t.text.includes(sub) && t.text.includes(chapter.topic));
 
                     if (isDone || onList) {
@@ -2409,7 +2426,7 @@ window.checkStudyPace = function() {
                     }
                 });
 
-                // Add partial points to "Completed"
+                // Add partial points
                 completedPoints += (subsDoneCount * valPerSub);
 
                 // Add remaining to "Pending Queue"
@@ -2427,22 +2444,17 @@ window.checkStudyPace = function() {
         });
 
         // 4. THE FINAL CALCULATION
+        // Formula: (Total - Done) / Days
         const remainingPoints = grandTotalPoints - completedPoints;
         const dailyRate = remainingPoints / studyDays;
 
-        // 5. Current Score (Today's Plan)
+        // 5. Current Score (Progress Bar for Selected Date)
         let currentScore = 0;
         (state.tasks[dateKey] || []).forEach(t => {
             if(t.text.startsWith("Study: ")) {
-                 // Rough check for value
-                 const p = t.track === trackType ? 2 : 0; // fallback
-                 // We rely on "remainingPoints" subtraction above for accuracy, 
-                 // but for the UI bar we need this.
-                 // Let's recalculate precisely:
                  syllabus.forEach(c => {
                      if(t.text.includes(c.topic)) {
                          const v = getTestPointValue(c.subject, c.topic);
-                         // Find sub count... simplified for speed:
                          const dt = c.dailyTests.find(d => d.subs.some(s => t.text.includes(s)));
                          if(dt) currentScore += (v / dt.subs.length);
                      }
@@ -2455,11 +2467,11 @@ window.checkStudyPace = function() {
             grandTotal: grandTotalPoints,
             completed: completedPoints,
             remaining: remainingPoints,
-            days: studyDays,
+            days: studyDays, // Dynamic based on calendar selection
             dailyTarget: dailyRate,
             currentScore: currentScore,
             pending: pendingQueue,
-            counts: { p: countPhy, c: countChem, b: countBio }, // Diagnostic
+            counts: { p: countPhy, c: countChem, b: countBio },
             dateStr: targetDate.toLocaleDateString('en-US', { month:'short', day:'numeric'})
         };
     }
@@ -2476,14 +2488,14 @@ window.checkStudyPace = function() {
         const diff = m.currentScore - m.dailyTarget;
         const isBehind = diff < -0.1;
         
-        // MIXER LOGIC
+        // MIXER (Smart Selection)
         let suggestions = [];
         if(isBehind) {
             let needed = Math.abs(diff);
-            // Sort by Value High -> Low
+            // Sort High Value First
             const pool = m.pending.sort((a,b) => b.valPerSub - a.valPerSub);
             
-            // Round Robin Fetch
+            // Round Robin Mixer
             const getNext = (subj) => {
                 const idx = pool.findIndex(i => i.subject.toLowerCase().includes(subj));
                 if(idx > -1) return pool.splice(idx, 1)[0];
@@ -2491,6 +2503,7 @@ window.checkStudyPace = function() {
             };
 
             while(needed > 0 && pool.length > 0) {
+                // Try to pick Phy -> Chem -> Bio -> Any
                 let item = getNext('phy') || getNext('chem') || getNext('bio') || pool.shift();
                 if(item) {
                     suggestions.push(item);
@@ -2508,8 +2521,8 @@ window.checkStudyPace = function() {
                 <div>
                     <h3 class="text-xl font-bold uppercase">${m.track} Exam</h3>
                     <div class="text-[10px] font-mono opacity-80 mt-1">
-                        Total Pts: ${m.grandTotal} (P:${m.counts.p} C:${m.counts.c} B:${m.counts.b})<br>
-                        Remaining: ${m.remaining.toFixed(1)} / ${m.days} Days
+                        Total Pts: ${m.grandTotal} | Left: ${m.remaining.toFixed(1)}<br>
+                        Time Left: ${m.days} Days
                     </div>
                 </div>
                 <div class="text-right">
@@ -2522,22 +2535,22 @@ window.checkStudyPace = function() {
                 <div class="bg-white h-full transition-all" style="width: ${Math.min(100, (m.currentScore/m.dailyTarget)*100)}%"></div>
             </div>
             <div class="flex justify-between text-[10px] font-bold opacity-80 mb-4">
-                <span>Done Today: ${m.currentScore.toFixed(1)}</span>
-                <span>Deadline: ${m.dateStr}</span>
+                <span>Today's Plan: ${m.currentScore.toFixed(1)}</span>
+                <span>Due: ${m.dateStr}</span>
             </div>
 
             ${isBehind ? `
             <div class="bg-black/10 rounded-xl p-3 border border-white/10">
                 <div class="flex items-center gap-2 text-red-200 text-xs font-bold mb-2">
-                    <i data-lucide="alert-circle" class="w-4 h-4"></i> Falling Behind!
+                    <i data-lucide="alert-circle" class="w-4 h-4"></i> Gap: ${Math.abs(diff).toFixed(1)} pts
                 </div>
                 <button onclick="acceptSuggestions('${m.track}')" class="w-full py-2 bg-white text-blue-900 font-bold rounded-lg text-xs shadow-lg hover:scale-[1.02] transition-transform">
-                    Add Catch-up Mix (+${suggestions.reduce((a,b)=>a+b.points,0).toFixed(1)} pts)
+                    Add Catch-up Mix
                 </button>
             </div>
             ` : `
             <div class="text-center py-2 bg-white/10 rounded-lg text-xs font-bold text-green-100">
-                ✨ On Track! Keep it up.
+                ✨ On Track!
             </div>
             `}
         </div>`;
