@@ -2335,7 +2335,7 @@ window.checkStudyPace = function() {
     const container = document.getElementById('ai-strategy-container');
     if (!container) return;
     
-    // 1. INSTANT RESET: Clear suggestions immediately so they can regenerate
+    // 1. INSTANT RESET
     container.innerHTML = ''; 
     container.classList.add('hidden'); 
     
@@ -2347,41 +2347,28 @@ window.checkStudyPace = function() {
     function calculateTrackMetrics(syllabus, baseDate, trackType) {
         if (!syllabus || !baseDate) return null;
         
-        // 1. SETUP DEADLINE & PHASE
-    let targetDate = new Date(baseDate);
-    targetDate.setHours(0,0,0,0);
-    let activePhase = 1;
-        // --- ADD THIS SECTION START ---
-    // Calculate days remaining until the target date
-    const msDiff = targetDate - simulationDate;
-    let studyDays = Math.ceil(msDiff / (1000 * 60 * 60 * 24));
+        let targetDate = new Date(baseDate);
+        targetDate.setHours(0,0,0,0);
+        
+        const msDiff = targetDate - simulationDate;
+        let studyDays = Math.ceil(msDiff / (1000 * 60 * 60 * 24));
 
-// Safety: Ensure we don't divide by zero if the exam is today
-    if (studyDays < 1) studyDays = 1; 
-    // --- ADD THIS SECTION END ---
+        // FIXED: Corrected comment syntax
+        // Safety: Ensure we don't divide by zero if the exam is today
+        if (studyDays < 1) studyDays = 1; 
 
-if (trackType === 'backlog') {
-        const planStart = backlogPlan.startDate ? new Date(backlogPlan.startDate) : new Date();
-        // ... rest of your backlog phase logic
-
-        // 3. AGGREGATE POINTS
         let grandTotalPoints = 0;
         let assumedDonePoints = 0;
         let pendingQueue = [];
         
         syllabus.forEach(chapter => {
-            // ... (Phase Filter) ...
-
-            // GET POINT VALUE (Uses the new function above)
             const ptsPerDT = getTestPointValue(chapter.subject, chapter.topic);
             
             chapter.dailyTests.forEach(dt => {
                 const subCount = dt.subs.length;
                 if (subCount === 0) return;
 
-                // STRICT DIVISION LOGIC: Points / Sub-topics
                 const valPerSub = ptsPerDT / subCount;
-                
                 grandTotalPoints += ptsPerDT;
 
                 const isWholeTestDone = state.dailyTestsAttempted && state.dailyTestsAttempted[dt.name];
@@ -2398,19 +2385,14 @@ if (trackType === 'backlog') {
                     let covered = false;
                     const taskSignature = `Study: ${chapter.topic} - ${sub}`;
 
-                    // Check History
                     for (const [dKey, tasks] of Object.entries(state.tasks)) {
-                        const taskDate = new Date(dKey);
-                        taskDate.setHours(0,0,0,0);
                         const match = tasks.find(t => t.text === taskSignature);
-                        
-                        if (match) {
-                            if (match.completed) { covered = true; break; }
-                            if (taskDate < simulationDate) { covered = true; break; }
-                        }
+                        if (match && match.completed) { covered = true; break; }
+                        // Only count past tasks as covered for pacing
+                        const taskDate = new Date(dKey);
+                        if (match && taskDate < simulationDate) { covered = true; break; }
                     }
 
-                    // Check Today's List (Counts towards score, but not pending)
                     const onSimulationList = (state.tasks[dateKey] || []).some(t => t.text === taskSignature);
 
                     if (covered) subsCovered++;
@@ -2432,7 +2414,6 @@ if (trackType === 'backlog') {
             });
         });
 
-        // 4. CURRENT SCORE (Scan Today's List)
         let currentScore = 0;
         (state.tasks[dateKey] || []).forEach(t => {
              if(t.text.startsWith("Study: ")) {
@@ -2452,7 +2433,7 @@ if (trackType === 'backlog') {
         const dailyRate = netRemaining <= 0 ? 0 : netRemaining / studyDays;
 
         return { track: trackType, dailyTarget: dailyRate, currentScore: currentScore, pending: pendingQueue };
-    }
+    } // FIXED: Closed calculateTrackMetrics function
 
     // --- EXECUTE & RENDER ---
     const main = calculateTrackMetrics(state.nextExam.syllabus, state.nextExam.date, 'main');
@@ -2462,13 +2443,39 @@ if (trackType === 'backlog') {
     function renderCard(m, color) {
         if(!m) return '';
         const diff = m.currentScore - m.dailyTarget;
-        
-        // INSTANT REAPPEAR: If deleted task makes diff < -0.1, show immediately
         if(diff >= -0.1) return ''; 
 
-        // ... (Card HTML Generation with Mix Logic) ...
-        // (Same as previous turn response)
-        return `<div class="rounded-2xl p-4 mb-4 ..."> ... </div>`;
+        let suggestions = [];
+        let needed = Math.abs(diff);
+        const pool = m.pending.sort((a,b) => b.valPerSub - a.valPerSub);
+        
+        for(let item of pool) {
+            if(needed <= 0) break;
+            suggestions.push(item);
+            needed -= item.points;
+        }
+        
+        if(m.track === 'main') window.currentMainSuggestions = suggestions;
+        else window.currentBacklogSuggestions = suggestions;
+
+        return `
+        <div class="rounded-2xl p-4 mb-4 text-white shadow-lg bg-gradient-to-r ${color === 'main' ? 'from-blue-600 to-indigo-700' : 'from-orange-500 to-red-600'} animate-in fade-in slide-in-from-top-2">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <h3 class="text-lg font-bold uppercase flex items-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4 text-yellow-300"></i> ${m.track} Smart Mix
+                    </h3>
+                    <div class="text-[10px] opacity-90 mt-0.5">Target: ${m.dailyTarget.toFixed(2)} pts/day</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-black">${diff.toFixed(2)}</div>
+                    <div class="text-[9px] uppercase opacity-75">Pts Behind</div>
+                </div>
+            </div>
+            <button onclick="acceptSuggestions('${m.track}')" class="w-full py-2.5 bg-white text-slate-900 font-bold rounded-xl text-xs shadow-md mt-3 hover:bg-slate-50 transition-all">
+                Add Tasks to Close Gap
+            </button>
+        </div>`;
     }
 
     const mainHTML = renderCard(main, 'main');
@@ -2477,6 +2484,7 @@ if (trackType === 'backlog') {
     if (mainHTML || backlogHTML) {
         container.innerHTML = mainHTML + backlogHTML;
         container.classList.remove('hidden');
+        if(window.lucide) lucide.createIcons({ root: container });
     }
 };
 
