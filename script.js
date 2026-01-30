@@ -1261,12 +1261,14 @@ window.handleAuthAction = function(e) {
     if (!currentUser || currentUser.isAnonymous) document.getElementById('auth-modal').classList.remove('hidden');
     else handleLogout();
 };
-        function init() {
-            // FIX: This must run FIRST to prevent the crash
-            setupSchedule(); 
+             function init() {
+    // FIX: This must run FIRST to prevent the crash
+    setupSchedule(); 
+    
+    // ✅ NEW: Activate Scroll Header Logic
+    initScrollHeader(); 
 
-            if (!isFirebaseActive && !localStorage.getItem('studyflow_demo_mode')) {
-                document.getElementById('auth-modal').classList.remove('hidden');
+    if (!isFirebaseActive && !localStorage.getItem('studyflow_demo_mode')) {           document.getElementById('auth-modal').classList.remove('hidden');
                 if(window.lucide) lucide.createIcons();
                 return;
             }
@@ -3130,6 +3132,41 @@ window.assignChapterTime = function(chapName, inputId) {
         setTimeout(() => toast.remove(), 3000);
     }
 };
+// ✅ NEW: Scroll-to-Hide Header Logic
+window.initScrollHeader = function() {
+    const scrollEl = document.getElementById('overview-scroll-view');
+    const headerEl = document.getElementById('overview-header');
+    
+    if (!scrollEl || !headerEl) return;
+
+    let lastScroll = 0;
+    
+    scrollEl.addEventListener('scroll', () => {
+        const currentScroll = scrollEl.scrollTop;
+        
+        // 1. Ignore bounce at top
+        if (currentScroll < 10) {
+            headerEl.style.marginTop = "0px";
+            return;
+        }
+        
+        // 2. Jitter protection (ignore tiny movements)
+        if (Math.abs(currentScroll - lastScroll) < 10) return;
+
+        if (currentScroll > lastScroll) {
+            // ⬇️ SCROLLING DOWN -> HIDE HEADER
+            headerEl.style.marginTop = `-${headerEl.offsetHeight}px`;
+        } else {
+            // ⬆️ SCROLLING UP -> SHOW HEADER
+            headerEl.style.marginTop = "0px";
+        }
+        
+        lastScroll = currentScroll;
+    });
+};
+
+document.addEventListener('DOMContentLoaded', init);
+
  document.addEventListener('DOMContentLoaded', init);
 
         // Optimization: FOUC listener - Triggered on DOMContentLoaded instead of Load for faster paint
