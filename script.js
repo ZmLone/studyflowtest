@@ -1421,7 +1421,7 @@ function setupSchedule() {
         }
 
 
-// --- HELPER: CALCULATE STATS (Phase-Aware & Weighted) ---
+// --- HELPER: CALCULATE STATS (Fair Ground: All Factors are 0-100%) ---
 function calculateUserStats() {
     // 1. Snapshot of all completed tasks
     const allCompleted = new Set(
@@ -1430,30 +1430,7 @@ function calculateUserStats() {
         .map(t => t.text)
     );
 
-    // 2. Identify Valid Tests for THIS SEASON (Auto-Reset Logic)
-    const validTests = new Set();
-    if (state.nextExam && state.nextExam.syllabus) {
-        state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => validTests.add(dt.name)));
-    }
-    if (typeof backlogPlan !== 'undefined' && backlogPlan.syllabus) {
-        backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => validTests.add(dt.name)));
-    }
-
-    // 3. Main Exam % (Weighted Points)
-    let mainTotal = 0, mainDone = 0;
-    if(state.nextExam && state.nextExam.syllabus) {
-        state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => {
-            const pts = getSubtopicPoints(dt, s.subject, s.topic);
-            dt.subs.forEach(sub => {
-                mainTotal += pts;
-                if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) mainDone += pts;
-            });
-        }));
-    }
-    const mainPct = mainTotal ? Math.round((mainDone/mainTotal)*100) : 0;
-
     // --- PHASE LOGIC START ---
-    // Calculate which 15-day phase is currently active
     let currentPhase = 1;
     if(typeof backlogPlan !== 'undefined') {
         const planStart = backlogPlan.startDate;
@@ -1464,13 +1441,36 @@ function calculateUserStats() {
     }
     // --- PHASE LOGIC END ---
 
-    // 4. Backlog % (Weighted Points - ACTIVE PHASE ONLY)
+    // 2. Main Exam % (Weighted) & Count Total Tests
+    let mainTotal = 0, mainDone = 0;
+    let mainTestsCount = 0;
+    const validTestNames = new Set();
+
+    if(state.nextExam && state.nextExam.syllabus) {
+        state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => {
+            validTestNames.add(dt.name);
+            mainTestsCount++; // Count available tests
+            
+            const pts = getSubtopicPoints(dt, s.subject, s.topic);
+            dt.subs.forEach(sub => {
+                mainTotal += pts;
+                if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) mainDone += pts;
+            });
+        }));
+    }
+    const mainPct = mainTotal ? Math.round((mainDone/mainTotal)*100) : 0;
+
+    // 3. Backlog % (Weighted - ACTIVE PHASE ONLY) & Count Total Tests
     let blTotal = 0, blDone = 0;
+    let blTestsCount = 0;
+
     if(typeof backlogPlan !== 'undefined' && backlogPlan.syllabus) {
         backlogPlan.syllabus.forEach(s => {
-            // ✅ FILTER: Only count points if they belong to the current phase
             if (s.phase === currentPhase) { 
                 s.dailyTests.forEach(dt => {
+                    validTestNames.add(dt.name);
+                    blTestsCount++; // Count available tests
+                    
                     const pts = getSubtopicPoints(dt, s.subject, s.topic);
                     dt.subs.forEach(sub => {
                         blTotal += pts;
@@ -1482,18 +1482,25 @@ function calculateUserStats() {
     }
     const blPct = blTotal ? Math.round((blDone/blTotal)*100) : 0;
 
-    // 5. Test Count (Z)
-    const testCount = Object.keys(state.dailyTestsAttempted).filter(k => 
-        state.dailyTestsAttempted[k] && validTests.has(k)
+    // 4. Test Progress % (The New "Fair" Metric)
+    // We calculate what % of the CURRENT RELEVANT tests you have attempted.
+    const totalPossibleTests = mainTestsCount + blTestsCount;
+    
+    const attemptsCount = Object.keys(state.dailyTestsAttempted).filter(k => 
+        state.dailyTestsAttempted[k] && validTestNames.has(k)
     ).length;
 
-    // 6. EQUAL WEIGHTAGE SCORE
-    const overallScore = mainPct + blPct + (testCount * 10);
+    const testPct = totalPossibleTests ? Math.round((attemptsCount / totalPossibleTests) * 100) : 0;
+
+    // 5. FAIR SCORE FORMULA
+    // All three components are now equal (0-100 scale).
+    // Max Score = 300 (100 + 100 + 100)
+    const overallScore = mainPct + blPct + testPct;
 
     return { 
         mainPct, 
         blPct, 
-        testCount, 
+        testCount: attemptsCount, // Keep returning raw count for the UI "Pill"
         overallScore 
     };
 }
