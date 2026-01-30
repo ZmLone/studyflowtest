@@ -3841,7 +3841,33 @@ function startSnow() {
     canvas.width = width;
     canvas.height = height;
 
-    const maxFalling = 400; // Constant deFlake(width, height, true));
+const maxFalling = 400; 
+    const fallingFlakes = [];
+    let landedFlakes = []; 
+
+    // LEDGE SCANNER
+    function updateSurfaces() {
+        snowLedges = [];
+        // We select ALL containers to ensure bottom cards get recognized
+        const elements = document.querySelectorAll('header, button, .rounded-xl, .rounded-2xl, .rounded-3xl, nav');
+        elements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            // Only add if visible on screen
+            if(rect.bottom > 0 && rect.top < height && rect.width > 0) {
+                snowLedges.push({
+                    top: rect.top + 3, // Slight overlap
+                    left: rect.left,
+                    right: rect.right
+                });
+            }
+        });
+    }
+    updateSurfaces();
+    window.addEventListener('scroll', () => { if(snowActive) updateSurfaces(); }, { passive: true });
+
+    // SPAWN PARTICLES (Everywhere on screen immediately)
+    for(let i = 0; i < maxFalling; i++) {
+        fallingFlakes.push(createFlake(width, height, true));
     }
 
     // ANIMATION LOOP
@@ -3923,7 +3949,7 @@ function startSnow() {
     });
 
     draw();
-};
+}
 
 function stopSnow() {
     const canvas = document.getElementById('snow-canvas');
