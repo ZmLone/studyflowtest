@@ -2261,16 +2261,36 @@ window.showPointsToast = function(points, current, target, subject, type) {
 };
 
 
+window.toggleMobileMenu = function(forceClose = false) {
+    // TARGET THE NEW ID "sidebar" INSTEAD OF "mobile-sidebar"
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobile-menu-overlay');
+    
+    if (!sidebar) return;
 
-        window.toggleMobileMenu = function(forceClose = false) {
-            const body = document.getElementById('app-body');
-            if (forceClose) { body.classList.remove('menu-open'); body.classList.add('menu-closed'); } 
-            else {
-                if (body.classList.contains('menu-open')) { body.classList.remove('menu-open'); body.classList.add('menu-closed'); } 
-                else { body.classList.remove('menu-closed'); body.classList.add('menu-open'); }
-            }
-        };
+    if (forceClose) {
+        // Force Close: Hide sidebar off-screen & hide overlay
+        sidebar.classList.add('-translate-x-full');
+        sidebar.classList.remove('translate-x-0'); // Ensure it slides out
+        if(overlay) overlay.classList.add('hidden');
+    } else {
+        // Toggle: Slide in or out
+        const isClosed = sidebar.classList.contains('-translate-x-full');
         
+        if (isClosed) {
+            // OPEN IT
+            sidebar.classList.remove('-translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            if(overlay) overlay.classList.remove('hidden');
+        } else {
+            // CLOSE IT
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            if(overlay) overlay.classList.add('hidden');
+        }
+    }
+};
+                
         // --- BOOKSHELF FUNCTIONS ---
 
         window.openNotebook = function(subject) {
