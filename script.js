@@ -1352,6 +1352,8 @@ function setupSchedule() {
             }) || mainSchedule[mainSchedule.length-1];
 
             // ✅ SAFE ADD TASK LISTENER (Prevents crash since footer is removed)
+            
+// ✅ SAFE ADD TASK LISTENER
             const addTaskForm = document.getElementById('add-task-form');
             if (addTaskForm) {
                 const newForm = addTaskForm.cloneNode(true);
@@ -1361,9 +1363,13 @@ function setupSchedule() {
                     e.preventDefault();
                     const input = document.getElementById('new-task-input');
                     if (input && input.value.trim()) {
-                        // Safe selection of values
-                        const type = document.getElementById('new-task-type')?.value || 'main';
-                        const subject = document.getElementById('new-task-subject')?.value || 'General';
+                        
+                        // Safe selection of values without optional chaining
+                        const typeEl = document.getElementById('new-task-type');
+                        const subEl = document.getElementById('new-task-subject');
+                        
+                        const type = typeEl ? typeEl.value : 'main';
+                        const subject = subEl ? subEl.value : 'General';
                         
                         addTask(input.value.trim(), type, subject);
                         input.value = '';
