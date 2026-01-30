@@ -2902,53 +2902,31 @@ window.renderTasks = renderTasks;
 
 
 window.renderHeader = function() {
-    // 1. UPDATE BREADCRUMB (User / App)
+    // 1. UPDATE BREADCRUMB
     const userEl = document.getElementById('header-breadcrumb-user');
+    const pageEl = document.getElementById('header-breadcrumb-page'); // ✅ NEW
     const avatarEl = document.getElementById('header-avatar-display');
     
     if (userEl) userEl.textContent = state.displayName || "Guest";
     if (avatarEl) avatarEl.textContent = (state.displayName || "G").charAt(0).toUpperCase();
 
+    // ✅ DYNAMIC PAGE TITLE
+    if (pageEl) {
+        const titles = {
+            'overview': 'Overview',
+            'target': 'Target Syllabus',
+            'backlog': 'Recovery Plan',
+            'mistakes': 'Mistake Notebook',
+            'leaderboard': 'Leaderboard',
+            'namaz': 'Spiritual'
+        };
+        // Update the text based on the current active view
+        pageEl.textContent = titles[state.activeView] || 'StudyFlow';
+    }
+
     // 2. RENDER WIDGETS
     renderHeaderPrayerWidget();
 };
-// ✅ NEW: Renders the 5-pill prayer strip in the header
-window.renderHeaderPrayerWidget = function() {
-    const container = document.getElementById('header-prayer-widget');
-    if (!container) return;
-
-    const k = formatDateKey(state.selectedDate);
-    const todayData = state.prayers[k] || {};
-    
-    const prayers = [
-        { key: 'Fajr', label: 'F' },
-        { key: 'Dhuhr', label: 'D' },
-        { key: 'Asr', label: 'A' },
-        { key: 'Maghrib', label: 'M' },
-        { key: 'Isha', label: 'I' }
-    ];
-
-    container.innerHTML = prayers.map(p => {
-        const isDone = todayData[p.key] === true;
-        
-        // This is the line you were looking for (Updated with White/Border style)
-       // GitHub-style dark button
-let baseClass = "h-7 min-w-[28px] px-1.5 rounded-md flex items-center justify-center text-[10px] font-bold transition-all duration-200 border shadow-sm";
-
-// GitHub Colors (Green for success, Gray for default)
-let stateClass = isDone 
-    ? "bg-[#238636] text-white border-[#238636] hover:bg-[#2ea043]" 
-    : "bg-slate-50 dark:bg-[#21262d] text-slate-500 dark:text-[#c9d1d9] border-slate-200 dark:border-[#30363d] hover:text-blue-500 dark:hover:text-[#58a6ff]"; 
-        return `
-            <button onclick="togglePrayer('${p.key}')" class="${baseClass} ${stateClass}" title="Mark ${p.key} as done">
-                ${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : p.label}
-            </button>
-        `;
-    }).join('');
-
-    if(window.lucide) lucide.createIcons({ root: container });
-};
-
 // ==========================================
 // 🚀 TACTICAL DASHBOARD V4 (Strict Phases + Total %)
 // ==========================================
