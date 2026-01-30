@@ -4131,7 +4131,7 @@ window.addEventListener('resize', () => {
     }
 });
 // ==========================================
-// 📊 POINTS ANALYTICS VIEW ENGINE
+// 📊 POINTS ANALYTICS VIEW ENGINE (Fixed Math & Breakdown)
 // ==========================================
 
 window.renderPointsAnalytics = function() {
@@ -4142,6 +4142,7 @@ window.renderPointsAnalytics = function() {
     const analyzeSyllabus = (syllabusArray, type, endDate) => {
         let counts = { Physics: 0, Chemistry: 0, Biology: 0, Total: 0 };
         let points = { Total: 0, Earned: 0 };
+        let breakdown = { Physics: 0, Chemistry: 0, Biology: 0 }; // NEW: Track points per subject
         
         const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
 
@@ -4154,16 +4155,20 @@ window.renderPointsAnalytics = function() {
                 counts.Total++;
                 if (counts[subj] !== undefined) counts[subj]++;
 
-                // 2. Calculate Points
-                const ptsPerTest = getSubtopicPoints(dt, chap.subject, chap.topic); // Uses your smart mix logic
-                const subsCount = dt.subs.length;
+                // 2. Calculate Points (FIXED LOGIC)
+                // Get the Full Value of the test (e.g. 4 pts for Physics)
+                const fullTestValue = getTestPoints(chap.subject, chap.topic); 
                 
-                // Total Potential Points for this test
-                // (ptsPerTest is the value of the WHOLE test, so we add it once)
-                points.Total += ptsPerTest; 
+                // Add FULL value to Total Possible
+                points.Total += fullTestValue;
+                
+                // Add to Subject Breakdown
+                if (breakdown[subj] !== undefined) breakdown[subj] += fullTestValue;
 
-                // Earned Points (Sum of subtopics done)
-                const subValue = ptsPerTest / subsCount;
+                // 3. Calculate Earned Points (Fractional based on completion)
+                const subsCount = dt.subs.length || 1;
+                const subValue = fullTestValue / subsCount;
+                
                 dt.subs.forEach(sub => {
                     const taskName = `Study: ${chap.topic} - ${sub}`;
                     if (allCompleted.has(taskName) || state.dailyTestsAttempted[dt.name]) {
@@ -4173,21 +4178,20 @@ window.renderPointsAnalytics = function() {
             });
         });
 
-        // 3. Daily Targets
+        // 4. Daily Targets
         const today = new Date(); today.setHours(0,0,0,0);
         const targetDate = new Date(endDate);
         const daysLeft = Math.max(1, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)));
         const remaining = points.Total - points.Earned;
         const dailyNeed = remaining / daysLeft;
 
-        return { counts, points, daysLeft, dailyNeed };
+        return { counts, points, daysLeft, dailyNeed, breakdown };
     };
 
     // --- 1. MAIN EXAM ANALYTICS ---
     const mainStats = analyzeSyllabus(state.nextExam.syllabus, 'main', state.nextExam.date);
 
     // --- 2. BACKLOG ANALYTICS (Active Phase Only) ---
-    // Calculate Active Phase
     const planStart = backlogPlan.startDate;
     const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
     let activePhase = 1;
@@ -4229,15 +4233,24 @@ window.renderPointsAnalytics = function() {
                     <div class="space-y-3">
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                             <span class="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2"><i data-lucide="atom" class="w-4 h-4"></i> Physics</span>
-                            <span class="text-sm font-black text-slate-700 dark:text-slate-200">${stats.counts.Physics} Tests</span>
+                            <div class="text-right">
+                                <span class="block text-sm font-black text-slate-700 dark:text-slate-200">${stats.counts.Physics} Tests</span>
+                                <span class="block text-[10px] font-bold text-slate-400">${stats.breakdown.Physics.toFixed(0)} Pts</span>
+                            </div>
                         </div>
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                             <span class="text-sm font-bold text-teal-600 dark:text-teal-400 flex items-center gap-2"><i data-lucide="flask-conical" class="w-4 h-4"></i> Chemistry</span>
-                            <span class="text-sm font-black text-slate-700 dark:text-slate-200">${stats.counts.Chemistry} Tests</span>
+                            <div class="text-right">
+                                <span class="block text-sm font-black text-slate-700 dark:text-slate-200">${stats.counts.Chemistry} Tests</span>
+                                <span class="block text-[10px] font-bold text-slate-400">${stats.breakdown.Chemistry.toFixed(0)} Pts</span>
+                            </div>
                         </div>
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                             <span class="text-sm font-bold text-green-600 dark:text-green-400 flex items-center gap-2"><i data-lucide="dna" class="w-4 h-4"></i> Biology</span>
-                            <span class="text-sm font-black text-slate-700 dark:text-slate-200">${stats.counts.Biology} Tests</span>
+                            <div class="text-right">
+                                <span class="block text-sm font-black text-slate-700 dark:text-slate-200">${stats.counts.Biology} Tests</span>
+                                <span class="block text-[10px] font-bold text-slate-400">${stats.breakdown.Biology.toFixed(0)} Pts</span>
+                            </div>
                         </div>
                     </div>
                 </div>
