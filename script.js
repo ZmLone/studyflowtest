@@ -2124,6 +2124,59 @@ window.showPointsToast = function(points, current, target, subject, type) {
                 showToast("Task added to planner");
             }
         };
+
+// ... inside window.addTask ...
+            if (pointsFound > 0) {
+                const math = calculateSmartMath(detectedType);
+                const planned = getPlannerPointsForToday(detectedType, syllabusRef);
+                showPointsToast(pointsFound, planned, math.dailyTargetPoints, detectedSubject, detectedType);
+            } else {
+                showToast("Task added to planner");
+            }
+        };
+
+        // ✅ PASTE THESE MISSING FUNCTIONS HERE:
+
+        window.deleteTask = function(id) {
+            const key = formatDateKey(state.selectedDate);
+            if(state.tasks[key]) {
+                state.tasks[key] = state.tasks[key].filter(t => t.id !== id);
+                saveData();
+                renderAll(); // Ensure UI updates
+            }
+        };
+
+        window.deleteGroup = function(chapterName) {
+            if(confirm(`Delete all tasks for "${chapterName}"?`)) {
+                const key = formatDateKey(state.selectedDate);
+                if(state.tasks[key]) {
+                     state.tasks[key] = state.tasks[key].filter(t => {
+                        let chap = t.chapter;
+                        if (!chap && t.text.startsWith("Study: ")) {
+                            const parts = t.text.replace("Study: ", "").split(" - ");
+                            if (parts.length > 1) chap = parts[0];
+                        }
+                        return chap !== chapterName;
+                    });
+                    saveData();
+                    // Also collapse the group in UI
+                    if (state.expandedFocusGroups[chapterName]) delete state.expandedFocusGroups[chapterName];
+                    renderAll();
+                }
+            }
+        };
+
+        window.toggleTask = function(id) {
+            const key = formatDateKey(state.selectedDate);
+            if(state.tasks[key]) {
+                const t = state.tasks[key].find(x => x.id === id);
+                if(t) { 
+                    t.completed = !t.completed; 
+                    saveData();
+                    renderAll(); // Update UI
+                }
+            }
+        };
         window.deleteGroup = function(chapterName) {
             const key = formatDateKey(state.selectedDate);
             if(state.tasks[key]) {
