@@ -1532,6 +1532,7 @@ window.renderPrayerModalItems = function() {
             <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center ${isDone ? 'border-white bg-white text-emerald-600' : 'border-slate-300 dark:border-slate-600'}">${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : ''}</div></button>`;
     }).join('');
     if(window.lucide) lucide.createIcons({ root: list });
+updateSidebarBadges();
 };
 
 window.updateHeaderPrayerBtn = function() {
@@ -2726,7 +2727,40 @@ window.renderLeaderboardList = function() {
     };
 
 
+window.updateSidebarBadges = function() {
+    // 1. Mistake Badge (Count unresolved)
+    const mistakeCount = (state.mistakes || []).filter(m => !m.resolved).length;
+    const mBadge = document.getElementById('badge-mistakes');
+    if(mBadge) {
+        mBadge.textContent = mistakeCount;
+        if(mistakeCount > 0) mBadge.classList.remove('hidden');
+        else mBadge.classList.add('hidden');
+    }
 
+    // 2. Backlog Phase Badge
+    const bBadge = document.getElementById('badge-backlog');
+    if(bBadge && typeof backlogPlan !== 'undefined') {
+        const planStart = backlogPlan.startDate || new Date();
+        const diffDays = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24)); 
+        let phase = 1;
+        if(diffDays > 45) phase = 4;
+        else if(diffDays > 30) phase = 3;
+        else if(diffDays > 15) phase = 2;
+        
+        bBadge.textContent = `Ph ${phase}`;
+        bBadge.classList.remove('hidden');
+    }
+
+    // 3. Leaderboard Rank (From Cache)
+    const rBadge = document.getElementById('badge-rank');
+    if(rBadge && leaderboardCache.length > 0 && currentUser) {
+        const myRank = leaderboardCache.findIndex(u => u.id === currentUser.uid);
+        if(myRank > -1) {
+            rBadge.textContent = `#${myRank + 1}`;
+            rBadge.classList.remove('hidden');
+        }
+    }
+};
 
 // --- PLANNER FUNCTIONS ---
 
@@ -3113,7 +3147,9 @@ window.renderAll = function() {
     renderHeader();
     updateHeaderPrayerBtn();
     renderStats();
-    
+    updateSidebarBadges();
+
+
     // Performance Optimization: Lazy Rendering
     if (state.activeView === 'overview') {
         renderTasks();

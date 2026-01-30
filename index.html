@@ -151,21 +151,21 @@
             <span>Next Target</span>
         </button>
 
-        <button id="nav-backlog" onclick="switchView('backlog')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 hover:translate-x-1">
-            <i data-lucide="history" class="w-5 h-5 transition-colors group-hover:text-orange-500"></i>
-            <span>Backlog Plan</span>
-        </button>
-
-        <button id="nav-mistakes" onclick="switchView('mistakes')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-200 hover:translate-x-1">
-            <i data-lucide="book" class="w-5 h-5 transition-colors group-hover:text-rose-500"></i>
-            <span>Mistake Notebook</span>
-        </button>
-
-        <button id="nav-leaderboard" onclick="switchView('leaderboard')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-200 hover:translate-x-1">
-            <i data-lucide="medal" class="w-5 h-5 transition-colors group-hover:text-amber-500"></i>
-            <span>Leaderboard</span>
-        </button>
-
+      <button id="nav-backlog" onclick="switchView('backlog')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 hover:translate-x-1">
+    <i data-lucide="history" class="w-5 h-5 transition-colors group-hover:text-orange-500"></i>
+    <span>Backlog Plan</span>
+    <span id="badge-backlog" class="ml-auto bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold px-2 py-0.5 rounded-md hidden">Ph 1</span>
+</button>  
+     <button id="nav-mistakes" onclick="switchView('mistakes')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-200 hover:translate-x-1">
+    <i data-lucide="book" class="w-5 h-5 transition-colors group-hover:text-rose-500"></i>
+    <span>Mistake Notebook</span>
+    <span id="badge-mistakes" class="ml-auto bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-[10px] font-bold px-2 py-0.5 rounded-full hidden">0</span>
+</button>  
+       <button id="nav-leaderboard" onclick="switchView('leaderboard')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-200 hover:translate-x-1">
+    <i data-lucide="medal" class="w-5 h-5 transition-colors group-hover:text-amber-500"></i>
+    <span>Leaderboard</span>
+    <span id="badge-rank" class="ml-auto bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md hidden">#--</span>
+</button> 
         <button id="nav-planner" onclick="switchView('planner')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200 hover:translate-x-1">
             <i data-lucide="calendar-range" class="w-5 h-5 transition-colors group-hover:text-indigo-500"></i>
             <span>Day Planner</span>
