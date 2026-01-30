@@ -1865,88 +1865,134 @@ function renderDailyHadith() {
             return sum;
         }
 
-        // --- 4. THE GENERATOR (Context-Aware) ---
-        window.generateSmartMix = function(mode = 'main') {
-            const math = calculateSmartMath(mode);
-            
-            // A. CHECK WHAT IS ALREADY PLANNED
-            const alreadyPlannedPts = getPlannerPointsForToday(mode, math.syllabusRef);
-            
-            // B. CALCULATE THE GAP
-            // If target is 20, and we planned 5, we need 15.
-            // If target is 20, and we planned 25, we need 0.
-            const pointsNeeded = Math.max(0, math.dailyTargetPoints - alreadyPlannedPts);
+  // ==========================================
+// ⚡ MODERN SMART MIX CONTROLLER
+// ==========================================
+let tempMixData = null; // Store data while modal is open
 
-            if (pointsNeeded < 0.5) {
-                alert(`✅ Daily Target Met!\n\n🎯 Required: ${math.dailyTargetPoints.toFixed(1)} Pts\n📝 Planned:  ${alreadyPlannedPts.toFixed(1)} Pts\n\nYou are strictly on track. No new tasks needed.`);
-                return;
-            }
+window.generateSmartMix = function(mode = 'main') {
+    const math = calculateSmartMath(mode);
+    const alreadyPlannedPts = getPlannerPointsForToday(mode, math.syllabusRef);
+    const pointsNeeded = Math.max(0, math.dailyTargetPoints - alreadyPlannedPts);
 
-            // C. SELECT TASKS TO FILL THE *REMAINING* GAP
-            const subjectLoad = {};
-            math.pendingTasks.forEach(t => {
-                if (!subjectLoad[t.subject]) subjectLoad[t.subject] = [];
-                subjectLoad[t.subject].push(t);
-            });
+    // 1. If Target Met, show simple toast
+    if (pointsNeeded < 0.5) {
+        showToast("✅ Daily target already met! Great job.");
+        return;
+    }
 
-            let currentPoints = 0;
-            let mixPool = [];
-            const SAFE_CAP = 12; 
+    // 2. Calculate the Candidates (The "Mix")
+    const subjectLoad = {};
+    math.pendingTasks.forEach(t => {
+        if (!subjectLoad[t.subject]) subjectLoad[t.subject] = [];
+        subjectLoad[t.subject].push(t);
+    });
 
-            while (currentPoints < pointsNeeded && mixPool.length < SAFE_CAP && math.pendingTasks.length > 0) {
-                const heavySubject = Object.keys(subjectLoad).reduce((a, b) => 
-                    subjectLoad[a].length > subjectLoad[b].length ? a : b
-                );
+    let currentPoints = 0;
+    let mixPool = [];
+    const SAFE_CAP = 12; 
 
-                if (!subjectLoad[heavySubject] || subjectLoad[heavySubject].length === 0) break;
+    while (currentPoints < pointsNeeded && mixPool.length < SAFE_CAP && math.pendingTasks.length > 0) {
+        const heavySubject = Object.keys(subjectLoad).reduce((a, b) => 
+            subjectLoad[a].length > subjectLoad[b].length ? a : b
+        );
 
-                const task = subjectLoad[heavySubject].shift();
-                mixPool.push(task);
-                currentPoints += task.points;
+        if (!subjectLoad[heavySubject] || subjectLoad[heavySubject].length === 0) break;
 
-                const index = math.pendingTasks.indexOf(task);
-                if (index > -1) math.pendingTasks.splice(index, 1);
-            }
+        const task = subjectLoad[heavySubject].shift();
+        mixPool.push(task);
+        currentPoints += task.points;
 
-            // Shuffler
-            let finalMix = [];
-            let lastSubject = "";
-            while (mixPool.length > 0) {
-                let candidateIndex = mixPool.findIndex(t => t.subject !== lastSubject);
-                if (candidateIndex === -1) candidateIndex = 0;
-                const selected = mixPool[candidateIndex];
-                finalMix.push(selected);
-                lastSubject = selected.subject;
-                mixPool.splice(candidateIndex, 1);
-            }
+        const index = math.pendingTasks.indexOf(task);
+        if (index > -1) math.pendingTasks.splice(index, 1);
+    }
 
-            // D. DETAILED CONFIRMATION DIALOG
-            const msg = `
-📊 SMART MIX CALCULATION (${mode.toUpperCase()})
------------------------------------
-🎯 Daily Target:    ${math.dailyTargetPoints.toFixed(2)} Pts
-✅ Already Planned: ${alreadyPlannedPts.toFixed(2)} Pts
-📉 Remaining Gap:   ${pointsNeeded.toFixed(2)} Pts
------------------------------------
-🤖 AI Suggestion:
-Adding ${finalMix.length} tasks worth ${currentPoints.toFixed(2)} Pts to fill the gap.
+    // Shuffle & Interleave
+    let finalMix = [];
+    let lastSubject = "";
+    while (mixPool.length > 0) {
+        let candidateIndex = mixPool.findIndex(t => t.subject !== lastSubject);
+        if (candidateIndex === -1) candidateIndex = 0;
+        const selected = mixPool[candidateIndex];
+        finalMix.push(selected);
+        lastSubject = selected.subject;
+        mixPool.splice(candidateIndex, 1);
+    }
 
-Proceed?`;
+    // 3. STORE DATA FOR CONFIRMATION
+    tempMixData = finalMix;
 
-            if (confirm(msg)) {
-                finalMix.forEach(t => {
-                    const key = formatDateKey(state.selectedDate);
-                    if (!state.tasks[key]) state.tasks[key] = [];
-                    state.tasks[key].push({
-                        id: Date.now() + Math.random().toString(36).substr(2, 9), 
-                        text: t.text, type: t.type, subject: t.subject, chapter: t.chapter, completed: false 
-                    });
-                });
-                saveData();
-                renderAll();
-                showToast(`Gap filled! Added ${finalMix.length} tasks.`);
-            }
-        };
+    // 4. POPULATE THE MODERN MODAL
+    document.getElementById('sm-target').innerText = math.dailyTargetPoints.toFixed(1);
+    document.getElementById('sm-planned').innerText = alreadyPlannedPts.toFixed(1);
+    document.getElementById('sm-gap').innerText = pointsNeeded.toFixed(1);
+    document.getElementById('sm-suggestion').innerHTML = `I have selected <b class="text-indigo-500">${finalMix.length} tasks</b> (${currentPoints.toFixed(1)} Pts) to bridge this gap perfectly.`;
+    
+    document.getElementById('smartMixSubtitle').innerText = mode === 'main' ? 'Exam Sprint Mode' : 'Backlog Recovery Mode';
+    
+    const header = document.getElementById('smartMixHeader');
+    if(mode === 'main') header.className = "relative h-32 bg-gradient-to-br from-brand-600 to-indigo-600 p-6 flex flex-col justify-between";
+    else header.className = "relative h-32 bg-gradient-to-br from-orange-500 to-red-500 p-6 flex flex-col justify-between";
+
+    // 5. OPEN MODAL ANIMATION
+    const modal = document.getElementById('smart-mix-modal');
+    const backdrop = document.getElementById('smartMixBackdrop');
+    const card = document.getElementById('smartMixCard');
+    
+    modal.classList.remove('hidden');
+    // Micro-delay for CSS transition
+    setTimeout(() => {
+        backdrop.classList.remove('opacity-0');
+        card.classList.remove('scale-95', 'opacity-0');
+        card.classList.add('scale-100', 'opacity-100');
+    }, 10);
+
+    // 6. ATTACH CONFIRM LISTENER
+    const btn = document.getElementById('btn-confirm-mix');
+    btn.onclick = () => confirmSmartMixExecute();
+};
+
+window.closeSmartMixModal = function() {
+    const modal = document.getElementById('smart-mix-modal');
+    const backdrop = document.getElementById('smartMixBackdrop');
+    const card = document.getElementById('smartMixCard');
+
+    backdrop.classList.add('opacity-0');
+    card.classList.remove('scale-100', 'opacity-100');
+    card.classList.add('scale-95', 'opacity-0');
+
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        tempMixData = null;
+    }, 300);
+};
+
+window.confirmSmartMixExecute = function() {
+    if(!tempMixData) return;
+
+    tempMixData.forEach(t => {
+        const key = formatDateKey(state.selectedDate);
+        if (!state.tasks[key]) state.tasks[key] = [];
+        state.tasks[key].push({
+            id: Date.now() + Math.random().toString(36).substr(2, 9), 
+            text: t.text, type: t.type, subject: t.subject, chapter: t.chapter, completed: false 
+        });
+    });
+    
+    saveData();
+    renderAll();
+    closeSmartMixModal();
+    
+    // Confetti!
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+    });
+    
+    showToast(`🚀 Added ${tempMixData.length} tasks to your plan.`);
+};      
+
 // --- ✨ NEW VISUAL: POINTS REWARD TOAST ---
 window.showPointsToast = function(points, current, target, subject, type) {
     // 1. Remove existing toasts to prevent stacking clutter
@@ -3013,175 +3059,104 @@ window.renderTasks = renderTasks;
             if(els.agendaDate) els.agendaDate.textContent = dateStr;
         }
 
+// ==========================================
+// 🚀 NEW: VELOCITY DASHBOARD (Useful Stats)
+// ==========================================
 window.renderStats = function() {
     const container = document.getElementById('stats-container');
     if (!container) return;
 
-    // 1. GATHER HISTORY
-    const allCompleted = new Set();
-    if (state.tasks) {
-        Object.values(state.tasks).flat().forEach(t => {
-            if (t.completed) allCompleted.add(t.text);
-        });
-    }
+    // 1. Calculate Core Data
+    const mathMain = calculateSmartMath('main');
+    const mathBacklog = calculateSmartMath('backlog');
+    const plannedTodayMain = getPlannerPointsForToday('main', mathMain.syllabusRef);
+    const plannedTodayBacklog = getPlannerPointsForToday('backlog', mathBacklog.syllabusRef);
+    
+    // Velocity Calculation (Are we fast enough?)
+    const mainVelocityColor = plannedTodayMain >= mathMain.dailyTargetPoints ? 'text-emerald-500' : 'text-rose-500';
+    const mainStatusText = plannedTodayMain >= mathMain.dailyTargetPoints ? 'On Track' : 'Lagging';
+    const mainPercent = Math.min(100, Math.round((plannedTodayMain / (mathMain.dailyTargetPoints || 1)) * 100));
 
-    // --- CALCULATE DATA ---
-    const nextExam = state.nextExam;
-    let daysLeft = 0;
-    let primaryPercent = 0;
+    // Subject Health (Which subject has the most pending points?)
+    const subjectLoad = { Physics: 0, Chemistry: 0, Biology: 0 };
+    mathMain.pendingTasks.forEach(t => { 
+        if(t.subject.includes('Physics')) subjectLoad.Physics += t.points;
+        else if(t.subject.includes('Chem')) subjectLoad.Chemistry += t.points;
+        else subjectLoad.Biology += t.points;
+    });
+    const heaviestSubject = Object.keys(subjectLoad).reduce((a, b) => subjectLoad[a] > subjectLoad[b] ? a : b);
 
-    if (nextExam) {
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const examDate = new Date(nextExam.date);
-        daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
-        
-        let totalSubTopics = 0;
-        let doneSubTopics = 0;
-        
-        nextExam.syllabus.forEach(chapter => {
-            chapter.dailyTests.forEach(dt => {
-                const isTestDone = state.dailyTestsAttempted[dt.name];
-                dt.subs.forEach(sub => {
-                    totalSubTopics++;
-                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) doneSubTopics++;
-                });
-            });
-        });
-        primaryPercent = totalSubTopics === 0 ? 0 : Math.round((doneSubTopics / totalSubTopics) * 100);
-    }
-
-    let currentPhase = 1;
-    let totalPercent = 0;
-    let phasePercent = 0;
-
-    if (typeof backlogPlan !== 'undefined') {
-        const planStart = new Date(backlogPlan.startDate);
-        const today = new Date();
-        const diffDays = Math.ceil(Math.abs(today - planStart) / (1000 * 60 * 60 * 24)); 
-        if(diffDays > 15) currentPhase = 2;
-        if(diffDays > 30) currentPhase = 3;
-        if(diffDays > 45) currentPhase = 4;
-        if(diffDays > 60) currentPhase = 4; 
-
-        let totalBacklogSubs = 0;
-        let doneBacklogSubs = 0;
-        let phaseTotalSubs = 0;
-        let phaseDoneSubs = 0;
-
-        backlogPlan.syllabus.forEach(chapter => {
-            const isPhase = chapter.phase === currentPhase;
-            chapter.dailyTests.forEach(dt => {
-                const isTestDone = state.dailyTestsAttempted[dt.name];
-                dt.subs.forEach(sub => {
-                    totalBacklogSubs++;
-                    if (isPhase) phaseTotalSubs++;
-                    if (isTestDone || allCompleted.has(`Study: ${chapter.topic} - ${sub}`)) {
-                        doneBacklogSubs++;
-                        if (isPhase) phaseDoneSubs++;
-                    }
-                });
-            });
-        });
-
-        totalPercent = totalBacklogSubs === 0 ? 0 : Math.round((doneBacklogSubs / totalBacklogSubs) * 100);
-        phasePercent = phaseTotalSubs === 0 ? 0 : Math.round((phaseDoneSubs / phaseTotalSubs) * 100);
-    }
-
-    // --- RENDER BRIGHT & COMPACT UI ---
+    // --- RENDER THE NEW CARDS ---
     container.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             
-            <div class="md:col-span-3 relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-indigo-500 via-purple-600 to-blue-600 text-white shadow-2xl shadow-indigo-500/30 group hover:scale-[1.01] transition-transform duration-300">
-                <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
-                <div class="absolute -left-8 -bottom-8 w-40 h-40 bg-cyan-400/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+            <div class="md:col-span-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl p-6 relative overflow-hidden shadow-xl flex flex-col justify-between group">
+                <div class="absolute top-0 right-0 p-6 opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                    <i data-lucide="activity" class="w-32 h-32"></i>
+                </div>
                 
-                <div class="relative z-10 flex flex-col h-full justify-between">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-wider mb-2 shadow-sm">
-                                <i data-lucide="crosshair" class="w-3 h-3 text-cyan-300"></i> Main Target
-                            </div>
-                            <h2 class="text-2xl md:text-3xl font-black text-white drop-shadow-sm truncate pr-2">
-                                ${nextExam ? nextExam.name : 'No Exam'}
-                            </h2>
+                <div class="relative z-10 flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="px-2 py-0.5 rounded-md bg-white/20 dark:bg-black/10 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
+                                Daily Velocity
+                            </span>
+                            <span class="text-[10px] font-bold ${mainStatusText === 'On Track' ? 'text-emerald-400 dark:text-emerald-600' : 'text-rose-400 dark:text-rose-600'} uppercase animate-pulse">
+                                ● ${mainStatusText}
+                            </span>
                         </div>
-                        <div class="text-right">
-                            <span class="block text-4xl md:text-5xl font-black tracking-tighter leading-none">${daysLeft}</span>
-                            <span class="text-[9px] font-bold uppercase opacity-80 tracking-widest">Days Left</span>
-                        </div>
+                        <h3 class="text-3xl font-black tracking-tight mt-1">
+                            ${plannedTodayMain.toFixed(1)} <span class="text-lg text-white/50 dark:text-slate-400 font-bold">/ ${mathMain.dailyTargetPoints.toFixed(1)} Pts</span>
+                        </h3>
                     </div>
+                    <div class="text-right">
+                        <div class="text-xs font-bold opacity-60 uppercase tracking-widest">Deadline</div>
+                        <div class="text-xl font-bold">Feb 7</div>
+                        <div class="text-[10px] opacity-50">${mathMain.daysLeft} days left</div>
+                    </div>
+                </div>
 
-                    <div class="mt-6">
-                        <div class="flex justify-between items-end mb-2 px-1">
-                            <span class="text-xs font-bold text-indigo-100 uppercase">Mission Progress</span>
-                            <span class="text-2xl font-black">${primaryPercent}%</span>
-                        </div>
-                        <div class="h-5 w-full bg-black/20 rounded-full p-1 backdrop-blur-sm shadow-inner border border-white/10">
-                            <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 relative overflow-hidden shadow-lg shadow-cyan-400/30 transition-all duration-1000 ease-out" style="width: ${primaryPercent}%">
-                                <div class="absolute inset-0 bg-white/30 w-full -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
-                            </div>
-                        </div>
+                <div class="relative z-10 mt-6">
+                    <div class="flex justify-between text-[10px] font-bold uppercase mb-1.5 opacity-70">
+                        <span>Sprint Efficiency</span>
+                        <span>${mainPercent}%</span>
+                    </div>
+                    <div class="h-4 w-full bg-white/10 dark:bg-black/10 rounded-full overflow-hidden backdrop-blur-sm">
+                        <div class="h-full bg-gradient-to-r from-brand-400 to-indigo-500 dark:from-brand-600 dark:to-indigo-600 shadow-[0_0_15px_rgba(56,189,248,0.5)] transition-all duration-1000" style="width: ${mainPercent}%"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="md:col-span-2 grid grid-cols-2 gap-4">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-rose-50 dark:bg-rose-900/20 rounded-full blur-2xl"></div>
                 
-                <div class="relative overflow-hidden rounded-3xl p-4 bg-gradient-to-br from-emerald-400 to-cyan-600 text-white shadow-lg shadow-emerald-500/20 hover:-translate-y-1 transition-transform">
-                    <div class="relative z-10 flex flex-col h-full justify-between">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[9px] font-bold uppercase text-emerald-100 tracking-wider mb-0.5">Focus</p>
-                                <h3 class="text-lg font-bold leading-tight">Phase ${currentPhase}</h3>
-                            </div>
-                            <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
-                                <i data-lucide="zap" class="w-4 h-4 text-white"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
-                                <span>Sprint</span>
-                                <span>${phasePercent}%</span>
-                            </div>
-                            <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
-                                <div class="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] rounded-full transition-all duration-1000" style="width: ${phasePercent}%"></div>
-                            </div>
-                        </div>
+                <div class="flex items-start justify-between relative z-10">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase text-slate-400 tracking-wider mb-1">Bottleneck</div>
+                        <h3 class="text-xl font-black text-slate-800 dark:text-white">${heaviestSubject}</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
+                            Has the most pending topics. Prioritize this today.
+                        </p>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-500 dark:text-rose-400">
+                        <i data-lucide="alert-octagon" class="w-5 h-5"></i>
                     </div>
                 </div>
 
-                <div class="relative overflow-hidden rounded-3xl p-4 bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-lg shadow-orange-500/20 hover:-translate-y-1 transition-transform">
-                    <div class="relative z-10 flex flex-col h-full justify-between">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[9px] font-bold uppercase text-orange-100 tracking-wider mb-0.5">Total</p>
-                                <h3 class="text-lg font-bold leading-tight">Backlog</h3>
-                            </div>
-                            <div class="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
-                                <i data-lucide="layers" class="w-4 h-4 text-white"></i>
-                            </div>
-                        </div>
-
-                        <div class="mt-3">
-                            <div class="flex justify-between text-[10px] font-bold mb-1 opacity-90">
-                                <span>Recovered</span>
-                                <span>${totalPercent}%</span>
-                            </div>
-                            <div class="h-3 w-full bg-black/10 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-yellow-300 to-white shadow-[0_0_10px_rgba(255,200,0,0.6)] rounded-full transition-all duration-1000" style="width: ${totalPercent}%"></div>
-                            </div>
-                        </div>
+                <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 relative z-10">
+                    <div class="flex justify-between items-center">
+                         <span class="text-[10px] font-bold text-slate-400 uppercase">Backlog Health</span>
+                         <span class="text-xs font-bold text-orange-500">${mathBacklog.dailyTargetPoints.toFixed(1)} pts/day</span>
                     </div>
                 </div>
-
             </div>
         </div>
     `;
 
-    if (window.lucide) lucide.createIcons({ root: container });
+    if(window.lucide) lucide.createIcons({ root: container });
 };
+
+
  function createTaskElementHTML(t, isSubTask = false) {
             // Updated Styles for "Pill" look
             let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
