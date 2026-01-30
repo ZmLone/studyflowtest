@@ -3188,33 +3188,51 @@ renderHeaderPrayerWidget();
 };
 
 window.renderTasks = renderTasks;
-       window.renderHeader = function() {
-    // New Elements
+    window.renderHeader = function() {
+    // 1. DATE LOGIC (The Time Capsule)
     const dayEl = document.getElementById('header-date-day');
     const fullEl = document.getElementById('header-date-full');
-    
-    // Check if selected date is Today
     const now = new Date();
     const isToday = state.selectedDate.toDateString() === now.toDateString();
 
     if(dayEl) {
-        // If today, show "TODAY", else show weekday (e.g., "MONDAY")
         dayEl.textContent = isToday ? "TODAY" : state.selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
-        // Add active color if today
         if(isToday) dayEl.className = "uppercase tracking-widest text-[9px] text-brand-600 font-extrabold";
         else dayEl.className = "uppercase tracking-widest text-[9px] text-slate-400";
     }
 
     if(fullEl) {
-        // Show "Jan 30"
         fullEl.textContent = state.selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
-    // Keep Agenda Date sync
+    // 2. DYNAMIC GREETING ENGINE (Time + Clickable Name)
+    const greetingEl = document.getElementById('header-dynamic-greeting');
+    if(greetingEl) {
+        const hour = now.getHours();
+        let greeting = "Welcome back";
+        let icon = "✨";
+
+        if (hour >= 5 && hour < 12) { greeting = "Good morning"; icon = "🌅"; }
+        else if (hour >= 12 && hour < 17) { greeting = "Good afternoon"; icon = "☀️"; }
+        else if (hour >= 17 && hour < 22) { greeting = "Good evening"; icon = "🌙"; }
+        else { greeting = "Burning the midnight oil"; icon = "🦉"; }
+
+        // Use stored name or fallback
+        const name = state.displayName || "Captain";
+        
+        // ✨ MAGIC: Makes the name clickable to open the Edit Profile modal
+        greetingEl.innerHTML = `
+            ${icon} ${greeting}, 
+            <button onclick="openProfileModal()" class="font-bold border-b border-dashed border-slate-400 hover:text-brand-600 hover:border-brand-600 transition-all cursor-pointer" title="Tap to edit profile">
+                ${name}
+            </button>
+        `;
+    }
+
+    // 3. AGENDA DATE (Keep sync)
     const agendaEl = document.getElementById('agenda-date-display');
     if(agendaEl) agendaEl.textContent = state.selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-};
-
+};   
 // ✅ NEW: Renders the 5-pill prayer strip in the header
 window.renderHeaderPrayerWidget = function() {
     const container = document.getElementById('header-prayer-widget');
