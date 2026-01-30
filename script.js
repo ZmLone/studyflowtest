@@ -2143,7 +2143,7 @@ window.showPointsToast = function(points, current, target, subject, type) {
                 state.tasks[key] = state.tasks[key].filter(t => t.id !== id);
                 saveData();
                 renderAll(); // Ensure UI updates
-            }
+            };
     
 
         window.deleteGroup = function(chapterName) {
