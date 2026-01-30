@@ -1351,26 +1351,25 @@ function setupSchedule() {
                 return examDeadline > now;
             }) || mainSchedule[mainSchedule.length-1];
 
-    // NEW CODE (Safe check)
-const addForm = document.getElementById('add-task-form');
-if (addForm) {
-    addForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const input = document.getElementById('new-task-input');
-        const text = input.value.trim();
-        if (!text) return;
-        
-        const typeSelect = document.getElementById('new-task-type');
-        const subjectSelect = document.getElementById('new-task-subject');
-        
-        const type = typeSelect ? typeSelect.value : 'main';
-        const subject = subjectSelect ? subjectSelect.value : 'General';
-
-        addTask(text, type, subject);
-        input.value = '';
-    });
-}     
-  
+            // ✅ SAFE ADD TASK LISTENER (Prevents crash since footer is removed)
+            const addTaskForm = document.getElementById('add-task-form');
+            if (addTaskForm) {
+                const newForm = addTaskForm.cloneNode(true);
+                addTaskForm.parentNode.replaceChild(newForm, addTaskForm);
+                
+                newForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const input = document.getElementById('new-task-input');
+                    if (input && input.value.trim()) {
+                        // Safe selection of values
+                        const type = document.getElementById('new-task-type')?.value || 'main';
+                        const subject = document.getElementById('new-task-subject')?.value || 'General';
+                        
+                        addTask(input.value.trim(), type, subject);
+                        input.value = '';
+                    }
+                });
+            }
             // Setup Mistake Form Listener
             const mistakeForm = document.getElementById('mistake-form');
             if(mistakeForm) {
