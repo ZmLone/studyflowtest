@@ -2321,7 +2321,7 @@ window.switchView = function(view) {
     toggleMobileMenu(true); // Close mobile menu if open
     
     // 1. Update Buttons Highlighting
-   ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz'].forEach(v => {
+  ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'points'].forEach(v => {
          const btn = document.getElementById(`nav-${v}`);
         if(btn) {
             // Reset all to default style
@@ -2352,6 +2352,7 @@ window.switchView = function(view) {
     if(view === 'backlog') renderSyllabus('backlog');
     if(view === 'leaderboard') fetchLeaderboard();
     if(view === 'namaz') renderNamazView();
+    if(view === 'points') renderPointsAnalytics();
     if(view === 'mistakes') {
         if(state.activeNotebook) renderNotebookEntries();
         else updateShelfCounts();
@@ -2933,7 +2934,9 @@ renderHeaderPrayerWidget();
     } else if (state.activeView === 'leaderboard') {
         renderLeaderboardList();
     }
-    
+    else if (state.activeView === 'points') {
+        renderPointsAnalytics();
+    }
     // Re-scan icons if library is loaded
     if(window.lucide) lucide.createIcons();
 };
@@ -2978,6 +2981,7 @@ window.renderHeader = function() {
             'mistakes': 'Mistake Notebook',
             'leaderboard': 'Leaderboard',
             'namaz': 'Spiritual Growth'
+            'points': 'Points Analytics'
         };
         const title = titles[state.activeView] || 'StudyFlow';
         
@@ -4126,3 +4130,185 @@ window.addEventListener('resize', () => {
         document.body.classList.remove('overflow-hidden'); // Restore scrolling
     }
 });
+// ==========================================
+// 📊 POINTS ANALYTICS VIEW ENGINE
+// ==========================================
+
+window.renderPointsAnalytics = function() {
+    const container = document.getElementById('points-content');
+    if (!container) return;
+
+    // --- HELPER: Analyze a Syllabus Tree ---
+    const analyzeSyllabus = (syllabusArray, type, endDate) => {
+        let counts = { Physics: 0, Chemistry: 0, Biology: 0, Total: 0 };
+        let points = { Total: 0, Earned: 0 };
+        
+        const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
+
+        syllabusArray.forEach(chap => {
+            let subj = chap.subject;
+            if (subj === 'Botany' || subj === 'Zoology') subj = 'Biology';
+
+            chap.dailyTests.forEach(dt => {
+                // 1. Count Tests
+                counts.Total++;
+                if (counts[subj] !== undefined) counts[subj]++;
+
+                // 2. Calculate Points
+                const ptsPerTest = getSubtopicPoints(dt, chap.subject, chap.topic); // Uses your smart mix logic
+                const subsCount = dt.subs.length;
+                
+                // Total Potential Points for this test
+                // (ptsPerTest is the value of the WHOLE test, so we add it once)
+                points.Total += ptsPerTest; 
+
+                // Earned Points (Sum of subtopics done)
+                const subValue = ptsPerTest / subsCount;
+                dt.subs.forEach(sub => {
+                    const taskName = `Study: ${chap.topic} - ${sub}`;
+                    if (allCompleted.has(taskName) || state.dailyTestsAttempted[dt.name]) {
+                        points.Earned += subValue;
+                    }
+                });
+            });
+        });
+
+        // 3. Daily Targets
+        const today = new Date(); today.setHours(0,0,0,0);
+        const targetDate = new Date(endDate);
+        const daysLeft = Math.max(1, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)));
+        const remaining = points.Total - points.Earned;
+        const dailyNeed = remaining / daysLeft;
+
+        return { counts, points, daysLeft, dailyNeed };
+    };
+
+    // --- 1. MAIN EXAM ANALYTICS ---
+    const mainStats = analyzeSyllabus(state.nextExam.syllabus, 'main', state.nextExam.date);
+
+    // --- 2. BACKLOG ANALYTICS (Active Phase Only) ---
+    // Calculate Active Phase
+    const planStart = backlogPlan.startDate;
+    const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+    let activePhase = 1;
+    if(diff > 45) activePhase = 4;
+    else if(diff > 30) activePhase = 3;
+    else if(diff > 15) activePhase = 2;
+
+    const backlogFiltered = backlogPlan.syllabus.filter(c => c.phase === activePhase);
+    const phaseEndDate = new Date(planStart);
+    phaseEndDate.setDate(planStart.getDate() + (activePhase * 15));
+    
+    const backlogStats = analyzeSyllabus(backlogFiltered, 'backlog', phaseEndDate);
+
+
+    // --- 3. RENDER HTML ---
+    const generateCard = (title, icon, color, stats, isBacklog) => `
+        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400 flex items-center justify-center shadow-sm">
+                        <i data-lucide="${icon}" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">${title}</h2>
+                        <p class="text-xs text-slate-500 font-medium">Strategy & Breakdown</p>
+                    </div>
+                </div>
+                ${isBacklog ? `<span class="px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs font-bold uppercase tracking-wide">Phase ${activePhase}</span>` : ''}
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Total Load Breakdown</h3>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="text-4xl font-black text-slate-800 dark:text-white">${stats.counts.Total}</div>
+                        <div class="text-sm font-medium text-slate-500 leading-tight">Total Daily<br>Tests Available</div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <span class="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2"><i data-lucide="atom" class="w-4 h-4"></i> Physics</span>
+                            <span class="text-sm font-black text-slate-700 dark:text-slate-200">${stats.counts.Physics} Tests</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <span class="text-sm font-bold text-teal-600 dark:text-teal-400 flex items-center gap-2"><i data-lucide="flask-conical" class="w-4 h-4"></i> Chemistry</span>
+                            <span class="text-sm font-black text-slate-700 dark:text-slate-200">${stats.counts.Chemistry} Tests</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <span class="text-sm font-bold text-green-600 dark:text-green-400 flex items-center gap-2"><i data-lucide="dna" class="w-4 h-4"></i> Biology</span>
+                            <span class="text-sm font-black text-slate-700 dark:text-slate-200">${stats.counts.Biology} Tests</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-l border-slate-100 dark:border-slate-800 md:pl-8">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Points & Targets</h3>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="p-4 rounded-2xl bg-${color}-50 dark:bg-${color}-900/10 border border-${color}-100 dark:border-${color}-900/30 text-center">
+                            <div class="text-2xl font-black text-${color}-600 dark:text-${color}-400">${stats.points.Earned.toFixed(1)}</div>
+                            <div class="text-[10px] font-bold uppercase text-${color}-700/60 dark:text-${color}-300/60">Live Points</div>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-center">
+                            <div class="text-2xl font-black text-slate-600 dark:text-slate-400">${stats.points.Total.toFixed(0)}</div>
+                            <div class="text-[10px] font-bold uppercase text-slate-400">Total Possible</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 dark:bg-black rounded-2xl p-5 text-white shadow-xl relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-gradient-to-r from-${color}-600 to-${color}-500 opacity-20"></div>
+                        <div class="relative z-10 flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-${color}-200 font-bold uppercase tracking-wide mb-1">Required Velocity</p>
+                                <div class="text-3xl font-black">${stats.dailyNeed <= 0 ? 'GOAL MET' : stats.dailyNeed.toFixed(1)} <span class="text-sm font-medium opacity-60">pts/day</span></div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-slate-300 font-bold uppercase tracking-wide mb-1">Time Left</p>
+                                <div class="text-2xl font-bold">${stats.daysLeft} <span class="text-sm font-medium opacity-60">Days</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // --- 4. EXPLANATION CARD ---
+    const explanationHtml = `
+        <div class="mt-8 p-6 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-3xl">
+            <h3 class="text-sm font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <i data-lucide="info" class="w-4 h-4"></i> How Points Are Calculated
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50 text-center">
+                    <div class="text-2xl font-black text-blue-500">4 Pts</div>
+                    <div class="text-xs font-medium text-slate-500">Per Physics Test</div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50 text-center">
+                    <div class="text-2xl font-black text-teal-500">3 Pts</div>
+                    <div class="text-xs font-medium text-slate-500">Per Chem Test</div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50 text-center">
+                    <div class="text-2xl font-black text-green-500">2 Pts</div>
+                    <div class="text-xs font-medium text-slate-500">Per Bio Test</div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/50 text-center ring-2 ring-indigo-500/20">
+                    <div class="text-2xl font-black text-indigo-500">3 Pts</div>
+                    <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400">High Yield Bio</div>
+                </div>
+            </div>
+            <p class="text-xs text-center text-slate-500 dark:text-slate-400 mt-4 italic opacity-80">
+                * High Yield Bio includes Genetics, Reproduction, & Evolution topics.
+            </p>
+        </div>
+    `;
+
+    container.innerHTML = `
+        ${generateCard("Main Exam (AIATS)", "crosshair", "brand", mainStats, false)}
+        ${generateCard("Backlog Recovery", "history", "orange", backlogStats, true)}
+        ${explanationHtml}
+    `;
+
+    if(window.lucide) lucide.createIcons({ root: container });
+};
