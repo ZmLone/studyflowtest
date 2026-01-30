@@ -3633,45 +3633,69 @@ function renderTasks() {
             if(state.nextExam) scanSyllabus(state.nextExam.syllabus, 'main');
             if(typeof backlogPlan !== 'undefined') scanSyllabus(backlogPlan.syllabus, 'backlog');
 
-            // 4. Render "READY" Cards (Green)
+     
+// 4. Render "READY" Cards (Smart Grouping - ALWAYS BUNDLE)
             if(readyTests.length > 0) {
-                const readyHtml = readyTests.map(test => {
+                // Helper to generate a single card HTML
+                const generateCard = (test, isGrouped = false) => {
                     const subSummary = test.subs.slice(0, 3).join(', ') + (test.subs.length > 3 ? '...' : '');
+                    const safeTestName = test.name.replace(/'/g, "\\'");
                     
                     return `
-                    <div class="mb-6 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-5 text-white shadow-lg shadow-emerald-500/20 relative overflow-hidden group animate-in slide-in-from-top-2 fade-in duration-300">
-                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <i data-lucide="award" class="w-24 h-24 rotate-12"></i>
-                        </div>
+                    <div class="${isGrouped ? 'mb-3 last:mb-0' : 'mb-6'} bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-5 text-white shadow-lg shadow-emerald-500/20 relative overflow-hidden group animate-in slide-in-from-top-2 fade-in duration-300">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="award" class="w-24 h-24 rotate-12"></i></div>
                         <div class="relative z-10">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
-                                    <span class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-white border border-white/10">
-                                        Unlocked
-                                    </span>
+                                    <span class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-white border border-white/10">Unlocked</span>
                                     <h3 class="text-xl font-bold text-white tracking-tight mt-1">${test.name}</h3>
                                     <p class="text-xs text-emerald-100 font-medium">Topic: ${test.topic}</p>
                                 </div>
-                                <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm shadow-sm animate-pulse">
-                                    <i data-lucide="unlock" class="w-6 h-6 text-white"></i>
-                                </div>
+                                <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm shadow-sm animate-pulse"><i data-lucide="unlock" class="w-6 h-6 text-white"></i></div>
                             </div>
-                            
                             <div class="bg-black/10 rounded-lg p-2 mb-4">
                                 <p class="text-[10px] uppercase font-bold text-emerald-200 mb-1">Includes</p>
                                 <p class="text-xs text-white/90 font-medium truncate">${subSummary}</p>
                             </div>
-
-                            <button onclick="confetti({particleCount: 150, spread: 60, origin: { y: 0.7 }}); toggleTestAttempt('${test.name}'); renderAll();" 
-                                class="w-full bg-white text-emerald-700 py-3 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                                Attempt & Mark Done
+                            <button onclick="confetti({particleCount: 150, spread: 60, origin: { y: 0.7 }}); toggleTestAttempt('${safeTestName}'); renderAll();" class="w-full bg-white text-emerald-700 py-3 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i> Attempt & Mark Done
                             </button>
                         </div>
+                    </div>`;
+                };
+
+                // --- ALWAYS BUNDLE LOGIC ---
+                const bundleId = `unlock-bundle-${Date.now()}`;
+                
+                const finalHtml = `
+                <div class="mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-1 shadow-xl shadow-indigo-500/20 animate-in slide-in-from-top-2 fade-in duration-300 cursor-pointer select-none group" onclick="const el = document.getElementById('${bundleId}'); el.classList.toggle('hidden'); this.querySelector('.arrow-icon').classList.toggle('rotate-180');">
+                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-lg flex justify-between items-center border border-white/10 hover:bg-white/20 transition-all">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-white p-2.5 rounded-xl text-indigo-600 shadow-sm relative">
+                                <i data-lucide="layers" class="w-6 h-6"></i>
+                                <div class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600">
+                                    ${readyTests.length}
+                                </div>
+                            </div>
+                            <div class="text-white">
+                                <h3 class="font-bold text-lg leading-tight">Tests Ready!</h3>
+                                <p class="text-xs text-indigo-100 font-medium opacity-80">Tap to expand stack</p>
+                            </div>
+                        </div>
+                        <div class="bg-black/20 p-2 rounded-full arrow-icon transition-transform duration-300">
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-white"></i>
+                        </div>
                     </div>
-                `}).join('');
-                list.insertAdjacentHTML('beforeend', readyHtml);
+                </div>
+                
+                <div id="${bundleId}" class="hidden pl-2 border-l-2 border-indigo-100 dark:border-indigo-900/30 mb-8 space-y-4">
+                    ${readyTests.map(test => generateCard(test, true)).join('')}
+                </div>
+                `;
+
+                list.insertAdjacentHTML('beforeend', finalHtml);
             }
+
             // --- END NEW LOGIC ---
 
             // --- STANDARD TASK RENDERING ---
