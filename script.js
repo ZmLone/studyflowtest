@@ -1291,65 +1291,68 @@ window.checkSyllabusOverlap = function() {
         }, 1500); // Small delay so it appears after load
     }
 };
-             function init() {
-    // FIX: This must run FIRST to prevent the crash
+function init() {
     setupSchedule(); 
-    
-    // ✅ NEW: Activate Scroll Header Logic
     initScrollHeader(); 
-
-// ✅ ADD THIS LINE:
     checkSyllabusOverlap();
 
-    if (!isFirebaseActive && !localStorage.getItem('studyflow_demo_mode')) {           document.getElementById('auth-modal').classList.remove('hidden');
-                if(window.lucide) lucide.createIcons();
-                return;
-            }
+    if (!isFirebaseActive && !localStorage.getItem('studyflow_demo_mode')) {
+        document.getElementById('auth-modal').classList.remove('hidden');
+        if(window.lucide) lucide.createIcons();
+        return;
+    }
 
-            if(isFirebaseActive) {
-                onAuthStateChanged(auth, (user) => {
-                    currentUser = user;
-                    
-                    if (user) {
-                        document.getElementById('auth-modal').classList.add('hidden');
-                        const docRef = getSafeDocRef(user.uid);
+    if(isFirebaseActive) {
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            
+            if (user) {
+                document.getElementById('auth-modal').classList.add('hidden');
+                const docRef = getSafeDocRef(user.uid);
+                
+                unsubscribeDoc = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        state.tasks = data.tasks || {};
+                        state.dailyTestsAttempted = data.dailyTestsAttempted || {};
+                        state.mistakes = data.mistakes || []; 
+                        state.prayers = data.prayers || {};
+                        state.displayName = data.displayName || null;
                         
-                        unsubscribeDoc = onSnapshot(docRef, (docSnap) => {
-                            if (docSnap.exists()) {
-                                const data = docSnap.data();
-                                state.tasks = data.tasks || {};
-                                state.dailyTestsAttempted = data.dailyTestsAttempted || {};
-                                state.mistakes = data.mistakes || []; 
-                                state.prayers = data.prayers || {};
-                                state.displayName = data.displayName || null;
-                                
-                                updateProfileUI(user); // Updates UI to "User Mode"
-                                renderAll();
-                            } else {
-                                saveData();
-                                updateProfileUI(user);
-                            }
-                        }, (error) => {
-                            console.error("Firestore error fallback:", error);
-                            initLocalMode();
-                        });   
-                    } else {
-                        updateProfileUI(null); // Updates UI to "Guest Mode"
-                        document.getElementById('auth-modal').classList.remove('hidden');
-                    }
-                });
-            } else {
-                initLocalMode();
-            }
+                        updateProfileUI(user);
+                        renderAll();
 
-            // Setup Mistake Form Listener
-            const mistakeForm = document.getElementById('mistake-form');
-            if(mistakeForm) {
-                const newMForm = mistakeForm.cloneNode(true);
-                mistakeForm.parentNode.replaceChild(newMForm, mistakeForm);
-                newMForm.addEventListener('submit', window.saveMistake);
+                        // ✅ FORCE UPDATE LEADERBOARD ON LOAD
+                        // This fixes the "Old High Score" issue by recalculating 
+                        // and syncing your stats immediately with the new formula.
+                        saveData(); 
+
+                    } else {
+                        saveData();
+                        updateProfileUI(user);
+                    }
+                }, (error) => {
+                    console.error("Firestore error fallback:", error);
+                    initLocalMode();
+                });   
+            } else {
+                updateProfileUI(null);
+                document.getElementById('auth-modal').classList.remove('hidden');
             }
-        }
+        });
+    } else {
+        initLocalMode();
+    }
+
+    // Setup Mistake Form Listener
+    const mistakeForm = document.getElementById('mistake-form');
+    if(mistakeForm) {
+        const newMForm = mistakeForm.cloneNode(true);
+        mistakeForm.parentNode.replaceChild(newMForm, mistakeForm);
+        newMForm.addEventListener('submit', window.saveMistake);
+    }
+}             
+
 function initLocalMode() {
         const storedPrayers = localStorage.getItem('studyflow_prayers');
         if (storedPrayers) state.prayers = JSON.parse(storedPrayers);
