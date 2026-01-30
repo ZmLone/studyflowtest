@@ -3086,218 +3086,231 @@ window.renderTasks = renderTasks;
         }
 
 // ==========================================
-// 🚀 NEW: TACTICAL DASHBOARD (Status & Analytics)
+// 🚀 TACTICAL DASHBOARD V2 (Execution-Aware)
 // ==========================================
 window.renderStats = function() {
     const container = document.getElementById('stats-container');
     if (!container) return;
 
-    // 1. Calculate Core Data (Smart Math)
-    // Note: These functions must exist from the Smart Mix Engine we added earlier
+    // --- 1. CORE DATA CALCULATION ---
     const mathMain = calculateSmartMath('main');
     const mathBacklog = calculateSmartMath('backlog');
-    
-    // 2. Get Planned Points for Today to calculate Velocity
-    const plannedMain = getPlannerPointsForToday('main', mathMain.syllabusRef);
-    const plannedBacklog = getPlannerPointsForToday('backlog', mathBacklog.syllabusRef);
 
-    // 3. Helper: Calculate Status Label
-    const getStatus = (planned, target) => {
-        if(target <= 0.1) return { label: "COMPLETE", color: "text-emerald-300" }; 
-        if(planned >= target * 1.1) return { label: "AHEAD", color: "text-emerald-300" };
-        if(planned >= target - 0.5) return { label: "ON TRACK", color: "text-emerald-300" };
-        return { label: "LAGGING", color: "text-rose-300" };
+    // Helper: Calculate Points Completed TODAY (Real User Data)
+    const getDailyExecution = (syllabusRef) => {
+        const k = formatDateKey(state.selectedDate);
+        const tasks = state.tasks[k] || [];
+        let planned = 0;
+        let completed = 0;
+
+        tasks.forEach(t => {
+            // Find point value for this task
+            let points = 0;
+            syllabusRef.forEach(chap => {
+                chap.dailyTests.forEach(dt => {
+                    dt.subs.forEach(sub => {
+                        // Fuzzy match to catch manual tasks too
+                        if (t.text.includes(sub)) {
+                             points = getSubtopicPoints(dt, chap.subject, chap.topic);
+                        }
+                    });
+                });
+            });
+            
+            // If it's a valid syllabus task
+            if(points > 0) {
+                planned += points;
+                if(t.completed) completed += points;
+            }
+        });
+        return { planned, completed };
     };
 
-    const statMain = getStatus(plannedMain, mathMain.dailyTargetPoints);
-    const statBacklog = getStatus(plannedBacklog, mathBacklog.dailyTargetPoints);
+    const execMain = getDailyExecution(mathMain.syllabusRef);
+    const execBacklog = getDailyExecution(mathBacklog.syllabusRef);
 
-    // 4. Calculate Total Progress % (Earned Points / Total Points)
-    const progMain = mathMain.totalPoints > 0 ? Math.round((mathMain.earnedPoints / mathMain.totalPoints) * 100) : 0;
-    const progBacklog = mathBacklog.totalPoints > 0 ? Math.round((mathBacklog.earnedPoints / mathBacklog.totalPoints) * 100) : 0;
-
-    // 5. Identify Bottlenecks (Subject with most pending points)
-    const getBottleneck = (tasks) => {
-        if(!tasks || tasks.length === 0) return "None";
-        const counts = {};
-        tasks.forEach(t => counts[t.subject] = (counts[t.subject] || 0) + t.points);
-        return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    // --- 2. VELOCITY STATUS LOGIC ---
+    // Rule: You are "On Track" only if you have COMPLETED near the target, not just planned it.
+    const getVelocityStatus = (done, target) => {
+        if (target <= 0.1) return { label: "GOAL MET", color: "text-emerald-400", bg: "bg-emerald-500", percent: 100 };
+        
+        const pct = (done / target) * 100;
+        
+        if (pct >= 100) return { label: "CRUSHING IT", color: "text-emerald-400", bg: "bg-emerald-500", percent: Math.min(100, pct) };
+        if (pct >= 80) return { label: "ON TRACK", color: "text-teal-400", bg: "bg-teal-500", percent: pct };
+        if (pct >= 50) return { label: "WORKING", color: "text-yellow-400", bg: "bg-yellow-500", percent: pct };
+        if (pct > 0) return { label: "LAGGING", color: "text-orange-400", bg: "bg-orange-500", percent: pct };
+        return { label: "NOT STARTED", color: "text-slate-400", bg: "bg-slate-500", percent: 0 };
     };
-    const bottleMain = getBottleneck(mathMain.pendingTasks);
-    const bottleBacklog = getBottleneck(mathBacklog.pendingTasks);
 
-    // 6. Global Subject Analytics (Aggregating all data)
-    const subStats = { Physics: {total:0, done:0}, Chemistry: {total:0, done:0}, Biology: {total:0, done:0} };
-    
-    const agg = (syllabus) => {
+    const velMain = getVelocityStatus(execMain.completed, mathMain.dailyTargetPoints);
+    const velBacklog = getVelocityStatus(execBacklog.completed, mathBacklog.dailyTargetPoints);
+
+    // --- 3. DETAILED SUBJECT ANALYTICS (Split) ---
+    const getSubjectBreakdown = (syllabus) => {
+        const stats = { 
+            Physics: { total: 0, done: 0 }, 
+            Chemistry: { total: 0, done: 0 }, 
+            Biology: { total: 0, done: 0 } 
+        };
+        
+        // Build Lookup Set for Speed
         const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
+
         syllabus.forEach(chap => {
+            let subj = chap.subject;
+            if(subj === 'Botany' || subj === 'Zoology') subj = 'Biology';
+            
             chap.dailyTests.forEach(dt => {
+                const isTestDone = state.dailyTestsAttempted[dt.name];
                 dt.subs.forEach(sub => {
-                    let s = chap.subject;
-                    if(s === 'Botany' || s === 'Zoology') s = 'Biology';
-                    if(subStats[s]) {
-                        subStats[s].total++;
-                        // Check if done via Task History OR Daily Test checkbox
-                        if(allCompleted.has(`Study: ${chap.topic} - ${sub}`) || state.dailyTestsAttempted[dt.name]) {
-                            subStats[s].done++;
+                    if(stats[subj]) {
+                        stats[subj].total++;
+                        // Check exact match or Test Override
+                        if(isTestDone || allCompleted.has(`Study: ${chap.topic} - ${sub}`)) {
+                            stats[subj].done++;
                         }
                     }
                 });
             });
         });
+        return stats;
     };
-    
-    if(state.nextExam) agg(state.nextExam.syllabus);
-    if(typeof backlogPlan !== 'undefined') agg(backlogPlan.syllabus);
 
-    // Helper to render a subject bar
-    const renderSubRow = (subj, data) => {
+    const statsMain = getSubjectBreakdown(mathMain.syllabusRef);
+    const statsBacklog = getSubjectBreakdown(mathBacklog.syllabusRef);
+
+    // Helper to render a mini bar
+    const renderMiniBar = (label, data, colorClass) => {
         const pct = data.total > 0 ? Math.round((data.done / data.total) * 100) : 0;
-        let color = 'bg-brand-500';
-        if(subj === 'Physics') color = 'bg-blue-500';
-        if(subj === 'Chemistry') color = 'bg-orange-500';
-        if(subj === 'Biology') color = 'bg-emerald-500';
-        
         return `
-            <div class="mb-4 last:mb-0">
-                <div class="flex justify-between text-[11px] font-bold uppercase tracking-wider mb-1.5">
-                    <span class="text-slate-600 dark:text-slate-400">${subj}</span>
-                    <span class="text-slate-800 dark:text-white">${pct}%</span>
+            <div class="mb-2">
+                <div class="flex justify-between text-[10px] font-bold uppercase mb-1">
+                    <span class="text-slate-500 dark:text-slate-400">${label}</span>
+                    <span class="text-slate-700 dark:text-slate-200">${pct}%</span>
                 </div>
-                <div class="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div class="h-full ${color} transition-all duration-1000 shadow-sm" style="width: ${pct}%"></div>
+                <div class="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div class="h-full ${colorClass} transition-all duration-1000" style="width: ${pct}%"></div>
                 </div>
             </div>
         `;
     };
 
-    // --- HTML GENERATION ---
+    // --- 4. RENDER HTML ---
     container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
             
-            <div class="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-slate-800 to-slate-950 text-white shadow-xl flex flex-col justify-between group border border-slate-700/50">
-                <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform duration-700">
-                    <i data-lucide="crosshair" class="w-32 h-32"></i>
-                </div>
-                
-                <div class="relative z-10">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider mb-2 text-slate-300">
-                                Main Target
-                            </div>
-                            <h3 class="text-2xl font-black leading-tight tracking-tight">${state.nextExam ? state.nextExam.name : 'No Exam'}</h3>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-3xl font-black leading-none tracking-tighter">${mathMain.daysLeft}</div>
-                            <div class="text-[9px] uppercase font-bold text-slate-500 mt-1">Days Left</div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="p-3 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10">
-                            <div class="text-[9px] uppercase text-slate-500 font-bold mb-1">Velocity</div>
-                            <div class="text-sm font-bold ${statMain.color} flex items-center gap-1.5">
-                                <span class="relative flex h-2 w-2">
-                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${statMain.label === 'LAGGING' ? 'bg-rose-400' : 'bg-emerald-400'} opacity-75"></span>
-                                  <span class="relative inline-flex rounded-full h-2 w-2 ${statMain.label === 'LAGGING' ? 'bg-rose-500' : 'bg-emerald-500'}"></span>
-                                </span>
-                                ${statMain.label}
-                            </div>
-                        </div>
-                         <div class="p-3 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10">
-                            <div class="text-[9px] uppercase text-slate-500 font-bold mb-1">Bottleneck</div>
-                            <div class="text-sm font-bold text-slate-200 truncate">${bottleMain}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="relative z-10">
-                    <div class="flex justify-between text-[10px] font-bold uppercase mb-2 opacity-70">
-                        <span>Total Completion</span>
-                        <span>${progMain}%</span>
-                    </div>
-                    <div class="h-3 w-full bg-slate-900/50 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
-                        <div class="h-full bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_15px_rgba(34,211,238,0.4)] transition-all duration-1000 relative" style="width: ${progMain}%">
-                             <div class="absolute inset-0 bg-white/20 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-orange-600 to-red-700 text-white shadow-xl flex flex-col justify-between group border border-orange-500/30">
+            <div class="relative overflow-hidden rounded-3xl p-6 bg-slate-900 dark:bg-black text-white shadow-xl flex flex-col justify-between group border border-slate-800">
                 <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-700">
-                    <i data-lucide="history" class="w-32 h-32"></i>
+                    <i data-lucide="zap" class="w-32 h-32 text-white"></i>
                 </div>
                 
                 <div class="relative z-10">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/20 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider mb-2 text-orange-100">
-                                Recovery Phase
-                            </div>
-                            <h3 class="text-2xl font-black leading-tight tracking-tight">Backlog</h3>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                            Exam Velocity
                         </div>
                         <div class="text-right">
-                            <div class="text-3xl font-black leading-none tracking-tighter">${mathBacklog.daysLeft}</div>
-                            <div class="text-[9px] uppercase font-bold text-orange-200 mt-1">Days Left</div>
+                            <div class="text-2xl font-black leading-none">${mathMain.daysLeft}</div>
+                            <div class="text-[9px] uppercase font-bold text-slate-500">Days Left</div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="p-3 rounded-2xl bg-black/10 backdrop-blur-md border border-white/10">
-                            <div class="text-[9px] uppercase text-orange-200 font-bold mb-1">Velocity</div>
-                            <div class="text-sm font-bold ${statBacklog.color} flex items-center gap-1.5">
+                    <div class="mb-6">
+                        <div class="text-4xl font-black tracking-tight mb-1">
+                            ${execMain.completed.toFixed(1)} <span class="text-xl text-slate-500 font-bold">/ ${mathMain.dailyTargetPoints.toFixed(1)}</span>
+                        </div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400">Daily Points Completed</div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <div class="flex items-center gap-2">
                                 <span class="relative flex h-2 w-2">
-                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${statBacklog.label === 'LAGGING' ? 'bg-rose-400' : 'bg-emerald-400'} opacity-75"></span>
-                                  <span class="relative inline-flex rounded-full h-2 w-2 ${statBacklog.label === 'LAGGING' ? 'bg-rose-500' : 'bg-emerald-500'}"></span>
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${velMain.bg} opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-2 w-2 ${velMain.bg}"></span>
                                 </span>
-                                ${statBacklog.label}
+                                <span class="text-xs font-bold ${velMain.color}">${velMain.label}</span>
+                            </div>
+                            <span class="text-xs font-bold text-slate-500">${Math.round(velMain.percent)}%</span>
+                        </div>
+                        <div class="h-4 w-full bg-slate-800 rounded-full overflow-hidden border border-white/5">
+                            <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-1000 relative" style="width: ${velMain.percent}%">
+                                <div class="absolute inset-0 bg-white/20 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
                             </div>
                         </div>
-                         <div class="p-3 rounded-2xl bg-black/10 backdrop-blur-md border border-white/10">
-                            <div class="text-[9px] uppercase text-orange-200 font-bold mb-1">Bottleneck</div>
-                            <div class="text-sm font-bold text-white truncate">${bottleBacklog}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="relative z-10">
-                    <div class="flex justify-between text-[10px] font-bold uppercase mb-2 opacity-80">
-                        <span>Phase Progress</span>
-                        <span>${progBacklog}%</span>
-                    </div>
-                    <div class="h-3 w-full bg-black/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
-                        <div class="h-full bg-gradient-to-r from-yellow-300 to-orange-400 shadow-[0_0_15px_rgba(251,146,60,0.5)] transition-all duration-1000" style="width: ${progBacklog}%"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col justify-center relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                    <i data-lucide="pie-chart" class="w-32 h-32"></i>
+            <div class="relative overflow-hidden rounded-3xl p-6 bg-slate-900 dark:bg-black text-white shadow-xl flex flex-col justify-between group border border-slate-800">
+                <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                    <i data-lucide="history" class="w-32 h-32 text-orange-500"></i>
                 </div>
                 
                 <div class="relative z-10">
-                    <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                        <div class="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
-                             <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 backdrop-blur-md border border-orange-500/20 text-[10px] font-bold uppercase tracking-wider text-orange-200">
+                            Backlog Velocity
                         </div>
-                        Subject Mastery
-                    </h4>
-                    <div class="space-y-2">
-                        ${renderSubRow('Physics', subStats.Physics)}
-                        ${renderSubRow('Chemistry', subStats.Chemistry)}
-                        ${renderSubRow('Biology', subStats.Biology)}
+                        <div class="text-right">
+                            <div class="text-2xl font-black leading-none text-orange-500">${mathBacklog.daysLeft}</div>
+                            <div class="text-[9px] uppercase font-bold text-slate-500">Days Left</div>
+                        </div>
                     </div>
-                    
-                    <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <div class="flex justify-between items-center text-xs">
-                             <span class="text-slate-400 font-medium">Overall Syllabus</span>
-                             <span class="font-bold text-slate-700 dark:text-slate-300">
-                                ${Math.round((subStats.Physics.done + subStats.Chemistry.done + subStats.Biology.done) / (subStats.Physics.total + subStats.Chemistry.total + subStats.Biology.total || 1) * 100)}% Done
-                             </span>
+
+                    <div class="mb-6">
+                        <div class="text-4xl font-black tracking-tight mb-1 text-white">
+                            ${execBacklog.completed.toFixed(1)} <span class="text-xl text-slate-500 font-bold">/ ${mathBacklog.dailyTargetPoints.toFixed(1)}</span>
+                        </div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400">Daily Points Completed</div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="relative flex h-2 w-2">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${velBacklog.bg} opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-2 w-2 ${velBacklog.bg}"></span>
+                                </span>
+                                <span class="text-xs font-bold ${velBacklog.color}">${velBacklog.label}</span>
+                            </div>
+                            <span class="text-xs font-bold text-slate-500">${Math.round(velBacklog.percent)}%</span>
+                        </div>
+                        <div class="h-4 w-full bg-slate-800 rounded-full overflow-hidden border border-white/5">
+                            <div class="h-full bg-gradient-to-r from-orange-500 to-red-500 shadow-[0_0_15px_rgba(249,115,22,0.5)] transition-all duration-1000 relative" style="width: ${velBacklog.percent}%">
+                                <div class="absolute inset-0 bg-white/20 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm flex flex-col relative overflow-hidden">
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-500"></i> Subject Mastery
+                </h4>
+
+                <div class="grid grid-cols-2 gap-6 h-full">
+                    <div>
+                        <div class="text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 mb-3 border-b border-brand-100 dark:border-brand-900/50 pb-1">
+                            Main Exam
+                        </div>
+                        <div class="space-y-3">
+                            ${renderMiniBar('Physics', statsMain.Physics, 'bg-blue-500')}
+                            ${renderMiniBar('Chemistry', statsMain.Chemistry, 'bg-cyan-500')}
+                            ${renderMiniBar('Biology', statsMain.Biology, 'bg-emerald-500')}
+                        </div>
+                    </div>
+
+                    <div class="border-l border-slate-100 dark:border-slate-800 pl-6">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400 mb-3 border-b border-orange-100 dark:border-orange-900/50 pb-1">
+                            Backlog
+                        </div>
+                        <div class="space-y-3">
+                            ${renderMiniBar('Physics', statsBacklog.Physics, 'bg-blue-400 opacity-80')}
+                            ${renderMiniBar('Chemistry', statsBacklog.Chemistry, 'bg-cyan-400 opacity-80')}
+                            ${renderMiniBar('Biology', statsBacklog.Biology, 'bg-emerald-400 opacity-80')}
                         </div>
                     </div>
                 </div>
