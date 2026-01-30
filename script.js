@@ -2833,44 +2833,12 @@ window.updateSidebarBadges = function() {
 
 
 
-// ✅ NEW: Scroll-to-Hide Header Logic
-// ✅ NEW: Scroll-to-Hide Header Logic (Improved)
-
-// ✅ NEW: Smooth GPU-Accelerated Scroll Hide
 window.initScrollHeader = function() {
-    const scrollEl = document.getElementById('overview-scroll-view');
+    // 🛑 LOGIC DISABLED for GitHub Style
     const headerEl = document.getElementById('overview-header');
-    
-    if (!scrollEl || !headerEl) return;
-
-    let lastScroll = 0;
-    let ticking = false; // Performance throttle
-
-    scrollEl.addEventListener('scroll', () => {
-        const currentScroll = scrollEl.scrollTop;
-        
-        if (!ticking) {
-            window.requestAnimationFrame(() => {
-                // 1. Always show if near top (bounce protection)
-                if (currentScroll < 50) {
-                    headerEl.style.transform = "translateY(0)";
-                } 
-                // 2. Hide on Scroll Down
-                else if (currentScroll > lastScroll && currentScroll > 60) {
-                    headerEl.style.transform = "translateY(-100%)";
-                } 
-                // 3. Show on Scroll Up
-                else if (currentScroll < lastScroll) {
-                    headerEl.style.transform = "translateY(0)";
-                }
-                
-                lastScroll = Math.max(0, currentScroll); // Prevent negative scroll bounce
-                ticking = false;
-            });
-            ticking = true;
-        }
-    });
+    if(headerEl) headerEl.style.transform = "none";
 };
+
 document.addEventListener('DOMContentLoaded', init);
 
  document.addEventListener('DOMContentLoaded', init);
@@ -2934,70 +2902,16 @@ window.renderTasks = renderTasks;
 
 
 window.renderHeader = function() {
-    // 1. DATE LOGIC (Time Capsule)
-    const dayEl = document.getElementById('header-date-day');
-    const fullEl = document.getElementById('header-date-full');
-    const now = new Date();
-    const isToday = state.selectedDate.toDateString() === now.toDateString();
+    // 1. UPDATE BREADCRUMB (User / App)
+    const userEl = document.getElementById('header-breadcrumb-user');
+    const avatarEl = document.getElementById('header-avatar-display');
+    
+    if (userEl) userEl.textContent = state.displayName || "Guest";
+    if (avatarEl) avatarEl.textContent = (state.displayName || "G").charAt(0).toUpperCase();
 
-    if(dayEl) {
-        dayEl.textContent = isToday ? "TODAY" : state.selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
-        if(isToday) dayEl.className = "uppercase tracking-widest text-[9px] text-brand-600 font-extrabold";
-        else dayEl.className = "uppercase tracking-widest text-[9px] text-slate-400";
-    }
-
-    if(fullEl) {
-        fullEl.textContent = state.selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
-    // 2. MINIMALIST GREETING ENGINE
-    const greetingEl = document.getElementById('header-dynamic-greeting');
-    if(greetingEl) {
-        const hour = now.getHours();
-        let greeting = "Welcome";
-        let icon = "✨";
-        
-        let gradientClass = "from-indigo-600 via-purple-600 to-pink-600"; 
-
-        if (hour >= 5 && hour < 12) { 
-            greeting = "Good morning"; icon = "🌅"; gradientClass = "from-orange-500 via-amber-500 to-yellow-500";
-        }
-        else if (hour >= 12 && hour < 17) { 
-            greeting = "Good afternoon"; icon = "☀️"; gradientClass = "from-blue-500 via-cyan-500 to-teal-500";
-        }
-        else if (hour >= 17 && hour < 22) { 
-            greeting = "Good evening"; icon = "🌙"; gradientClass = "from-indigo-500 via-purple-500 to-pink-500";
-        }
-        else { 
-            greeting = "Up late"; icon = "🦉"; gradientClass = "from-violet-600 via-fuchsia-600 to-indigo-600";
-        }
-
-        const name = state.displayName || "Future Doctor";
-        
-        // ✅ NEW: Compact Layout (Icon + Stacked Text)
-        greetingEl.innerHTML = `
-            <div class="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-700 ease-out">
-                <div class="text-xl md:text-2xl animate-bounce delay-75 drop-shadow-sm">${icon}</div>
-                
-                <div class="flex flex-col justify-center">
-                    <h1 class="text-[10px] md:text-xs font-bold text-slate-400 dark:text-slate-500 leading-none mb-0.5 uppercase tracking-wide">${greeting}</h1>
-                    <button onclick="openProfileModal()" class="text-left group">
-                        <span class="text-sm md:text-base font-black bg-gradient-to-r ${gradientClass} text-transparent bg-clip-text truncate max-w-[140px] block group-hover:opacity-80 transition-opacity">
-                            ${name}
-                        </span>
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        if(window.lucide) lucide.createIcons({ root: greetingEl });
-    }
-
-    // 3. Agenda Date Sync
-    const agendaEl = document.getElementById('agenda-date-display');
-    if(agendaEl) agendaEl.textContent = state.selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    // 2. RENDER WIDGETS
+    renderHeaderPrayerWidget();
 };
-
 // ✅ NEW: Renders the 5-pill prayer strip in the header
 window.renderHeaderPrayerWidget = function() {
     const container = document.getElementById('header-prayer-widget');
@@ -3018,12 +2932,13 @@ window.renderHeaderPrayerWidget = function() {
         const isDone = todayData[p.key] === true;
         
         // This is the line you were looking for (Updated with White/Border style)
-        let baseClass = "flex-1 md:flex-none h-9 w-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm";
-        
-        let stateClass = isDone 
-            ? "bg-emerald-500 text-white !border-emerald-500 shadow-md shadow-emerald-500/30 scale-105" 
-            : "text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-300 dark:hover:border-brand-700";
+       // GitHub-style dark button
+let baseClass = "h-7 min-w-[28px] px-1.5 rounded-md flex items-center justify-center text-[10px] font-bold transition-all duration-200 border shadow-sm";
 
+// GitHub Colors (Green for success, Gray for default)
+let stateClass = isDone 
+    ? "bg-[#238636] text-white border-[#238636] hover:bg-[#2ea043]" 
+    : "bg-slate-50 dark:bg-[#21262d] text-slate-500 dark:text-[#c9d1d9] border-slate-200 dark:border-[#30363d] hover:text-blue-500 dark:hover:text-[#58a6ff]"; 
         return `
             <button onclick="togglePrayer('${p.key}')" class="${baseClass} ${stateClass}" title="Mark ${p.key} as done">
                 ${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : p.label}
