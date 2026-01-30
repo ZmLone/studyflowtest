@@ -586,22 +586,14 @@
 
 <div id="view-leaderboard" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors min-h-0">
 
-    <header class="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Leaderboard
-            </h1>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Compete with other aspirants.</p>
-        </div>
-        
-        <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-            <button onclick="switchRankTab('overall')" id="tab-overall" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white">Overall</button>
-            <button onclick="switchRankTab('exam')" id="tab-exam" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Exam %</button>
-            <button onclick="switchRankTab('backlog')" id="tab-backlog" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Backlog %</button>
-            <button onclick="switchRankTab('tests')" id="tab-tests" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Tests</button>
-        </div>
-    </header>
-
+    <header class="px-6 py-5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between sticky top-0 z-10">
+    <div>
+        <h1 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="trophy" class="w-5 h-5 text-yellow-500"></i> Leaderboard
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 text-xs font-medium mt-0.5">Top performers this season</p>
+    </div>
+</header>
     <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
         <div class="max-w-4xl mx-auto">
             <div class="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-indigo-900 dark:to-slate-900 rounded-2xl p-6 text-white shadow-xl mb-8 flex items-center justify-between">

@@ -2673,7 +2673,7 @@ window.renderLeaderboardList = function() {
     const list = document.getElementById('leaderboard-list');
     if(!list) return;
 
-    // 1. Get Live Stats for "You"
+    // 1. Get Live Stats for "You" so the list updates instantly when you interact
     const myStats = calculateUserStats();
     
     // 2. Update Profile Card (Top Section)
@@ -2683,87 +2683,133 @@ window.renderLeaderboardList = function() {
     // Update Your Pill Stats
     if(document.getElementById('lb-my-exam')) document.getElementById('lb-my-exam').textContent = `${myStats.mainPct}%`;
     if(document.getElementById('lb-my-backlog')) document.getElementById('lb-my-backlog').textContent = `${myStats.blPct}%`;
-    if(document.getElementById('lb-my-tests')) document.getElementById('lb-my-tests').textContent = myStats.testCount;
+    // Note: We now use testPct (%) for consistency with the new Fair Rule
+    if(document.getElementById('lb-my-tests')) document.getElementById('lb-my-tests').textContent = `${myStats.testPct || 0}%`;
     
-    // Update Your Rank Badge
-    const myRankEl = document.getElementById('lb-my-rank');
-    
-    // 3. FILTER: Only show users in the SAME EXAM SEASON (Reset Logic)
+    // 3. FILTER & SORT (By Season)
     const currentExamName = state.nextExam.name;
     const headerTitle = document.querySelector('#view-leaderboard h1');
-    if(headerTitle) headerTitle.innerHTML = `<i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Leaderboard <span class="hidden md:inline-block text-xs bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded ml-2 align-middle">${currentExamName} Season</span>`;
+    
+    // Add Season Badge to Title
+    if(headerTitle) headerTitle.innerHTML = `<i data-lucide="trophy" class="w-5 h-5 text-yellow-500"></i> Leaderboard <span class="hidden md:inline-block text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full ml-2 align-middle border border-slate-200 dark:border-slate-700">${currentExamName}</span>`;
 
     let sortedData = [...leaderboardCache]
-        .filter(u => u.currentExam === currentExamName) // <--- FILTERS OUT OLD DATA
+        .filter(u => u.currentExam === currentExamName) 
         .sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
 
-    // Calculate My Rank
+    // Update My Rank Display
     const myId = currentUser ? currentUser.uid : null;
     const myRankIndex = sortedData.findIndex(u => u.id === myId);
+    const myRankEl = document.getElementById('lb-my-rank');
     if(myRankEl) myRankEl.textContent = myRankIndex > -1 ? `#${myRankIndex + 1}` : '-';
 
+    // 4. EMPTY STATE
     if(sortedData.length === 0) {
-        list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-slate-400 opacity-60">
-            <i data-lucide="flag" class="w-12 h-12 mb-3"></i>
-            <p>New Season (${currentExamName}) Started!<br>Complete a task to join.</p>
-        </div>`;
+        list.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12 text-slate-400 opacity-60">
+                <div class="bg-slate-100 dark:bg-slate-800 p-4 rounded-full mb-3">
+                    <i data-lucide="flag" class="w-8 h-8 text-slate-300 dark:text-slate-600"></i>
+                </div>
+                <p class="text-sm font-medium">New Season Started!</p>
+                <p class="text-xs">Complete a task to be the first.</p>
+            </div>`;
         if(window.lucide) lucide.createIcons({ root: list });
         return;
     }
 
-    // 4. Render 3-Pill Cards
+    // 5. RENDER CARDS (New Design)
     list.innerHTML = sortedData.map((user, index) => {
         const isMe = user.id === myId;
-        const stats = isMe ? myStats : user; // Use live data for yourself
+        const stats = isMe ? myStats : user; // Use live stats for yourself
         
-        let rankBadge = `<span class="font-bold text-slate-500 text-sm">#${index + 1}</span>`;
-        let cardBorder = isMe ? "border-brand-500 ring-1 ring-brand-500" : "border-slate-200 dark:border-slate-800";
-        let cardBg = isMe ? "bg-brand-50/50 dark:bg-brand-900/10" : "bg-white dark:bg-slate-900";
-        
+        // --- RANK STYLING (Gold/Silver/Bronze) ---
+        let rankDisplay = `<span class="text-sm font-bold text-slate-500 w-6 text-center">#${index + 1}</span>`;
+        let borderClass = "border-slate-200 dark:border-slate-800";
+        let bgClass = "bg-white dark:bg-slate-900";
+
         if (index === 0) {
-            rankBadge = `<div class="w-8 h-8 rounded-full bg-yellow-400 text-yellow-900 flex items-center justify-center font-bold text-sm shadow-sm"><i data-lucide="crown" class="w-4 h-4"></i></div>`;
-            cardBorder = "border-yellow-400/50";
-        } else if (index === 1) rankBadge = `<div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-sm shadow-sm">2</div>`;
-        else if (index === 2) rankBadge = `<div class="w-8 h-8 rounded-full bg-orange-300 text-orange-800 flex items-center justify-center font-bold text-sm shadow-sm">3</div>`;
+            rankDisplay = `<div class="w-7 h-7 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center shadow-sm ring-1 ring-yellow-200"><i data-lucide="crown" class="w-3.5 h-3.5 fill-current"></i></div>`;
+            borderClass = "border-yellow-400/60 ring-1 ring-yellow-400/20";
+            bgClass = "bg-gradient-to-r from-yellow-50/50 to-white dark:from-yellow-900/10 dark:to-slate-900";
+        } else if (index === 1) {
+            rankDisplay = `<div class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center shadow-sm ring-1 ring-slate-200 font-bold text-xs">2</div>`;
+            borderClass = "border-slate-300 dark:border-slate-600";
+        } else if (index === 2) {
+            rankDisplay = `<div class="w-7 h-7 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center shadow-sm ring-1 ring-orange-200 font-bold text-xs">3</div>`;
+            borderClass = "border-orange-300 dark:border-orange-700";
+        }
+
+        // Highlight "Me"
+        if (isMe) {
+            borderClass = "border-brand-500 ring-1 ring-brand-500 shadow-md shadow-brand-500/10";
+            bgClass = "bg-brand-50 dark:bg-brand-900/10";
+        }
+
+        // Safe Fallbacks for display
+        const dispMain = stats.mainPct || 0;
+        const dispBacklog = stats.blPct || 0;
+        // Show % if available (new data), otherwise count (old data) to avoid showing "0%" for valid old tests
+        const dispTest = (stats.testPct !== undefined) ? `${stats.testPct}%` : (stats.testCount || 0); 
 
         return `
-            <div class="relative flex flex-col gap-3 p-4 rounded-xl border ${cardBorder} ${cardBg} mb-3 transition-all hover:scale-[1.01] shadow-sm">
+            <div class="relative flex flex-col gap-3 p-4 rounded-2xl border ${borderClass} ${bgClass} mb-3 transition-transform active:scale-[0.99]">
                 
                 <div class="flex justify-between items-center">
                     <div class="flex items-center gap-3">
-                        <div class="shrink-0 w-8 flex justify-center">${rankBadge}</div>
-                        <div>
-                            <p class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        ${rankDisplay}
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-2">
                                 ${user.displayName || 'User'}
-                                ${isMe ? '<span class="bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">You</span>' : ''}
-                            </p>
-                            <p class="text-[10px] text-slate-500 font-medium">Score: ${stats.overallScore || 0}</p>
+                                ${isMe ? '<span class="bg-brand-600 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wide">YOU</span>' : ''}
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-medium">Rank ${index + 1}</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-lg font-black text-brand-600 dark:text-brand-400 leading-none">${stats.overallScore || 0}</span>
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Points</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 mt-1">
+                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-black/20 p-2 rounded-lg border border-slate-100 dark:border-white/5">
+                        <div class="w-6 h-6 rounded-md bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                            <i data-lucide="target" class="w-3.5 h-3.5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[9px] text-slate-400 font-bold uppercase truncate">Exam</div>
+                            <div class="text-xs font-bold text-slate-700 dark:text-slate-200">${dispMain}%</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-black/20 p-2 rounded-lg border border-slate-100 dark:border-white/5">
+                        <div class="w-6 h-6 rounded-md bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 shrink-0">
+                            <i data-lucide="history" class="w-3.5 h-3.5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[9px] text-slate-400 font-bold uppercase truncate">Backlog</div>
+                            <div class="text-xs font-bold text-slate-700 dark:text-slate-200">${dispBacklog}%</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-black/20 p-2 rounded-lg border border-slate-100 dark:border-white/5">
+                        <div class="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                            <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[9px] text-slate-400 font-bold uppercase truncate">Tests</div>
+                            <div class="text-xs font-bold text-slate-700 dark:text-slate-200">${dispTest}</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-center border border-slate-100 dark:border-slate-700">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase block">Main</span>
-                        <span class="text-xs font-black text-blue-600 dark:text-blue-400">${stats.mainPct || 0}%</span>
-                    </div>
-                    <div class="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-center border border-slate-100 dark:border-slate-700">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase block">Backlog</span>
-                        <span class="text-xs font-black text-orange-600 dark:text-orange-400">${stats.blPct || 0}%</span>
-                    </div>
-                    <div class="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-center border border-slate-100 dark:border-slate-700">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase block">Tests</span>
-                        <span class="text-xs font-black text-emerald-600 dark:text-emerald-400">${stats.testCount || 0}</span>
-                    </div>
-                </div>
             </div>
         `;
     }).join('');
 
     if(window.lucide) lucide.createIcons({ root: list });
     updateSidebarBadges();
-};
-     
+};     
 // --- PROFILE FUNCTIONS ---
     window.openProfileModal = function() {
         const input = document.getElementById('profile-name-input');
