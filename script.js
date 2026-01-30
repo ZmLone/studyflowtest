@@ -1511,8 +1511,11 @@ window.togglePrayer = function(prayerName) {
     if (!state.prayers[k]) state.prayers[k] = {};
     state.prayers[k][prayerName] = !state.prayers[k][prayerName];
     saveData();
+    
+    // Update both the modal (if open) and the NEW header widget
     renderPrayerModalItems();
-    updateHeaderPrayerBtn();
+    renderHeaderPrayerWidget(); // <--- Changed this line!
+    updateSidebarBadges();      // Optional: Updates badges if you add prayer logic there later
 };
 
 window.renderPrayerModalItems = function() {
@@ -2707,6 +2710,7 @@ window.renderLeaderboardList = function() {
     }).join('');
 
     if(window.lucide) lucide.createIcons({ root: list });
+updateSidebarBadges();
 };
 
      
