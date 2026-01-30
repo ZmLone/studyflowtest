@@ -3723,7 +3723,7 @@ function startSnow() {
     canvas.width = width;
     canvas.height = height;
 
-const maxFalling = 400; 
+    const maxFalling = 400; // Constant density
     const fallingFlakes = [];
     let landedFlakes = []; 
 
