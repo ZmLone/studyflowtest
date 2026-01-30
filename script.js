@@ -2144,7 +2144,7 @@ window.showPointsToast = function(points, current, target, subject, type) {
                 saveData();
                 renderAll(); // Ensure UI updates
             }
-        };
+    
 
         window.deleteGroup = function(chapterName) {
             if(confirm(`Delete all tasks for "${chapterName}"?`)) {
