@@ -166,11 +166,7 @@
     <span>Leaderboard</span>
     <span id="badge-rank" class="ml-auto bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-md hidden">#--</span>
 </button> 
-        <button id="nav-planner" onclick="switchView('planner')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all duration-200 hover:translate-x-1">
-            <i data-lucide="calendar-range" class="w-5 h-5 transition-colors group-hover:text-indigo-500"></i>
-            <span>Day Planner</span>
-        </button>
-
+        
         <button id="nav-namaz" onclick="switchView('namaz')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200 hover:translate-x-1">
             <i data-lucide="book-heart" class="w-5 h-5 transition-colors group-hover:text-emerald-500"></i>
             <span>Spiritual Insights</span>
@@ -576,24 +572,6 @@
         </div>
     </div>
 </div>
-<div id="view-planner" class="hidden flex-1 flex flex-col overflow-hidden bg-white dark:bg-slate-950 transition-colors min-h-0">
-    <header class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
-        <div class="flex justify-between items-center max-w-2xl mx-auto w-full">
-            <div>
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <i data-lucide="calendar-range" class="w-5 h-5 text-indigo-500"></i> Planner
-                </h2>
-                <p class="text-xs text-slate-500">Design your perfect day.</p>
-            </div>
-            <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-                <button onclick="setPlannerTab('unscheduled')" id="tab-unscheduled" class="px-3 py-1.5 rounded-md text-xs font-bold transition-all bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-300">
-                    To Plan
-                </button>
-                <button onclick="setPlannerTab('scheduled')" id="tab-scheduled" class="px-3 py-1.5 rounded-md text-xs font-bold transition-all text-slate-500 hover:text-slate-800">
-                    Schedule
-                </button>
-            </div>
-        </div>
     </header>
 
     <div class="flex-1 overflow-y-auto custom-scroll p-4 pb-24">
@@ -720,53 +698,6 @@
             <p class="text-xs text-slate-500 dark:text-slate-400 font-medium" id="modal-prayer-date">...</p>
         </div>
         <div class="grid grid-cols-1 gap-2" id="modal-prayer-list"></div>
-    </div>
-</div>
-<div id="scheduler-modal" class="hidden fixed inset-0 z-[90] bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center sm:p-4">
-    <div class="bg-white dark:bg-slate-900 w-full md:w-[400px] md:rounded-2xl rounded-t-2xl border-t md:border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-200">
-        
-        <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-            <div>
-                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Plan This Session</h3>
-                <p class="text-xs text-slate-500" id="scheduler-subtitle">Set your timing</p>
-            </div>
-            <button onclick="closeScheduler()" class="p-2 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-        </div>
-
-        <div class="p-6 space-y-6">
-            <input type="hidden" id="scheduler-task-id">
-            <input type="hidden" id="scheduler-is-chapter">
-            <input type="hidden" id="scheduler-chapter-name">
-
-            <div class="space-y-2">
-                <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Start Time</label>
-                <div class="relative">
-                    <input type="time" id="scheduler-start" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all">
-                    <i data-lucide="clock" class="absolute right-4 top-3.5 w-5 h-5 text-slate-400"></i>
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Duration (Hours)</label>
-                <div class="grid grid-cols-4 gap-2">
-                    <button type="button" onclick="setDuration(0.5)" class="dur-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm font-medium transition-colors">0.5h</button>
-                    <button type="button" onclick="setDuration(1)" class="dur-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm font-medium transition-colors">1h</button>
-                    <button type="button" onclick="setDuration(2)" class="dur-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm font-medium transition-colors">2h</button>
-                    <button type="button" onclick="setDuration(3)" class="dur-btn p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm font-medium transition-colors">3h</button>
-                </div>
-                <div class="flex items-center gap-3 mt-2">
-                    <input type="number" id="scheduler-duration" placeholder="Custom" class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-500">
-                    <span class="text-sm font-bold text-slate-500">Hours</span>
-                </div>
-            </div>
-
-            <button onclick="confirmSchedule()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-lg shadow-lg shadow-indigo-500/30 transition-all transform active:scale-95 flex items-center justify-center gap-2">
-                <i data-lucide="calendar-check" class="w-5 h-5"></i>
-                Set Schedule
-            </button>
-        </div>
     </div>
 </div>
 <div id="customModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center">

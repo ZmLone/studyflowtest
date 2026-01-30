@@ -2294,8 +2294,8 @@ window.switchView = function(view) {
     toggleMobileMenu(true); // Close mobile menu if open
     
     // 1. Update Buttons Highlighting
-    ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'planner'].forEach(v => {
-        const btn = document.getElementById(`nav-${v}`);
+   ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz'].forEach(v => {
+         const btn = document.getElementById(`nav-${v}`);
         if(btn) {
             // Reset all to default style
             btn.className = "group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-brand-600 dark:hover:text-brand-400 transition-all duration-200 hover:translate-x-1";
@@ -2325,7 +2325,6 @@ window.switchView = function(view) {
     if(view === 'backlog') renderSyllabus('backlog');
     if(view === 'leaderboard') fetchLeaderboard();
     if(view === 'namaz') renderNamazView();
-    if(view === 'planner') renderPlanner();
     if(view === 'mistakes') {
         if(state.activeNotebook) renderNotebookEntries();
         else updateShelfCounts();
