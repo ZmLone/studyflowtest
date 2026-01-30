@@ -2061,8 +2061,7 @@ window.showPointsToast = function(points, current, target, subject, type) {
     }, 3500);
 };
 
-        
-// --- 5. MANUAL ADD HOOK (With NEW Visuals) ---
+   // --- 5. MANUAL ADD HOOK (With NEW Visuals) ---
         window.addTask = function(text, type = 'main', subject = 'General', chapter = null) {
             // 1. Standard Add
             const key = formatDateKey(state.selectedDate);
@@ -2088,7 +2087,7 @@ window.showPointsToast = function(points, current, target, subject, type) {
                             if (text.includes(sub)) {
                                 pointsFound = getSubtopicPoints(dt, chap.subject, chap.topic);
                                 detectedType = 'main';
-                                detectedSubject = chap.subject; // Auto-correct subject if matched
+                                detectedSubject = chap.subject; 
                                 syllabusRef = state.nextExam.syllabus;
                             }
                         });
@@ -2115,7 +2114,7 @@ window.showPointsToast = function(points, current, target, subject, type) {
             // 3. TRIGGER THE NEW VISUAL TOAST
             if (pointsFound > 0) {
                 const math = calculateSmartMath(detectedType);
-                const planned = getPlannerPointsForToday(detectedType, syllabusRef); // Includes new task
+                const planned = getPlannerPointsForToday(detectedType, syllabusRef);
                 
                 // ✨ CALL THE NEW VISUAL FUNCTION ✨
                 showPointsToast(pointsFound, planned, math.dailyTargetPoints, detectedSubject, detectedType);
@@ -2125,26 +2124,16 @@ window.showPointsToast = function(points, current, target, subject, type) {
             }
         };
 
-// ... inside window.addTask ...
-            if (pointsFound > 0) {
-                const math = calculateSmartMath(detectedType);
-                const planned = getPlannerPointsForToday(detectedType, syllabusRef);
-                showPointsToast(pointsFound, planned, math.dailyTargetPoints, detectedSubject, detectedType);
-            } else {
-                showToast("Task added to planner");
-            }
-        };
-
-        // ✅ PASTE THESE MISSING FUNCTIONS HERE:
+        // ✅ RESTORED FUNCTIONS
 
         window.deleteTask = function(id) {
             const key = formatDateKey(state.selectedDate);
             if(state.tasks[key]) {
                 state.tasks[key] = state.tasks[key].filter(t => t.id !== id);
                 saveData();
-                renderAll(); // Ensure UI updates
-            };
-    
+                renderAll(); 
+            }
+        };
 
         window.deleteGroup = function(chapterName) {
             if(confirm(`Delete all tasks for "${chapterName}"?`)) {
@@ -2159,7 +2148,6 @@ window.showPointsToast = function(points, current, target, subject, type) {
                         return chap !== chapterName;
                     });
                     saveData();
-                    // Also collapse the group in UI
                     if (state.expandedFocusGroups[chapterName]) delete state.expandedFocusGroups[chapterName];
                     renderAll();
                 }
@@ -2173,26 +2161,11 @@ window.showPointsToast = function(points, current, target, subject, type) {
                 if(t) { 
                     t.completed = !t.completed; 
                     saveData();
-                    renderAll(); // Update UI
+                    renderAll(); 
                 }
             }
-        };
-        window.deleteGroup = function(chapterName) {
-            const key = formatDateKey(state.selectedDate);
-            if(state.tasks[key]) {
-                 state.tasks[key] = state.tasks[key].filter(t => {
-                    let chap = t.chapter;
-                    if (!chap && t.text.startsWith("Study: ")) {
-                        const parts = t.text.replace("Study: ", "").split(" - ");
-                        if (parts.length > 1) chap = parts[0];
-                    }
-                    return chap !== chapterName;
-                });
-                saveData();
-                if (state.expandedFocusGroups[chapterName]) delete state.expandedFocusGroups[chapterName];
-            }
-        };
-
+        };     
+        
         window.toggleTask = function(id) {
             const key = formatDateKey(state.selectedDate);
             if(state.tasks[key]) {
