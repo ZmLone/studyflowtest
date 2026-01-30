@@ -311,13 +311,66 @@
 
 <div id="view-target" class="hidden flex-1 flex flex-col overflow-hidden bg-white dark:bg-slate-900 transition-colors min-h-0">
         
-                        <div id="main-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4">
+            <header class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-slate-50/50 dark:bg-slate-900/50">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 tracking-wide">Main Track</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white" id="syllabus-title">Syllabus</h2>
+                </div>
+                
+                <div class="flex-1 max-w-md w-full relative group">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                    </div>
+                    <input type="text" 
+                        onkeyup="handleSearch(this.value, 'main')" 
+                        placeholder="Search topics (e.g., 'Thermodynamics')..." 
+                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-white rounded-xl py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all shadow-sm"
+                    >
+                </div>
+
+                <div class="text-right hidden md:block">
+                    <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Exam Date</div>
+                    <div class="text-lg font-bold text-slate-900 dark:text-white" id="syllabus-date">...</div>
+                    <div class="text-xs font-bold text-brand-600 dark:text-brand-400 mt-1" id="syllabus-days-left">...</div>
+                </div>
+            </header>
+            <div id="main-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4">
                 </div>
         </div>
 
         <div id="view-backlog" class="hidden flex-1 flex flex-col overflow-hidden bg-white dark:bg-slate-900 transition-colors min-h-0">
 
-                        <div id="backlog-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4">
+            <header class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-orange-50/30 dark:bg-orange-900/10">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 tracking-wide">Recovery Plan</span>
+                    </div>
+ <h2 class="text-2xl font-bold text-slate-900 dark:text-white">60-Day Recovery</h2>
+                </div>
+
+                <div class="flex-1 max-w-md w-full relative group">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 group-focus-within:text-orange-500 transition-colors"></i>
+                    </div>
+                    <input type="text" 
+                        onkeyup="handleSearch(this.value, 'backlog')" 
+                        placeholder="Search backlog..." 
+                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-white rounded-xl py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm"
+                    >
+                </div>
+
+              <div class="text-right hidden md:block">
+    <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Current Phase Target</div>
+    <h3 id="backlog-deadline-display" class="text-lg font-bold text-slate-900 dark:text-white">Calculating...</h3>
+    
+    <div id="backlog-phase-label" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 mt-1">
+        Loading...
+    </div>
+</div> 
+            </header>
+            <div id="backlog-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4">
                 </div>
         </div>
 
@@ -461,7 +514,14 @@
             </div>
         </div>
 <div id="view-namaz" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors min-h-0">
-        <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
+    <header class="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="moon-star" class="w-6 h-6 text-emerald-500"></i> Spiritual Growth
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Your journey towards consistency.</p>
+    </header>
+
+    <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
         <div class="max-w-4xl mx-auto space-y-6">
             
             <div class="bg-gradient-to-r from-emerald-800 to-teal-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden group">
@@ -525,7 +585,22 @@
 
 <div id="view-leaderboard" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors min-h-0">
 
-    
+    <header class="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Leaderboard
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Compete with other aspirants.</p>
+        </div>
+        
+        <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <button onclick="switchRankTab('overall')" id="tab-overall" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white">Overall</button>
+            <button onclick="switchRankTab('exam')" id="tab-exam" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Exam %</button>
+            <button onclick="switchRankTab('backlog')" id="tab-backlog" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Backlog %</button>
+            <button onclick="switchRankTab('tests')" id="tab-tests" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Tests</button>
+        </div>
+    </header>
+
     <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
         <div class="max-w-4xl mx-auto">
             <div class="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-indigo-900 dark:to-slate-900 rounded-2xl p-6 text-white shadow-xl mb-8 flex items-center justify-between">
