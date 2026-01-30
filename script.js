@@ -1419,7 +1419,7 @@ function setupSchedule() {
                 newMForm.addEventListener('submit', window.saveMistake);
             }
         }
-
+// --- HELPER: CALCULATE STATS (Weighted Points for Consistency) ---
 function calculateUserStats() {
     // 1. Snapshot of all completed tasks
     const allCompleted = new Set(
@@ -1433,32 +1433,41 @@ function calculateUserStats() {
     if (state.nextExam && state.nextExam.syllabus) {
         state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => validTests.add(dt.name)));
     }
-    // Backlog tests always count if they are in the active plan
     if (typeof backlogPlan !== 'undefined' && backlogPlan.syllabus) {
         backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => validTests.add(dt.name)));
     }
 
-    // 3. Main Exam % (X%) - Resets automatically when state.nextExam changes
+    // 3. Main Exam % (WEIGHTED POINTS)
+    // Now matches your dashboard progress bar exactly
     let mainTotal = 0, mainDone = 0;
     if(state.nextExam && state.nextExam.syllabus) {
-        state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => dt.subs.forEach(sub => {
-            mainTotal++;
-            if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) mainDone++;
-        })));
+        state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => {
+            // Get value of this specific topic (e.g. Physics = 4pts, Bio = 2pts)
+            const pts = getSubtopicPoints(dt, s.subject, s.topic);
+            
+            dt.subs.forEach(sub => {
+                mainTotal += pts;
+                if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) mainDone += pts;
+            });
+        }));
     }
     const mainPct = mainTotal ? Math.round((mainDone/mainTotal)*100) : 0;
 
-    // 4. Backlog % (Y%)
+    // 4. Backlog % (WEIGHTED POINTS)
     let blTotal = 0, blDone = 0;
     if(typeof backlogPlan !== 'undefined' && backlogPlan.syllabus) {
-        backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => dt.subs.forEach(sub => {
-            blTotal++;
-            if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) blDone++;
-        })));
+        backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => {
+            const pts = getSubtopicPoints(dt, s.subject, s.topic);
+            
+            dt.subs.forEach(sub => {
+                blTotal += pts;
+                if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) blDone += pts;
+            });
+        }));
     }
     const blPct = blTotal ? Math.round((blDone/blTotal)*100) : 0;
 
-    // 5. Test Count (Z) - Only counts tests relevant to CURRENT Exam + Backlog
+    // 5. Test Count (Z)
     const testCount = Object.keys(state.dailyTestsAttempted).filter(k => 
         state.dailyTestsAttempted[k] && validTests.has(k)
     ).length;
@@ -1473,6 +1482,7 @@ function calculateUserStats() {
         overallScore 
     };
 }
+
 
 function saveData() {
     const stats = calculateUserStats(); 
