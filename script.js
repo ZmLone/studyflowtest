@@ -3117,47 +3117,103 @@ window.renderTasks = renderTasks;
             if(els.agendaDate) els.agendaDate.textContent = dateStr;
         }
 
+
 // ==========================================
-// 🚀 TACTICAL DASHBOARD V3 (Smart Analytics)
+// 🚀 TACTICAL DASHBOARD V4 (Strict Phases + Total %)
 // ==========================================
 window.renderStats = function() {
     const container = document.getElementById('stats-container');
     if (!container) return;
 
-    // --- 1. CORE DATA CALCULATION ---
-    const mathMain = calculateSmartMath('main');
-    const mathBacklog = calculateSmartMath('backlog');
+    // --- 1. DETERMINE ACTIVE BACKLOG PHASE ---
+    // We calculate this first to filter data correctly
+    const planStart = (typeof backlogPlan !== 'undefined') ? backlogPlan.startDate : new Date();
+    const now = new Date();
+    const diffTime = now - planStart;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    
+    let currentPhase = 1;
+    if(diffDays > 45) currentPhase = 4;
+    else if(diffDays > 30) currentPhase = 3;
+    else if(diffDays > 15) currentPhase = 2;
 
-    // Helper: Calculate Points Completed TODAY (Real User Data)
-    const getDailyExecution = (syllabusRef) => {
+    // --- 2. PREPARE SYLLABUS DATA ---
+    // Main Exam: Uses everything
+    const mainSyllabus = state.nextExam ? state.nextExam.syllabus : [];
+    
+    // Backlog: STRICTLY filter to ONLY the current phase
+    const backlogSyllabus = (typeof backlogPlan !== 'undefined') 
+        ? backlogPlan.syllabus.filter(item => item.phase === currentPhase) 
+        : [];
+
+    // --- 3. CORE CALCULATIONS ---
+    // We re-use the smart math logic but pass our filtered syllabus
+    // Note: calculateSmartMath usually grabs data internally, so we simulate it here for stats
+    
+    const getDailyData = (syllabus) => {
         const k = formatDateKey(state.selectedDate);
         const tasks = state.tasks[k] || [];
-        let planned = 0;
-        let completed = 0;
-
+        let planned = 0, completed = 0;
+        
         tasks.forEach(t => {
-            let points = 0;
-            syllabusRef.forEach(chap => {
+            syllabus.forEach(chap => {
                 chap.dailyTests.forEach(dt => {
                     dt.subs.forEach(sub => {
                         if (t.text.includes(sub)) {
-                             points = getSubtopicPoints(dt, chap.subject, chap.topic);
+                             const pts = getSubtopicPoints(dt, chap.subject, chap.topic);
+                             planned += pts;
+                             if(t.completed) completed += pts;
                         }
                     });
                 });
             });
-            if(points > 0) {
-                planned += points;
-                if(t.completed) completed += points;
-            }
         });
         return { planned, completed };
     };
 
-    const execMain = getDailyExecution(mathMain.syllabusRef);
-    const execBacklog = getDailyExecution(mathBacklog.syllabusRef);
+    const execMain = getDailyData(mainSyllabus);
+    const execBacklog = getDailyData(backlogSyllabus); // Uses filtered list
 
-    // --- 2. VELOCITY STATUS LOGIC ---
+    // Recalculate Targets based on filtered lists
+    const getTarget = (syllabus, endDateStr) => {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const targetDate = new Date(endDateStr);
+        const daysLeft = Math.max(1, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)));
+        
+        let totalPts = 0, earnedPts = 0;
+        const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
+
+        syllabus.forEach(chap => {
+            chap.dailyTests.forEach(dt => {
+                const subPts = getSubtopicPoints(dt, chap.subject, chap.topic);
+                dt.subs.forEach(sub => {
+                    totalPts += subPts;
+                    if (allCompleted.has(`Study: ${chap.topic} - ${sub}`) || state.dailyTestsAttempted[dt.name]) {
+                        earnedPts += subPts;
+                    }
+                });
+            });
+        });
+        
+        // Coverage % Calculation
+        const coveragePct = totalPts === 0 ? 0 : Math.round((earnedPts / totalPts) * 100);
+        
+        return { 
+            daysLeft, 
+            dailyTarget: (totalPts - earnedPts) / daysLeft,
+            coveragePct
+        };
+    };
+
+    // Dates: Main Exam vs Current Phase End
+    const mainStats = getTarget(mainSyllabus, '2026-02-07T00:00:00');
+    
+    // Calculate Phase End Date dynamically
+    const phaseEndDate = new Date(planStart);
+    phaseEndDate.setDate(planStart.getDate() + (currentPhase * 15));
+    const backlogStats = getTarget(backlogSyllabus, phaseEndDate);
+
+    // --- 4. VELOCITY VISUALS ---
     const getVelocityStatus = (done, target) => {
         if (target <= 0.1) return { label: "GOAL MET", color: "text-emerald-400", bg: "bg-emerald-500", percent: 100 };
         const pct = (done / target) * 100;
@@ -3168,16 +3224,12 @@ window.renderStats = function() {
         return { label: "NOT STARTED", color: "text-slate-400", bg: "bg-slate-500", percent: 0 };
     };
 
-    const velMain = getVelocityStatus(execMain.completed, mathMain.dailyTargetPoints);
-    const velBacklog = getVelocityStatus(execBacklog.completed, mathBacklog.dailyTargetPoints);
+    const velMain = getVelocityStatus(execMain.completed, mainStats.dailyTarget);
+    const velBacklog = getVelocityStatus(execBacklog.completed, backlogStats.dailyTarget);
 
-    // --- 3. INTELLIGENT SUBJECT BREAKDOWN ---
+    // --- 5. SUBJECT ANALYTICS (Filtered) ---
     const getSubjectBreakdown = (syllabus) => {
-        const stats = { 
-            Physics: { total: 0, done: 0 }, 
-            Chemistry: { total: 0, done: 0 }, 
-            Biology: { total: 0, done: 0 } 
-        };
+        const stats = { Physics: {t:0, d:0}, Chemistry: {t:0, d:0}, Biology: {t:0, d:0} };
         const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
 
         syllabus.forEach(chap => {
@@ -3187,53 +3239,37 @@ window.renderStats = function() {
                 const isTestDone = state.dailyTestsAttempted[dt.name];
                 dt.subs.forEach(sub => {
                     if(stats[subj]) {
-                        stats[subj].total++;
-                        if(isTestDone || allCompleted.has(`Study: ${chap.topic} - ${sub}`)) {
-                            stats[subj].done++;
-                        }
+                        stats[subj].t++;
+                        if(isTestDone || allCompleted.has(`Study: ${chap.topic} - ${sub}`)) stats[subj].d++;
                     }
                 });
             });
         });
-        return stats;
+        return { 
+            Physics: { total: stats.Physics.t, done: stats.Physics.d },
+            Chemistry: { total: stats.Chemistry.t, done: stats.Chemistry.d },
+            Biology: { total: stats.Biology.t, done: stats.Biology.d }
+        };
     };
 
-    const statsMain = getSubjectBreakdown(mathMain.syllabusRef);
-    const statsBacklog = getSubjectBreakdown(mathBacklog.syllabusRef);
+    const statsMain = getSubjectBreakdown(mainSyllabus);
+    const statsBacklog = getSubjectBreakdown(backlogSyllabus); // Strict Phase Filtering Applied Here
 
-    // --- 4. ANALYTICS HELPER: DETECT WEAKNESS ---
+    // Helper for rendering Subject Bars
     const renderSmartSubject = (subj, data, allData) => {
         const pct = data.total > 0 ? Math.round((data.done / data.total) * 100) : 0;
         
-        // Calculate Average of All Subjects in this Exam
-        let totalPct = 0;
-        let count = 0;
-        Object.values(allData).forEach(d => {
-            if(d.total > 0) {
-                totalPct += (d.done / d.total) * 100;
-                count++;
-            }
-        });
+        let totalPct = 0; let count = 0;
+        Object.values(allData).forEach(d => { if(d.total > 0) { totalPct += (d.done / d.total) * 100; count++; } });
         const avg = count > 0 ? totalPct / count : 0;
         
-        // Determine Status
         let status = "Balanced";
-        let statusColor = "text-slate-400";
         let barColor = "bg-slate-400";
-        let icon = "minus";
+        let statusIcon = "";
 
-        if(pct < avg - 5) {
-            status = "Lagging";
-            statusColor = "text-rose-500";
-            barColor = "bg-rose-500";
-            icon = "arrow-down";
-        } else if (pct > avg + 5) {
-            status = "Strong";
-            statusColor = "text-emerald-500";
-            barColor = "bg-emerald-500";
-            icon = "arrow-up";
-        } else {
-            // Default colors per subject if balanced
+        if(pct < avg - 5) { status = "Lagging"; barColor = "bg-rose-500"; statusIcon = `<i data-lucide="alert-circle" class="w-2 h-2 text-rose-500"></i>`; }
+        else if (pct > avg + 5) { status = "Strong"; barColor = "bg-emerald-500"; statusIcon = `<i data-lucide="zap" class="w-2 h-2 text-emerald-500"></i>`; }
+        else {
             if(subj === 'Physics') barColor = "bg-blue-500";
             if(subj === 'Chemistry') barColor = "bg-cyan-500";
             if(subj === 'Biology') barColor = "bg-green-500";
@@ -3244,8 +3280,7 @@ window.renderStats = function() {
                 <div class="flex justify-between items-end mb-1">
                     <div class="flex items-center gap-1.5">
                         <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 w-14">${subj}</span>
-                        ${status === 'Lagging' ? `<span class="text-[9px] font-bold px-1 rounded bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-300 flex items-center gap-0.5"><i data-lucide="alert-circle" class="w-2 h-2"></i> Lagging</span>` : ''}
-                        ${status === 'Strong' ? `<span class="text-[9px] font-bold px-1 rounded bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300 flex items-center gap-0.5"><i data-lucide="zap" class="w-2 h-2"></i> Strong</span>` : ''}
+                        ${statusIcon}
                     </div>
                     <span class="text-xs font-bold text-slate-700 dark:text-white">${pct}%</span>
                 </div>
@@ -3256,23 +3291,15 @@ window.renderStats = function() {
         `;
     };
 
-    // Find the absolute weakest subject across both exams
-    const findWeakest = () => {
-        let lowest = 101;
-        let name = "None";
-        const check = (stats) => {
-            Object.entries(stats).forEach(([k, v]) => {
-                const p = v.total > 0 ? (v.done / v.total) * 100 : 0;
-                if(p < lowest) { lowest = p; name = k; }
-            });
-        };
-        check(statsMain);
-        check(statsBacklog);
-        return name;
-    };
-    const weakestSub = findWeakest();
+    // Find Weakest Subject
+    let weakestSub = "None";
+    let lowest = 101;
+    [statsMain, statsBacklog].forEach(grp => Object.entries(grp).forEach(([k, v]) => {
+        const p = v.total > 0 ? (v.done / v.total) * 100 : 0;
+        if(p < lowest) { lowest = p; weakestSub = k; }
+    }));
 
-    // --- 5. RENDER HTML ---
+    // --- 6. RENDER HTML ---
     container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
             
@@ -3282,21 +3309,29 @@ window.renderStats = function() {
                 </div>
                 
                 <div class="relative z-10">
-                    <div class="flex justify-between items-start mb-4">
+                    <div class="flex justify-between items-start mb-6">
                         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-300">
                             Main Target
                         </div>
                         <div class="text-right">
-                            <div class="text-2xl font-black leading-none">${mathMain.daysLeft}</div>
+                            <div class="text-2xl font-black leading-none">${mainStats.daysLeft}</div>
                             <div class="text-[9px] uppercase font-bold text-slate-500">Days Left</div>
                         </div>
                     </div>
 
-                    <div class="mb-6">
-                        <div class="text-4xl font-black tracking-tight mb-1">
-                            ${execMain.completed.toFixed(1)} <span class="text-xl text-slate-500 font-bold">/ ${mathMain.dailyTargetPoints.toFixed(1)}</span>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <div class="text-3xl font-black tracking-tight mb-0.5">
+                                ${execMain.completed.toFixed(1)} <span class="text-sm text-slate-500 font-bold">/ ${mainStats.dailyTarget.toFixed(1)}</span>
+                            </div>
+                            <div class="text-[9px] uppercase font-bold text-slate-400">Daily Velocity</div>
                         </div>
-                        <div class="text-[10px] uppercase font-bold text-slate-400">Daily Points Completed</div>
+                        <div class="text-right">
+                            <div class="text-3xl font-black tracking-tight mb-0.5 text-blue-400">
+                                ${mainStats.coveragePct}%
+                            </div>
+                            <div class="text-[9px] uppercase font-bold text-slate-400">Total Covered</div>
+                        </div>
                     </div>
 
                     <div>
@@ -3308,7 +3343,6 @@ window.renderStats = function() {
                                 </span>
                                 <span class="text-xs font-bold ${velMain.color}">${velMain.label}</span>
                             </div>
-                            <span class="text-xs font-bold text-slate-500">${Math.round(velMain.percent)}%</span>
                         </div>
                         <div class="h-4 w-full bg-slate-800 rounded-full overflow-hidden border border-white/5">
                             <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-1000 relative" style="width: ${velMain.percent}%">
@@ -3325,21 +3359,29 @@ window.renderStats = function() {
                 </div>
                 
                 <div class="relative z-10">
-                    <div class="flex justify-between items-start mb-4">
+                    <div class="flex justify-between items-start mb-6">
                         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 backdrop-blur-md border border-orange-500/20 text-[10px] font-bold uppercase tracking-wider text-orange-200">
-                            Backlog Recovery
+                            Backlog Phase ${currentPhase}
                         </div>
                         <div class="text-right">
-                            <div class="text-2xl font-black leading-none text-orange-500">${mathBacklog.daysLeft}</div>
+                            <div class="text-2xl font-black leading-none text-orange-500">${backlogStats.daysLeft}</div>
                             <div class="text-[9px] uppercase font-bold text-slate-500">Days Left</div>
                         </div>
                     </div>
 
-                    <div class="mb-6">
-                        <div class="text-4xl font-black tracking-tight mb-1 text-white">
-                            ${execBacklog.completed.toFixed(1)} <span class="text-xl text-slate-500 font-bold">/ ${mathBacklog.dailyTargetPoints.toFixed(1)}</span>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <div class="text-3xl font-black tracking-tight mb-0.5 text-white">
+                                ${execBacklog.completed.toFixed(1)} <span class="text-sm text-slate-500 font-bold">/ ${backlogStats.dailyTarget.toFixed(1)}</span>
+                            </div>
+                            <div class="text-[9px] uppercase font-bold text-slate-400">Daily Velocity</div>
                         </div>
-                        <div class="text-[10px] uppercase font-bold text-slate-400">Daily Points Completed</div>
+                        <div class="text-right">
+                            <div class="text-3xl font-black tracking-tight mb-0.5 text-orange-400">
+                                ${backlogStats.coveragePct}%
+                            </div>
+                            <div class="text-[9px] uppercase font-bold text-slate-400">Phase Completion</div>
+                        </div>
                     </div>
 
                     <div>
@@ -3351,7 +3393,6 @@ window.renderStats = function() {
                                 </span>
                                 <span class="text-xs font-bold ${velBacklog.color}">${velBacklog.label}</span>
                             </div>
-                            <span class="text-xs font-bold text-slate-500">${Math.round(velBacklog.percent)}%</span>
                         </div>
                         <div class="h-4 w-full bg-slate-800 rounded-full overflow-hidden border border-white/5">
                             <div class="h-full bg-gradient-to-r from-orange-500 to-red-500 shadow-[0_0_15px_rgba(249,115,22,0.5)] transition-all duration-1000 relative" style="width: ${velBacklog.percent}%">
@@ -3384,7 +3425,7 @@ window.renderStats = function() {
 
                     <div class="border-l border-slate-100 dark:border-slate-800 pl-6">
                         <div class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-100 dark:border-slate-800 pb-1">
-                            Backlog
+                            Backlog (Ph ${currentPhase})
                         </div>
                         <div class="space-y-1">
                             ${renderSmartSubject('Physics', statsBacklog.Physics, statsBacklog)}
@@ -3392,13 +3433,6 @@ window.renderStats = function() {
                             ${renderSmartSubject('Biology', statsBacklog.Biology, statsBacklog)}
                         </div>
                     </div>
-                </div>
-                
-                <div class="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800">
-                    <p class="text-[10px] text-slate-400 italic text-center">
-                        <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
-                        Subjects marked "Lagging" are >5% behind your average pace.
-                    </p>
                 </div>
             </div>
 
