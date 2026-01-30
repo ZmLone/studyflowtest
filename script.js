@@ -1532,7 +1532,8 @@ window.renderPrayerModalItems = function() {
             <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center ${isDone ? 'border-white bg-white text-emerald-600' : 'border-slate-300 dark:border-slate-600'}">${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : ''}</div></button>`;
     }).join('');
     if(window.lucide) lucide.createIcons({ root: list });
-updateSidebarBadges();
+
+   updateSidebarBadges();
 };
 
 window.updateHeaderPrayerBtn = function() {
@@ -2094,69 +2095,78 @@ window.showPointsToast = function(points, current, target, subject, type) {
         setTimeout(() => wrapper.remove(), 300);
     }, 3500);
 };
-   // --- 5. MANUAL ADD HOOK (With NEW Visuals) ---
-        window.addTask = function(text, type = 'main', subject = 'General', chapter = null) {
-            // 1. Standard Add
-            const key = formatDateKey(state.selectedDate);
-            if (!state.tasks[key]) state.tasks[key] = [];
-            state.tasks[key].push({
-                id: Date.now() + Math.random().toString(36).substr(2, 9), 
-                text, type, subject, chapter, completed: false 
+   
+// --- 5. MANUAL ADD HOOK (With NEW Visuals & Duplicate Check) ---
+window.addTask = function(text, type = 'main', subject = 'General', chapter = null) {
+    // 1. Get Today's List
+    const key = formatDateKey(state.selectedDate);
+    if (!state.tasks[key]) state.tasks[key] = [];
+
+    // ✅ PREVENT DUPLICATES
+    const alreadyExists = state.tasks[key].some(t => t.text === text);
+    if (alreadyExists) {
+        showToast("⚠️ Task already added to planner");
+        return; // Stop here!
+    }
+
+    // 2. Add New Task
+    state.tasks[key].push({
+        id: Date.now() + Math.random().toString(36).substr(2, 9), 
+        text, type, subject, chapter, completed: false 
+    });
+    saveData();
+    renderAll();
+
+    // 3. CHECK POINTS & SHOW UPDATED VISUALS
+    let pointsFound = 0;
+    let detectedType = 'main';
+    let detectedSubject = subject; // Use the manual subject selection initially
+    let syllabusRef = [];
+
+    // Scan Main
+    if (state.nextExam) {
+        state.nextExam.syllabus.forEach(chap => {
+            chap.dailyTests.forEach(dt => {
+                dt.subs.forEach(sub => {
+                    if (text.includes(sub)) {
+                        pointsFound = getSubtopicPoints(dt, chap.subject, chap.topic);
+                        detectedType = 'main';
+                        detectedSubject = chap.subject; 
+                        syllabusRef = state.nextExam.syllabus;
+                    }
+                });
             });
-            saveData();
-            renderAll();
-
-            // 2. CHECK POINTS & SHOW UPDATED VISUALS
-            let pointsFound = 0;
-            let detectedType = 'main';
-            let detectedSubject = subject; // Use the manual subject selection initially
-            let syllabusRef = [];
-
-            // Scan Main
-            if (state.nextExam) {
-                state.nextExam.syllabus.forEach(chap => {
-                    chap.dailyTests.forEach(dt => {
-                        dt.subs.forEach(sub => {
-                            if (text.includes(sub)) {
-                                pointsFound = getSubtopicPoints(dt, chap.subject, chap.topic);
-                                detectedType = 'main';
-                                detectedSubject = chap.subject; 
-                                syllabusRef = state.nextExam.syllabus;
-                            }
-                        });
-                    });
+        });
+    }
+    
+    // Scan Backlog if not found
+    if (pointsFound === 0 && typeof backlogPlan !== 'undefined') {
+        backlogPlan.syllabus.forEach(chap => {
+            chap.dailyTests.forEach(dt => {
+                dt.subs.forEach(sub => {
+                    if (text.includes(sub)) {
+                        pointsFound = getSubtopicPoints(dt, chap.subject, chap.topic);
+                        detectedType = 'backlog';
+                        detectedSubject = chap.subject;
+                        syllabusRef = backlogPlan.syllabus;
+                    }
                 });
-            }
-            
-            // Scan Backlog if not found
-            if (pointsFound === 0 && typeof backlogPlan !== 'undefined') {
-                backlogPlan.syllabus.forEach(chap => {
-                    chap.dailyTests.forEach(dt => {
-                        dt.subs.forEach(sub => {
-                            if (text.includes(sub)) {
-                                pointsFound = getSubtopicPoints(dt, chap.subject, chap.topic);
-                                detectedType = 'backlog';
-                                detectedSubject = chap.subject;
-                                syllabusRef = backlogPlan.syllabus;
-                            }
-                        });
-                    });
-                });
-            }
+            });
+        });
+    }
 
-            // 3. TRIGGER THE NEW VISUAL TOAST
-            if (pointsFound > 0) {
-                const math = calculateSmartMath(detectedType);
-                const planned = getPlannerPointsForToday(detectedType, syllabusRef);
-                
-                // ✨ CALL THE NEW VISUAL FUNCTION ✨
-                showPointsToast(pointsFound, planned, math.dailyTargetPoints, detectedSubject, detectedType);
-            } else {
-                // Generic toast for non-syllabus tasks
-                showToast("Task added to planner");
-            }
-        };
-
+    // 4. TRIGGER THE NEW VISUAL TOAST
+    if (pointsFound > 0) {
+        const math = calculateSmartMath(detectedType);
+        const planned = getPlannerPointsForToday(detectedType, syllabusRef);
+        
+        // ✨ CALL THE NEW VISUAL FUNCTION ✨
+        showPointsToast(pointsFound, planned, math.dailyTargetPoints, detectedSubject, detectedType);
+    } else {
+        // Generic toast for non-syllabus tasks
+        showToast("Task added to planner");
+    }
+};
         // ✅ RESTORED FUNCTIONS
 
         window.deleteTask = function(id) {
