@@ -2840,9 +2840,6 @@ window.initScrollHeader = function() {
 };
 
 document.addEventListener('DOMContentLoaded', init);
-
- document.addEventListener('DOMContentLoaded', init);
-
         // Optimization: FOUC listener - Triggered on DOMContentLoaded instead of Load for faster paint
         document.addEventListener('DOMContentLoaded', () => {
             // Small timeout to allow Tailwind CDN to parse initial classes
@@ -2926,6 +2923,41 @@ window.renderHeader = function() {
 
     // 2. RENDER WIDGETS
     renderHeaderPrayerWidget();
+};
+
+// ✅ NEW: Renders the 5-pill prayer strip in the header
+window.renderHeaderPrayerWidget = function() {
+    const container = document.getElementById('header-prayer-widget');
+    if (!container) return;
+
+    const k = formatDateKey(state.selectedDate);
+    const todayData = state.prayers[k] || {};
+    
+    const prayers = [
+        { key: 'Fajr', label: 'F' },
+        { key: 'Dhuhr', label: 'D' },
+        { key: 'Asr', label: 'A' },
+        { key: 'Maghrib', label: 'M' },
+        { key: 'Isha', label: 'I' }
+    ];
+
+    container.innerHTML = prayers.map(p => {
+        const isDone = todayData[p.key] === true;
+        
+        let baseClass = "flex-1 md:flex-none h-9 w-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm";
+        
+        let stateClass = isDone 
+            ? "bg-emerald-500 text-white !border-emerald-500 shadow-md shadow-emerald-500/30 scale-105" 
+            : "text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-300 dark:hover:border-brand-700";
+
+        return `
+            <button onclick="togglePrayer('${p.key}')" class="${baseClass} ${stateClass}" title="Mark ${p.key} as done">
+                ${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : p.label}
+            </button>
+        `;
+    }).join('');
+
+    if(window.lucide) lucide.createIcons({ root: container });
 };
 // ==========================================
 // 🚀 TACTICAL DASHBOARD V4 (Strict Phases + Total %)
