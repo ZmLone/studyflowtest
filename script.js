@@ -1947,9 +1947,76 @@ Proceed?`;
                 showToast(`Gap filled! Added ${finalMix.length} tasks.`);
             }
         };
+// --- ✨ NEW VISUAL: POINTS REWARD TOAST ---
+window.showPointsToast = function(points, current, target, subject, type) {
+    // 1. Remove existing toasts to prevent stacking clutter
+    const existing = document.getElementById('points-toast');
+    if(existing) existing.remove();
 
+    // 2. Calculate Progress %
+    const percent = Math.min(100, Math.round((current / target) * 100));
+    
+    // 3. Subject Colors
+    let gradient = "from-emerald-500 to-teal-500";
+    let icon = "zap";
+    if(subject === 'Physics') { gradient = "from-blue-500 to-indigo-500"; icon = "atom"; }
+    if(subject === 'Chemistry') { gradient = "from-orange-500 to-amber-500"; icon = "flask-conical"; }
+    if(subject === 'Botany' || subject === 'Zoology') { gradient = "from-green-500 to-emerald-600"; icon = "leaf"; }
 
-        // --- 5. MANUAL ADD HOOK (With Target Feedback) ---
+    // 4. Create the Card
+    const toast = document.createElement('div');
+    toast.id = "points-toast";
+    toast.className = "fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-2xl rounded-2xl p-4 animate-in slide-in-from-bottom-4 fade-in duration-300 ring-1 ring-black/5";
+    
+    toast.innerHTML = `
+        <div class="flex justify-between items-start mb-2">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white shadow-lg shadow-${gradient.split('-')[1]}-500/30">
+                    <i data-lucide="${icon}" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">${subject} • ${type === 'main' ? 'Exam' : 'Backlog'}</h4>
+                    <div class="text-xl font-black text-slate-800 dark:text-white flex items-center gap-1">
+                        +${points.toFixed(2)} <span class="text-sm font-bold text-slate-400">Pts</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-[10px] font-bold uppercase text-slate-400">Target</div>
+                <div class="text-sm font-bold text-slate-700 dark:text-slate-300">
+                    <span class="${percent >= 100 ? 'text-green-500' : ''}">${current.toFixed(1)}</span>
+                    <span class="opacity-50">/</span> 
+                    ${target.toFixed(1)}
+                </div>
+            </div>
+        </div>
+
+        <div class="relative h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r ${gradient} transition-all duration-1000 ease-out" style="width: ${percent}%"></div>
+        </div>
+        <div class="mt-1 flex justify-between text-[9px] font-bold uppercase tracking-wider text-slate-400">
+            <span>Daily Progress</span>
+            <span>${percent}%</span>
+        </div>
+    `;
+
+    document.body.appendChild(toast);
+    if(window.lucide) lucide.createIcons({ root: toast });
+
+    // 5. Sound Effect (Optional Satisfaction)
+    // const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3');
+    // audio.volume = 0.2;
+    // audio.play().catch(e => {}); // Ignore auto-play errors
+
+    // 6. Remove after 3.5 seconds
+    setTimeout(() => {
+        toast.classList.add('animate-out', 'fade-out', 'slide-out-to-bottom-4');
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+};
+
+        
+// --- 5. MANUAL ADD HOOK (With NEW Visuals) ---
         window.addTask = function(text, type = 'main', subject = 'General', chapter = null) {
             // 1. Standard Add
             const key = formatDateKey(state.selectedDate);
@@ -1961,9 +2028,10 @@ Proceed?`;
             saveData();
             renderAll();
 
-            // 2. CHECK POINTS & SHOW UPDATED MATH
+            // 2. CHECK POINTS & SHOW UPDATED VISUALS
             let pointsFound = 0;
             let detectedType = 'main';
+            let detectedSubject = subject; // Use the manual subject selection initially
             let syllabusRef = [];
 
             // Scan Main
@@ -1974,6 +2042,7 @@ Proceed?`;
                             if (text.includes(sub)) {
                                 pointsFound = getSubtopicPoints(dt, chap.subject, chap.topic);
                                 detectedType = 'main';
+                                detectedSubject = chap.subject; // Auto-correct subject if matched
                                 syllabusRef = state.nextExam.syllabus;
                             }
                         });
@@ -1989,6 +2058,7 @@ Proceed?`;
                             if (text.includes(sub)) {
                                 pointsFound = getSubtopicPoints(dt, chap.subject, chap.topic);
                                 detectedType = 'backlog';
+                                detectedSubject = chap.subject;
                                 syllabusRef = backlogPlan.syllabus;
                             }
                         });
@@ -1996,16 +2066,18 @@ Proceed?`;
                 });
             }
 
-            // 3. NOTIFY WITH CONTEXT
+            // 3. TRIGGER THE NEW VISUAL TOAST
             if (pointsFound > 0) {
                 const math = calculateSmartMath(detectedType);
-                const planned = getPlannerPointsForToday(detectedType, syllabusRef); // This now includes the task we just added
+                const planned = getPlannerPointsForToday(detectedType, syllabusRef); // Includes new task
                 
-                showToast(`+${pointsFound.toFixed(2)} Pts! (Progress: ${planned.toFixed(1)} / ${math.dailyTargetPoints.toFixed(1)})`);
+                // ✨ CALL THE NEW VISUAL FUNCTION ✨
+                showPointsToast(pointsFound, planned, math.dailyTargetPoints, detectedSubject, detectedType);
+            } else {
+                // Generic toast for non-syllabus tasks
+                showToast("Task added to planner");
             }
         };
-
-
         window.deleteGroup = function(chapterName) {
             const key = formatDateKey(state.selectedDate);
             if(state.tasks[key]) {
