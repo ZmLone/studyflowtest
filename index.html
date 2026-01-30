@@ -235,35 +235,43 @@
         </div>
 <div id="view-overview" class="flex-1 flex flex-col overflow-hidden relative bg-slate-50 dark:bg-black transition-colors min-h-0">
     
-    <header class="px-5 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shrink-0 z-20 sticky top-0">
-        <div>
-            <h1 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                <i data-lucide="layout-dashboard" class="w-5 h-5 text-brand-500"></i> 
-                <span id="header-greeting">Command Center</span>
-            </h1>
-            <p class="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wider" id="overview-date">...</p>
-        </div>
+    
+<header class="px-4 py-3 md:px-8 md:py-5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shrink-0 z-30 sticky top-0 transition-all">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 max-w-7xl mx-auto">
         
-        <div class="flex items-center gap-2">
-            <div class="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-                <button onclick="changeDay(-1)" class="w-8 h-8 flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all text-slate-500 dark:text-slate-400">
-                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                    <span class="bg-gradient-to-br from-brand-600 to-indigo-600 text-transparent bg-clip-text">Dashboard</span>
+                </h1>
+                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 mt-0.5">Welcome back, Captain.</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-3 bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-x-auto no-scrollbar">
+            
+            <div class="flex items-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm shrink-0">
+                <button onclick="changeDay(-1)" class="p-2 md:p-2.5 text-slate-400 hover:text-brand-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-l-xl transition-colors border-r border-slate-100 dark:border-slate-800">
+                    <i data-lucide="chevron-left" class="w-4 h-4 md:w-5 md:h-5"></i>
                 </button>
-                <button onclick="goToToday()" class="px-3 h-8 flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Today
+                
+                <button onclick="goToToday()" class="px-3 md:px-4 py-2 text-xs md:text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex flex-col items-center justify-center min-w-[80px] md:min-w-[100px] group">
+                    <span id="header-date-day" class="uppercase tracking-widest text-[9px] text-slate-400 group-hover:text-brand-500">TODAY</span>
+                    <span id="header-date-full">Loading...</span>
                 </button>
-                <button onclick="changeDay(1)" class="w-8 h-8 flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all text-slate-500 dark:text-slate-400">
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+
+                <button onclick="changeDay(1)" class="p-2 md:p-2.5 text-slate-400 hover:text-brand-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-r-xl transition-colors border-l border-slate-100 dark:border-slate-800">
+                    <i data-lucide="chevron-right" class="w-4 h-4 md:w-5 md:h-5"></i>
                 </button>
             </div>
 
-            <button onclick="openPrayerModal()" class="ml-2 flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl font-bold text-xs hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all border border-emerald-200 dark:border-emerald-800/50">
-                <i data-lucide="moon" class="w-3.5 h-3.5"></i>
-                <span class="hidden md:inline">Prayers</span>
-                <span id="header-prayer-count" class="bg-emerald-600 text-white text-[9px] px-1.5 py-0.5 rounded ml-1">0/5</span>
-            </button>
+            <div class="w-px h-8 bg-slate-300 dark:bg-slate-700 mx-1 hidden md:block"></div>
+
+            <div id="header-prayer-widget" class="flex items-center gap-1 shrink-0"></div>
+
         </div>
-    </header>
+    </div>
+</header>
 
     <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-6 relative z-10 pb-32">
         <div class="max-w-4xl mx-auto space-y-6">

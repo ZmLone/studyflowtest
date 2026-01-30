@@ -3155,7 +3155,7 @@ window.assignChapterTime = function(chapName, inputId) {
         
 window.renderAll = function() {
     renderHeader();
-    updateHeaderPrayerBtn();
+renderHeaderPrayerWidget();
     renderStats();
     updateSidebarBadges();
 
@@ -3184,13 +3184,68 @@ window.renderAll = function() {
 };
 
 window.renderTasks = renderTasks;
-        function renderHeader() {
-            const els = { date: document.getElementById('overview-date'), agendaDate: document.getElementById('agenda-date-display') };
-            const dateStr = state.selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-            if(els.date) els.date.textContent = state.selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-            if(els.agendaDate) els.agendaDate.textContent = dateStr;
-        }
+       window.renderHeader = function() {
+    // New Elements
+    const dayEl = document.getElementById('header-date-day');
+    const fullEl = document.getElementById('header-date-full');
+    
+    // Check if selected date is Today
+    const now = new Date();
+    const isToday = state.selectedDate.toDateString() === now.toDateString();
 
+    if(dayEl) {
+        // If today, show "TODAY", else show weekday (e.g., "MONDAY")
+        dayEl.textContent = isToday ? "TODAY" : state.selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+        // Add active color if today
+        if(isToday) dayEl.className = "uppercase tracking-widest text-[9px] text-brand-600 font-extrabold";
+        else dayEl.className = "uppercase tracking-widest text-[9px] text-slate-400";
+    }
+
+    if(fullEl) {
+        // Show "Jan 30"
+        fullEl.textContent = state.selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Keep Agenda Date sync
+    const agendaEl = document.getElementById('agenda-date-display');
+    if(agendaEl) agendaEl.textContent = state.selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+};
+
+// ✅ NEW: Renders the 5-pill prayer strip in the header
+window.renderHeaderPrayerWidget = function() {
+    const container = document.getElementById('header-prayer-widget');
+    if (!container) return;
+
+    const k = formatDateKey(state.selectedDate);
+    const todayData = state.prayers[k] || {};
+    
+    const prayers = [
+        { key: 'Fajr', label: 'F' },
+        { key: 'Dhuhr', label: 'D' },
+        { key: 'Asr', label: 'A' },
+        { key: 'Maghrib', label: 'M' },
+        { key: 'Isha', label: 'I' }
+    ];
+
+    container.innerHTML = prayers.map(p => {
+        const isDone = todayData[p.key] === true;
+        
+        // This is the line you were looking for (Updated with White/Border style)
+        let baseClass = "flex-1 md:flex-none h-9 w-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm";
+        
+        let stateClass = isDone 
+            ? "bg-emerald-500 text-white !border-emerald-500 shadow-md shadow-emerald-500/30 scale-105" 
+            : "text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-300 dark:hover:border-brand-700";
+
+        return `
+            <button onclick="togglePrayer('${p.key}')" class="${baseClass} ${stateClass}" title="Mark ${p.key} as done">
+                ${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : p.label}
+            </button>
+        `;
+    }).join('');
+
+    if(window.lucide) lucide.createIcons({ root: container });
+};
 
 // ==========================================
 // 🚀 TACTICAL DASHBOARD V4 (Strict Phases + Total %)
