@@ -3133,38 +3133,46 @@ window.assignChapterTime = function(chapName, inputId) {
     }
 };
 // ✅ NEW: Scroll-to-Hide Header Logic
+// ✅ NEW: Scroll-to-Hide Header Logic (Improved)
 window.initScrollHeader = function() {
     const scrollEl = document.getElementById('overview-scroll-view');
     const headerEl = document.getElementById('overview-header');
     
-    if (!scrollEl || !headerEl) return;
+    // Safety check
+    if (!scrollEl || !headerEl) {
+        console.warn("Header scroll elements missing");
+        return;
+    }
 
     let lastScroll = 0;
     
     scrollEl.addEventListener('scroll', () => {
         const currentScroll = scrollEl.scrollTop;
-        
-        // 1. Ignore bounce at top
-        if (currentScroll < 10) {
+        const headerHeight = headerEl.offsetHeight;
+
+        // 1. If at the very top, always show
+        if (currentScroll <= 0) {
             headerEl.style.marginTop = "0px";
+            lastScroll = 0;
             return;
         }
-        
-        // 2. Jitter protection (ignore tiny movements)
-        if (Math.abs(currentScroll - lastScroll) < 10) return;
 
+        // 2. Determine Direction
         if (currentScroll > lastScroll) {
-            // ⬇️ SCROLLING DOWN -> HIDE HEADER
-            headerEl.style.marginTop = `-${headerEl.offsetHeight}px`;
+            // ⬇️ SCROLLING DOWN -> HIDE
+            // Only hide if we've scrolled past the header's height (prevents flickering at top)
+            if (currentScroll > headerHeight) {
+                headerEl.style.marginTop = `-${headerHeight}px`;
+            }
         } else {
-            // ⬆️ SCROLLING UP -> SHOW HEADER
+            // ⬆️ SCROLLING UP -> SHOW
             headerEl.style.marginTop = "0px";
         }
         
+        // 3. Always update position
         lastScroll = currentScroll;
     });
 };
-
 document.addEventListener('DOMContentLoaded', init);
 
  document.addEventListener('DOMContentLoaded', init);
