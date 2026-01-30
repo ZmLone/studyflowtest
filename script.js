@@ -1419,7 +1419,9 @@ function setupSchedule() {
                 newMForm.addEventListener('submit', window.saveMistake);
             }
         }
-// --- HELPER: CALCULATE STATS (Weighted Points for Consistency) ---
+
+
+// --- HELPER: CALCULATE STATS (Phase-Aware & Weighted) ---
 function calculateUserStats() {
     // 1. Snapshot of all completed tasks
     const allCompleted = new Set(
@@ -1437,14 +1439,11 @@ function calculateUserStats() {
         backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => validTests.add(dt.name)));
     }
 
-    // 3. Main Exam % (WEIGHTED POINTS)
-    // Now matches your dashboard progress bar exactly
+    // 3. Main Exam % (Weighted Points)
     let mainTotal = 0, mainDone = 0;
     if(state.nextExam && state.nextExam.syllabus) {
         state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => {
-            // Get value of this specific topic (e.g. Physics = 4pts, Bio = 2pts)
             const pts = getSubtopicPoints(dt, s.subject, s.topic);
-            
             dt.subs.forEach(sub => {
                 mainTotal += pts;
                 if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) mainDone += pts;
@@ -1453,17 +1452,33 @@ function calculateUserStats() {
     }
     const mainPct = mainTotal ? Math.round((mainDone/mainTotal)*100) : 0;
 
-    // 4. Backlog % (WEIGHTED POINTS)
+    // --- PHASE LOGIC START ---
+    // Calculate which 15-day phase is currently active
+    let currentPhase = 1;
+    if(typeof backlogPlan !== 'undefined') {
+        const planStart = backlogPlan.startDate;
+        const diff = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24));
+        if(diff > 45) currentPhase = 4;
+        else if(diff > 30) currentPhase = 3;
+        else if(diff > 15) currentPhase = 2;
+    }
+    // --- PHASE LOGIC END ---
+
+    // 4. Backlog % (Weighted Points - ACTIVE PHASE ONLY)
     let blTotal = 0, blDone = 0;
     if(typeof backlogPlan !== 'undefined' && backlogPlan.syllabus) {
-        backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => {
-            const pts = getSubtopicPoints(dt, s.subject, s.topic);
-            
-            dt.subs.forEach(sub => {
-                blTotal += pts;
-                if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) blDone += pts;
-            });
-        }));
+        backlogPlan.syllabus.forEach(s => {
+            // ✅ FILTER: Only count points if they belong to the current phase
+            if (s.phase === currentPhase) { 
+                s.dailyTests.forEach(dt => {
+                    const pts = getSubtopicPoints(dt, s.subject, s.topic);
+                    dt.subs.forEach(sub => {
+                        blTotal += pts;
+                        if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) blDone += pts;
+                    });
+                });
+            }
+        });
     }
     const blPct = blTotal ? Math.round((blDone/blTotal)*100) : 0;
 
@@ -1482,8 +1497,6 @@ function calculateUserStats() {
         overallScore 
     };
 }
-
-
 function saveData() {
     const stats = calculateUserStats(); 
 
