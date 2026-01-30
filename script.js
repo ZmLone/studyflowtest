@@ -2285,7 +2285,263 @@ window.renderLeaderboardList = function() {
         renderHeader(); 
     };
 
+// ======================================================
+// 🧠 ADVANCED SMART MIX ENGINE (Weighted & Deadline Aware)
+// ======================================================
 
+// --- 1. CONFIGURATION: THE POINTS SYSTEM ---
+const POINT_RULES = {
+    Physics: 4,
+    Chemistry: 3,
+    HighYieldBio: 3, // Sexual Repro, Genetics, Evolution
+    StandardBio: 2
+};
+
+const HIGH_YIELD_TOPICS = [
+    "Sexual Reproduction in Plants", 
+    "Principles of Inheritance", 
+    "Molecular Basis of Inheritance", 
+    "Evolution"
+];
+
+// Helper: Get Points for a specific Test/Topic
+function getTestPoints(subject, topic) {
+    if (subject === 'Physics') return POINT_RULES.Physics;
+    if (subject === 'Chemistry') return POINT_RULES.Chemistry;
+    if (subject === 'Botany' || subject === 'Zoology' || subject === 'Biology') {
+        // Check fuzzy match for High Yield Topics
+        const isHighYield = HIGH_YIELD_TOPICS.some(h => topic.includes(h));
+        return isHighYield ? POINT_RULES.HighYieldBio : POINT_RULES.StandardBio;
+    }
+    return 1; // Default for unknown
+}
+
+// Helper: Calculate Points for a single Subtopic
+// Formula: (Test Points) / (Number of Subtopics in that Test)
+function getSubtopicPoints(testObj, subject, topic) {
+    const totalPts = getTestPoints(subject, topic);
+    const count = testObj.subs.length || 1;
+    return totalPts / count;
+}
+
+// --- 2. THE MATH ENGINE (Deadline & Velocity) ---
+function calculateSmartMath(type) {
+    // A. Define Deadlines
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    
+    let targetDate, syllabus;
+    
+    if (type === 'main') {
+        // Target: Feb 7 (1 day before Exam on Feb 8)
+        targetDate = new Date('2026-02-07T00:00:00'); 
+        syllabus = state.nextExam ? state.nextExam.syllabus : [];
+    } else {
+        // Target: Feb 12 (Backlog Phase 1 End)
+        targetDate = new Date('2026-02-12T00:00:00');
+        syllabus = typeof backlogPlan !== 'undefined' ? backlogPlan.syllabus : [];
+    }
+
+    // Days Left (Minimum 1 to avoid infinity)
+    const daysLeft = Math.max(1, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)));
+
+    // B. Scan Syllabus & Calculate Points
+    let totalPoints = 0;
+    let earnedPoints = 0;
+    let pendingTasks = []; // Flattened list of ALL pending subtopics with metadata
+
+    // Completed Tasks Lookup Set
+    const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
+    const plannedToday = new Set((state.tasks[formatDateKey(today)] || []).map(t => t.text));
+
+    syllabus.forEach(chap => {
+        // Backlog Phase Filter (Only include Phase 1 for now)
+        if (type === 'backlog' && chap.phase > 1) return;
+
+        chap.dailyTests.forEach(dt => {
+            // Points for this specific test
+            const subPts = getSubtopicPoints(dt, chap.subject, chap.topic);
+            
+            dt.subs.forEach(sub => {
+                totalPoints += subPts;
+                const taskName = `Study: ${chap.topic} - ${sub}`;
+                
+                if (allCompleted.has(taskName) || state.dailyTestsAttempted[dt.name]) {
+                    earnedPoints += subPts;
+                } else if (!plannedToday.has(taskName)) {
+                    // It's pending and not yet planned for today
+                    pendingTasks.push({
+                        text: taskName,
+                        subject: chap.subject,
+                        points: subPts,
+                        chapter: chap.topic,
+                        type: type
+                    });
+                }
+            });
+        });
+    });
+
+    const remainingPoints = totalPoints - earnedPoints;
+    const dailyTargetPoints = remainingPoints / daysLeft;
+
+    return { 
+        daysLeft, 
+        totalPoints, 
+        earnedPoints, 
+        remainingPoints, 
+        dailyTargetPoints, 
+        pendingTasks 
+    };
+}
+
+// --- 3. THE GENERATOR (Weighted Shuffler) ---
+window.generateSmartMix = function(mode = 'main') {
+    const math = calculateSmartMath(mode);
+    
+    if (math.remainingPoints <= 0.1) {
+        alert("🎉 You have completed this syllabus! No Smart Mix needed.");
+        return;
+    }
+
+    // 1. Group Pending Tasks by Subject to Determine "Load"
+    const subjectLoad = {};
+    math.pendingTasks.forEach(t => {
+        if (!subjectLoad[t.subject]) subjectLoad[t.subject] = [];
+        subjectLoad[t.subject].push(t);
+    });
+
+    // 2. Select Candidates based on Daily Point Target
+    // We keep adding tasks until we hit the 'dailyTargetPoints'
+    let currentPoints = 0;
+    let mixPool = [];
+    
+    // Safety: Cap at 8 hours (approx 12 tasks) to prevent infinite loops
+    const SAFE_CAP = 12; 
+
+    // Weighted Selection Loop
+    while (currentPoints < math.dailyTargetPoints && mixPool.length < SAFE_CAP && math.pendingTasks.length > 0) {
+        
+        // Find subject with highest remaining load
+        const heavySubject = Object.keys(subjectLoad).reduce((a, b) => 
+            subjectLoad[a].length > subjectLoad[b].length ? a : b
+        );
+
+        if (!subjectLoad[heavySubject] || subjectLoad[heavySubject].length === 0) break;
+
+        // Take a task from the heavy subject (Shift removes it from pending)
+        const task = subjectLoad[heavySubject].shift();
+        
+        mixPool.push(task);
+        currentPoints += task.points;
+
+        // Remove from main list to prevent duplicates
+        const index = math.pendingTasks.indexOf(task);
+        if (index > -1) math.pendingTasks.splice(index, 1);
+    }
+
+    // 3. The "Anti-Boredom" Shuffler (Interleaving)
+    // We have our selected pool. Now we arrange them: Phy -> Chem -> Bio
+    let finalMix = [];
+    let lastSubject = "";
+    
+    // While we still have tasks in the pool
+    while (mixPool.length > 0) {
+        // Try to find a task different from the last subject
+        let candidateIndex = mixPool.findIndex(t => t.subject !== lastSubject);
+        
+        // If no different subject exists (e.g. only Physics left), take the first one
+        if (candidateIndex === -1) candidateIndex = 0;
+        
+        const selected = mixPool[candidateIndex];
+        finalMix.push(selected);
+        lastSubject = selected.subject;
+        
+        // Remove from pool
+        mixPool.splice(candidateIndex, 1);
+    }
+
+    // 4. Execution: Add to Planner
+    if (confirm(`Smart Mix (${mode.toUpperCase()})\n\n🎯 Target: Feb ${mode === 'main' ? '7' : '12'}\n📊 Daily Need: ${math.dailyTargetPoints.toFixed(1)} Pts\n📝 Selected: ${finalMix.length} Tasks (${currentPoints.toFixed(1)} Pts)\n\nAdd to planner?`)) {
+        finalMix.forEach(t => {
+            addTask(t.text, t.type, t.subject, t.chapter);
+        });
+        showToast(`Added ${finalMix.length} tasks!`);
+    }
+};
+
+
+// --- 4. MANUAL ADD HOOK (Notification System) ---
+
+// Save the original addTask to wrap it
+const originalAddTask = window.addTask;
+
+window.addTask = function(text, type = 'main', subject = 'General', chapter = null) {
+    // 1. Perform the standard add
+    const key = formatDateKey(state.selectedDate);
+    if (!state.tasks[key]) state.tasks[key] = [];
+    
+    const newTask = {
+        id: Date.now() + Math.random().toString(36).substr(2, 9), 
+        text, type, subject, chapter, completed: false 
+    };
+    state.tasks[key].push(newTask);
+    saveData();
+
+    // 2. INTELLIGENT POINTS CHECK
+    // Does this text match a syllabus topic?
+    let pointsFound = 0;
+    let detectedType = 'main';
+
+    // Scan Main
+    if (state.nextExam) {
+        state.nextExam.syllabus.forEach(chap => {
+            chap.dailyTests.forEach(dt => {
+                dt.subs.forEach(sub => {
+                    if (text.includes(sub)) {
+                        pointsFound = getSubtopicPoints(dt, chap.subject, chap.topic);
+                        detectedType = 'main';
+                    }
+                });
+            });
+        });
+    }
+    
+    // Scan Backlog if not found in Main
+    if (pointsFound === 0 && typeof backlogPlan !== 'undefined') {
+        backlogPlan.syllabus.forEach(chap => {
+            chap.dailyTests.forEach(dt => {
+                dt.subs.forEach(sub => {
+                    if (text.includes(sub)) {
+                        pointsFound = getSubtopicPoints(dt, chap.subject, chap.topic);
+                        detectedType = 'backlog';
+                    }
+                });
+            });
+        });
+    }
+
+    // 3. NOTIFY USER
+    if (pointsFound > 0) {
+        // Recalculate the math for this specific exam
+        const math = calculateSmartMath(detectedType);
+        // The 'remainingPoints' in math ALREADY includes the task we just added 
+        // because we added it to state.tasks before calling calculateSmartMath.
+        // So we can show the NEW daily target directly.
+        
+        const msg = `
+            <div class="text-left">
+                <div class="font-bold text-green-400 mb-1">+${pointsFound.toFixed(2)} Points Added!</div>
+                <div class="text-xs text-slate-300">
+                    Your manual task counts towards <b>${detectedType.toUpperCase()}</b>.
+                    <br>New Daily Target: <span class="text-white font-bold">${math.dailyTargetPoints.toFixed(2)} Pts</span>
+                </div>
+            </div>
+        `;
+        // Use a custom toast or alert
+        showToast(`+${pointsFound.toFixed(2)} Points! Daily Target updated.`);
+    }
+};
 
 
 // --- PLANNER FUNCTIONS ---
