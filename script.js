@@ -3923,7 +3923,7 @@ function startSnow() {
     });
 
     draw();
-}
+};
 
 function stopSnow() {
     const canvas = document.getElementById('snow-canvas');
