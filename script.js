@@ -3662,31 +3662,26 @@ window.renderSyllabus = function(type, searchQuery = '') {
     const rawData = type === 'main' ? state.nextExam.syllabus : backlogPlan.syllabus;
     
     // --- 4. DEADLINE & PROGRESS LOGIC ---
-    // If we are in Backlog mode, update the Header UI to show Phase Deadline
     if(type === 'backlog') {
         const planStart = backlogPlan.startDate || new Date();
         const now = new Date();
         const diffTime = Math.abs(now - planStart);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
         
-        // Determine Active Phase
         let currentPhase = 1;
         if(diffDays > 15) currentPhase = 2;
         if(diffDays > 30) currentPhase = 3;
         if(diffDays > 45) currentPhase = 4;
 
-        // Calculate Phase End Date
         const phaseEndDate = new Date(planStart);
         phaseEndDate.setDate(planStart.getDate() + (currentPhase * 15));
         
-        // Update DOM elements (Assuming you have these IDs in your HTML)
-        const deadlineEl = document.getElementById('backlog-deadline-display'); // You might need to add this ID to your HTML date card
+        const deadlineEl = document.getElementById('backlog-deadline-display');
         if(deadlineEl) deadlineEl.innerText = phaseEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         
         const phaseLabelEl = document.getElementById('backlog-phase-label');
         if(phaseLabelEl) phaseLabelEl.innerText = `Phase ${currentPhase} Active`;
     }
-    // ------------------------------------
 
     const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
     const k = formatDateKey(state.selectedDate);
@@ -3694,11 +3689,9 @@ window.renderSyllabus = function(type, searchQuery = '') {
     const lowerQuery = searchQuery.toLowerCase().trim();
     const fragment = document.createDocumentFragment();
     
-    // Phase & Unit Trackers
     let lastPhase = 0;
     let lastUnit = "";
 
-    // Active Phase Calculation for highlighting
     let activePhaseUI = 1;
     if(type === 'backlog') {
         const planStart = backlogPlan.startDate;
@@ -3709,12 +3702,11 @@ window.renderSyllabus = function(type, searchQuery = '') {
     }
 
     rawData.forEach((item, chapterIdx) => {
-        // --- 1. PHASE DIVIDER WITH DATES ---
+        // --- 1. PHASE DIVIDER ---
         if(item.phase && item.phase !== lastPhase) {
             lastPhase = item.phase;
-            lastUnit = ""; // Reset unit on new phase
+            lastUnit = ""; 
             
-            // Calculate Dates
             const pStart = new Date(backlogPlan.startDate);
             pStart.setDate(pStart.getDate() + ((item.phase-1)*15));
             const pEnd = new Date(backlogPlan.startDate);
@@ -3737,7 +3729,7 @@ window.renderSyllabus = function(type, searchQuery = '') {
             fragment.appendChild(divider);
         }
 
-        // --- 2. UNIT HEADER (New!) ---
+        // --- 2. UNIT HEADER ---
         if(item.unit && item.unit !== lastUnit) {
             lastUnit = item.unit;
             const unitHeader = document.createElement('div');
@@ -3750,20 +3742,9 @@ window.renderSyllabus = function(type, searchQuery = '') {
             fragment.appendChild(unitHeader);
         }
 
-        // --- 3. CHAPTER CARD RENDER ---
+        // --- 3. CHAPTER CARD ---
         const chapterMatch = item.topic.toLowerCase().includes(lowerQuery) || item.subject.toLowerCase().includes(lowerQuery);
-        // ... (Rest of the rendering logic is exactly the same as before, just ensure you include it) ...
-        // ... Copy the rest of the renderSyllabus function from previous step here ...
         
-        // [Insert the Card Creation Logic here from previous turn]
-        // This is where "const chapterId = ..." starts.
-        // Make sure to use item.topic as the Chapter Name.
-        
-        // (Shortened for brevity - Paste the previous card generation code here)
-        
-        // ...
-        
-        // START OF CARD LOGIC (Pasted for clarity)
         const matchingTests = item.dailyTests.filter(dt => {
             if (chapterMatch) return true; 
             return dt.name.toLowerCase().includes(lowerQuery) || 
@@ -3786,15 +3767,15 @@ window.renderSyllabus = function(type, searchQuery = '') {
         const card = document.createElement('div');
         card.className = chapterCardClass;
         
-        // Use 'topic' as Chapter Name
-        const safeTopic = escapeHtml(item.topic);
+        // Escape Topic Name for HTML Display
+        const safeTopicDisplay = item.topic.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         
         let html = `
             <div class="px-4 py-3 border-b ${allDailyTestsCompleted ? 'border-green-200 dark:border-green-800 bg-green-100 dark:bg-green-900/20' : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800'} flex justify-between items-center cursor-pointer select-none" onclick="toggleChapter('${chapterId}')">
                 <div>
                     <span class="text-[10px] font-bold uppercase tracking-wider ${allDailyTestsCompleted ? 'text-green-700 dark:text-green-300' : 'text-slate-400 dark:text-slate-500'}">${item.subject}</span>
                     <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-slate-800 dark:text-white">${safeTopic}</h4> 
+                        <h4 class="font-bold text-slate-800 dark:text-white">${safeTopicDisplay}</h4> 
                         ${allDailyTestsCompleted ? '<i data-lucide="check-circle" class="w-4 h-4 text-green-600 dark:text-green-400"></i>' : ''}
                     </div>
                 </div>
@@ -3802,10 +3783,10 @@ window.renderSyllabus = function(type, searchQuery = '') {
             </div>
         `;
         
-        // ... (Daily Test Loop - Same as before) ...
          if (isChapterExpanded) {
             html += `<div class="p-4 grid grid-cols-1 gap-3">`;
             const testsToRender = lowerQuery ? matchingTests : item.dailyTests;
+            
             testsToRender.forEach((dt) => {
                 const originalIndex = item.dailyTests.indexOf(dt);
                 const testId = `${chapterId}-test-${originalIndex}`;
@@ -3819,6 +3800,8 @@ window.renderSyllabus = function(type, searchQuery = '') {
                 if (isAttempted) cardStyle = "border-0 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md";
 
                 const showCheckbox = isReady || isAttempted;
+                // ESCAPE TEST NAME FOR ONCLICK
+                const safeTestName = dt.name.replace(/'/g, "\\'");
                 
                 html += `
                     <div class="${cardStyle} overflow-hidden">
@@ -3826,7 +3809,7 @@ window.renderSyllabus = function(type, searchQuery = '') {
                              <div class="flex items-center gap-2">
                                 <i data-lucide="chevron-right" class="w-4 h-4 ${isAttempted ? 'text-white/70' : 'text-slate-400'} transition-transform duration-200 ${isTestExpanded ? 'rotate-90' : ''}"></i>
                                 <div class="flex items-center gap-2" onclick="event.stopPropagation()">
-                                    ${showCheckbox ? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${dt.name}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
+                                    ${showCheckbox ? `<input type="checkbox" ${isAttempted ? 'checked' : ''} onchange="toggleTestAttempt('${safeTestName}')" class="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500 cursor-pointer">` : ''}        
                                     <span class="text-xs font-bold ${isAttempted ? 'text-green-800 bg-white/90' : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700'} px-2 py-0.5 rounded backdrop-blur-sm">${dt.name}</span>
                                 </div>
                             </div>
@@ -3839,11 +3822,16 @@ window.renderSyllabus = function(type, searchQuery = '') {
                                         const taskName = `Study: ${item.topic} - ${sub}`;
                                         const isAdded = todaysTasks.has(taskName);
                                         const isDone = allCompleted.has(taskName);
-                                         return `
+                                        
+                                        // ✅✅✅ FIX: ESCAPE SINGLE QUOTES FOR JS FUNCTIONS ✅✅✅
+                                        const safeTopic = item.topic.replace(/'/g, "\\'");
+                                        const safeSub = sub.replace(/'/g, "\\'");
+                                        
+                                        return `
                                             <div class="flex items-center justify-between group pl-6 py-0.5">
                                                 <span class="text-[11px] truncate w-3/4 ${isDone ? 'line-through opacity-50' : ''}" title="${sub}">• ${sub}</span>
                                                 ${!isDone ? 
-                                                    `<button onclick="addSyllabusTask('${item.topic} - ${sub}', '${type}', '${item.subject}', '${item.topic}')" class="${isAttempted ? 'text-white/80' : 'text-brand-400 hover:text-brand-600'} transition-colors p-1">
+                                                    `<button onclick="addSyllabusTask('${safeTopic} - ${safeSub}', '${type}', '${item.subject}', '${safeTopic}')" class="${isAttempted ? 'text-white/80' : 'text-brand-400 hover:text-brand-600'} transition-colors p-1">
                                                         <i data-lucide="${isAdded ? 'copy-check' : 'plus-circle'}" class="w-4 h-4"></i>
                                                     </button>` : 
                                                     `<i data-lucide="check" class="w-3 h-3 ${isAttempted ? 'text-white' : 'text-green-500'}"></i>`
@@ -3864,7 +3852,6 @@ window.renderSyllabus = function(type, searchQuery = '') {
     container.appendChild(fragment);
     if(window.lucide) lucide.createIcons({ root: container });
 };
-
       
     // --- MODAL CONTROLLER ---
 const modal = document.getElementById('customModal');
