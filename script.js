@@ -2980,7 +2980,7 @@ window.renderHeader = function() {
             'backlog': 'Recovery Plan',
             'mistakes': 'Mistake Notebook',
             'leaderboard': 'Leaderboard',
-            'namaz': 'Spiritual Growth'
+            'namaz': 'Spiritual Growth',
             'points': 'Points Analytics'
         };
         const title = titles[state.activeView] || 'StudyFlow';
