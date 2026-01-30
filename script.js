@@ -2011,7 +2011,7 @@ window.confirmSmartMixExecute = function() {
 window.showPointsToast = function(points, current, target, subject, type) {
     // 1. Remove existing to prevent stacking
     const existing = document.getElementById('points-toast-wrapper');
-    if(existing) existing.remove();
+    if (existing) existing.remove();
 
     // 2. Calculate Progress
     const percent = Math.min(100, Math.round((current / target) * 100));
@@ -2019,24 +2019,34 @@ window.showPointsToast = function(points, current, target, subject, type) {
     // 3. Subject Colors
     let gradient = "from-emerald-500 to-teal-500";
     let icon = "zap";
-    if(subject === 'Physics') { gradient = "from-blue-500 to-indigo-500"; icon = "atom"; }
-    if(subject === 'Chemistry') { gradient = "from-orange-500 to-amber-500"; icon = "flask-conical"; }
-    if(subject === 'Botany' || subject === 'Zoology' || subject === 'Biology') { gradient = "from-green-500 to-emerald-600"; icon = "leaf"; }
+    
+    if (subject === 'Physics') {
+        gradient = "from-blue-500 to-indigo-500";
+        icon = "atom";
+    } else if (subject === 'Chemistry') {
+        gradient = "from-orange-500 to-amber-500";
+        icon = "flask-conical";
+    } else if (subject === 'Botany' || subject === 'Zoology' || subject === 'Biology') {
+        gradient = "from-green-500 to-emerald-600";
+        icon = "leaf";
+    }
 
-    // 4. Create WRAPPER (Positioning Only - Solves Centering Issue)
+    // 4. Create WRAPPER (Positioning Only)
     const wrapper = document.createElement('div');
     wrapper.id = "points-toast-wrapper";
-    // Fixed, Centered, Responsive Width (90% on mobile, max 24rem on PC)
     wrapper.className = "fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm pointer-events-none";
 
     // 5. Create INNER CARD (Styling & Animation)
     const toast = document.createElement('div');
     toast.className = "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-2xl rounded-2xl p-4 ring-1 ring-black/5 animate-in slide-in-from-bottom-4 fade-in duration-300 pointer-events-auto";
     
+    // Extract color name for shadow (e.g., 'emerald' from 'from-emerald-500')
+    const colorName = gradient.split('-')[1];
+
     toast.innerHTML = `
         <div class="flex justify-between items-start mb-2">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white shadow-lg shadow-${gradient.split('-')[1]}-500/30">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white shadow-lg shadow-${colorName}-500/30">
                     <i data-lucide="${icon}" class="w-5 h-5"></i>
                 </div>
                 <div>
@@ -2069,7 +2079,7 @@ window.showPointsToast = function(points, current, target, subject, type) {
     wrapper.appendChild(toast);
     document.body.appendChild(wrapper);
 
-    if(window.lucide) lucide.createIcons({ root: toast });
+    if (window.lucide) lucide.createIcons({ root: toast });
 
     // 7. Remove after 3.5 seconds
     setTimeout(() => {
