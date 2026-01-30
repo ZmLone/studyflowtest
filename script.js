@@ -2007,13 +2007,13 @@ window.confirmSmartMixExecute = function() {
     showToast(`🚀 Added ${tempMixData.length} tasks to your plan.`);
 };      
 
-// --- ✨ NEW VISUAL: POINTS REWARD TOAST ---
+// --- ✨ NEW VISUAL: POINTS REWARD TOAST (Fixed Centering) ---
 window.showPointsToast = function(points, current, target, subject, type) {
-    // 1. Remove existing toasts to prevent stacking clutter
-    const existing = document.getElementById('points-toast');
+    // 1. Remove existing to prevent stacking
+    const existing = document.getElementById('points-toast-wrapper');
     if(existing) existing.remove();
 
-    // 2. Calculate Progress %
+    // 2. Calculate Progress
     const percent = Math.min(100, Math.round((current / target) * 100));
     
     // 3. Subject Colors
@@ -2021,12 +2021,17 @@ window.showPointsToast = function(points, current, target, subject, type) {
     let icon = "zap";
     if(subject === 'Physics') { gradient = "from-blue-500 to-indigo-500"; icon = "atom"; }
     if(subject === 'Chemistry') { gradient = "from-orange-500 to-amber-500"; icon = "flask-conical"; }
-    if(subject === 'Botany' || subject === 'Zoology') { gradient = "from-green-500 to-emerald-600"; icon = "leaf"; }
+    if(subject === 'Botany' || subject === 'Zoology' || subject === 'Biology') { gradient = "from-green-500 to-emerald-600"; icon = "leaf"; }
 
-    // 4. Create the Card
+    // 4. Create WRAPPER (Positioning Only - Solves Centering Issue)
+    const wrapper = document.createElement('div');
+    wrapper.id = "points-toast-wrapper";
+    // Fixed, Centered, Responsive Width (90% on mobile, max 24rem on PC)
+    wrapper.className = "fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm pointer-events-none";
+
+    // 5. Create INNER CARD (Styling & Animation)
     const toast = document.createElement('div');
-    toast.id = "points-toast";
-    toast.className = "fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-2xl rounded-2xl p-4 animate-in slide-in-from-bottom-4 fade-in duration-300 ring-1 ring-black/5";
+    toast.className = "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-2xl rounded-2xl p-4 ring-1 ring-black/5 animate-in slide-in-from-bottom-4 fade-in duration-300 pointer-events-auto";
     
     toast.innerHTML = `
         <div class="flex justify-between items-start mb-2">
@@ -2060,21 +2065,18 @@ window.showPointsToast = function(points, current, target, subject, type) {
         </div>
     `;
 
-    document.body.appendChild(toast);
+    // 6. Assemble & Inject
+    wrapper.appendChild(toast);
+    document.body.appendChild(wrapper);
+
     if(window.lucide) lucide.createIcons({ root: toast });
 
-    // 5. Sound Effect (Optional Satisfaction)
-    // const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3');
-    // audio.volume = 0.2;
-    // audio.play().catch(e => {}); // Ignore auto-play errors
-
-    // 6. Remove after 3.5 seconds
+    // 7. Remove after 3.5 seconds
     setTimeout(() => {
         toast.classList.add('animate-out', 'fade-out', 'slide-out-to-bottom-4');
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => wrapper.remove(), 300);
     }, 3500);
 };
-
    // --- 5. MANUAL ADD HOOK (With NEW Visuals) ---
         window.addTask = function(text, type = 'main', subject = 'General', chapter = null) {
             // 1. Standard Add
