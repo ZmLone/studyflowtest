@@ -3134,43 +3134,40 @@ window.assignChapterTime = function(chapName, inputId) {
 };
 // ✅ NEW: Scroll-to-Hide Header Logic
 // ✅ NEW: Scroll-to-Hide Header Logic (Improved)
+
+// ✅ NEW: Smooth GPU-Accelerated Scroll Hide
 window.initScrollHeader = function() {
     const scrollEl = document.getElementById('overview-scroll-view');
     const headerEl = document.getElementById('overview-header');
     
-    // Safety check
-    if (!scrollEl || !headerEl) {
-        console.warn("Header scroll elements missing");
-        return;
-    }
+    if (!scrollEl || !headerEl) return;
 
     let lastScroll = 0;
-    
+    let ticking = false; // Performance throttle
+
     scrollEl.addEventListener('scroll', () => {
         const currentScroll = scrollEl.scrollTop;
-        const headerHeight = headerEl.offsetHeight;
-
-        // 1. If at the very top, always show
-        if (currentScroll <= 0) {
-            headerEl.style.marginTop = "0px";
-            lastScroll = 0;
-            return;
-        }
-
-        // 2. Determine Direction
-        if (currentScroll > lastScroll) {
-            // ⬇️ SCROLLING DOWN -> HIDE
-            // Only hide if we've scrolled past the header's height (prevents flickering at top)
-            if (currentScroll > headerHeight) {
-                headerEl.style.marginTop = `-${headerHeight}px`;
-            }
-        } else {
-            // ⬆️ SCROLLING UP -> SHOW
-            headerEl.style.marginTop = "0px";
-        }
         
-        // 3. Always update position
-        lastScroll = currentScroll;
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                // 1. Always show if near top (bounce protection)
+                if (currentScroll < 50) {
+                    headerEl.style.transform = "translateY(0)";
+                } 
+                // 2. Hide on Scroll Down
+                else if (currentScroll > lastScroll && currentScroll > 60) {
+                    headerEl.style.transform = "translateY(-100%)";
+                } 
+                // 3. Show on Scroll Up
+                else if (currentScroll < lastScroll) {
+                    headerEl.style.transform = "translateY(0)";
+                }
+                
+                lastScroll = Math.max(0, currentScroll); // Prevent negative scroll bounce
+                ticking = false;
+            });
+            ticking = true;
+        }
     });
 };
 document.addEventListener('DOMContentLoaded', init);
