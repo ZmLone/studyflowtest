@@ -8,20 +8,31 @@ window.onerror = function(msg, url, line) {
     }
 };
 window.showToast = function(message) {
-    // Create toast element
+    // 1. Create Wrapper for POSITIONING (Fixed, Centered, No Animation)
+    // This ensures the element stays perfectly centered regardless of inner animations
+    const wrapper = document.createElement('div');
+    wrapper.className = "fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] pointer-events-none";
+
+    // 2. Create Toast for STYLING & ANIMATION
+    // We removed the positioning classes from here to avoid conflicts
     const toast = document.createElement('div');
-    toast.className = "fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-2xl font-bold text-sm shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300";
+    toast.className = "bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-2xl font-bold text-sm shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-auto";
     toast.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 text-brand-500"></i> ${message}`;
     
-    document.body.appendChild(toast);
+    // 3. Assemble
+    wrapper.appendChild(toast);
+    document.body.appendChild(wrapper);
+
+    // Initialize icons
     if(window.lucide) lucide.createIcons({ root: toast });
 
-    // Remove after 4 seconds
+    // 4. Remove after 4 seconds (Animate out inner toast, then remove wrapper)
     setTimeout(() => {
         toast.classList.add('animate-out', 'fade-out', 'slide-out-to-bottom-4');
-        setTimeout(() => toast.remove(), 300);
+        setTimeout(() => wrapper.remove(), 300);
     }, 4000);
 };
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
  import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";       
@@ -1340,22 +1351,26 @@ function setupSchedule() {
                 return examDeadline > now;
             }) || mainSchedule[mainSchedule.length-1];
 
-            const addTaskForm = document.getElementById('add-task-form');
-            if(addTaskForm) {
-                const newForm = addTaskForm.cloneNode(true);
-                addTaskForm.parentNode.replaceChild(newForm, addTaskForm);
-                newForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const inp = document.getElementById('new-task-input');
-                    const typeSelect = document.getElementById('new-task-type');
-                    const subSelect = document.getElementById('new-task-subject');
-                    if(inp.value.trim()) { 
-                        addTask(inp.value.trim(), typeSelect.value, subSelect.value); 
-                        inp.value = ''; 
-                    }
-                });
-            }
+    // NEW CODE (Safe check)
+const addForm = document.getElementById('add-task-form');
+if (addForm) {
+    addForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById('new-task-input');
+        const text = input.value.trim();
+        if (!text) return;
+        
+        const typeSelect = document.getElementById('new-task-type');
+        const subjectSelect = document.getElementById('new-task-subject');
+        
+        const type = typeSelect ? typeSelect.value : 'main';
+        const subject = subjectSelect ? subjectSelect.value : 'General';
 
+        addTask(text, type, subject);
+        input.value = '';
+    });
+}     
+  
             // Setup Mistake Form Listener
             const mistakeForm = document.getElementById('mistake-form');
             if(mistakeForm) {
