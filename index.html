@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth dark">
 <head>
@@ -583,7 +584,55 @@
 </div>
     
 
+<div id="view-leaderboard" class="hidden flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors min-h-0">
 
+    <header class="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Leaderboard
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Compete with other aspirants.</p>
+        </div>
+        
+        <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+            <button onclick="switchRankTab('overall')" id="tab-overall" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white">Overall</button>
+            <button onclick="switchRankTab('exam')" id="tab-exam" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Exam %</button>
+            <button onclick="switchRankTab('backlog')" id="tab-backlog" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Backlog %</button>
+            <button onclick="switchRankTab('tests')" id="tab-tests" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">Tests</button>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-gradient-to-r from-slate-800 to-slate-900 dark:from-indigo-900 dark:to-slate-900 rounded-2xl p-6 text-white shadow-xl mb-8 flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Your Performance</p>
+                    <h3 class="text-2xl font-bold" id="lb-user-name">Guest User</h3>
+                    <div class="flex gap-4 mt-2 text-sm font-medium text-slate-300">
+                        <span>Exam: <span id="lb-my-exam" class="text-white">0%</span></span>
+                        <span>Backlog: <span id="lb-my-backlog" class="text-white">0%</span></span>
+                        <span>Tests: <span id="lb-my-tests" class="text-white">0</span></span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-3xl font-black text-yellow-400" id="lb-my-rank">#--</p>
+                    <p class="text-xs font-bold text-slate-400 uppercase">Current Rank</p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <div class="col-span-2 text-center">Rank</div>
+                    <div class="col-span-6">Student</div>
+                    <div class="col-span-4 text-right" id="lb-header-score">Score</div>
+                </div>
+                <div id="leaderboard-list" class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <div class="p-8 text-center text-slate-400">Loading rankings...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     </main>
 <div id="profile-modal" class="hidden fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl border border-slate-200 dark:border-slate-800 p-6 animate-in fade-in zoom-in duration-200">

@@ -1420,45 +1420,62 @@ function setupSchedule() {
             }
         }
 
-
-// Replace your existing calculateUserStats with this:
 function calculateUserStats() {
-    // 1. Calculate Main Exam Progress
-    const mainSyllabus = state.nextExam ? state.nextExam.syllabus : [];
-    let mainT = 0, mainD = 0;
-    const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
-    
-    mainSyllabus.forEach(chap => chap.dailyTests.forEach(dt => {
-        const testDone = state.dailyTestsAttempted[dt.name];
-        dt.subs.forEach(sub => {
-            mainT++;
-            if(testDone || allCompleted.has(`Study: ${chap.topic} - ${sub}`)) mainD++;
-        });
-    }));
+    // 1. Snapshot of all completed tasks
+    const allCompleted = new Set(
+        Object.values(state.tasks).flat()
+        .filter(t => t.completed)
+        .map(t => t.text)
+    );
 
-    // 2. Calculate Backlog Progress (All phases for leaderboard)
-    let blT = 0, blD = 0;
-    if(typeof backlogPlan !== 'undefined') {
-        backlogPlan.syllabus.forEach(chap => chap.dailyTests.forEach(dt => {
-            const testDone = state.dailyTestsAttempted[dt.name];
-            dt.subs.forEach(sub => {
-                blT++;
-                if(testDone || allCompleted.has(`Study: ${chap.topic} - ${sub}`)) blD++;
-            });
-        }));
+    // 2. Identify Valid Tests for THIS SEASON (Auto-Reset Logic)
+    const validTests = new Set();
+    if (state.nextExam && state.nextExam.syllabus) {
+        state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => validTests.add(dt.name)));
+    }
+    // Backlog tests always count if they are in the active plan
+    if (typeof backlogPlan !== 'undefined' && backlogPlan.syllabus) {
+        backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => validTests.add(dt.name)));
     }
 
-    const mainPct = mainT ? Math.round((mainD / mainT) * 100) : 0;
-    const blPct = blT ? Math.round((blD / blT) * 100) : 0;
-    
-    // THE MASTER FORMULA: Used for Sidebar AND Leaderboard
-    // Weighted 70% Exam, 30% Backlog
-    const overallPct = Math.round((mainPct * 0.7) + (blPct * 0.3));
+    // 3. Main Exam % (X%) - Resets automatically when state.nextExam changes
+    let mainTotal = 0, mainDone = 0;
+    if(state.nextExam && state.nextExam.syllabus) {
+        state.nextExam.syllabus.forEach(s => s.dailyTests.forEach(dt => dt.subs.forEach(sub => {
+            mainTotal++;
+            if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) mainDone++;
+        })));
+    }
+    const mainPct = mainTotal ? Math.round((mainDone/mainTotal)*100) : 0;
 
-    return { mainPct, blPct, overallPct, score: (mainD * 10) + (blD * 5) };
+    // 4. Backlog % (Y%)
+    let blTotal = 0, blDone = 0;
+    if(typeof backlogPlan !== 'undefined' && backlogPlan.syllabus) {
+        backlogPlan.syllabus.forEach(s => s.dailyTests.forEach(dt => dt.subs.forEach(sub => {
+            blTotal++;
+            if(allCompleted.has(`Study: ${s.topic} - ${sub}`)) blDone++;
+        })));
+    }
+    const blPct = blTotal ? Math.round((blDone/blTotal)*100) : 0;
+
+    // 5. Test Count (Z) - Only counts tests relevant to CURRENT Exam + Backlog
+    const testCount = Object.keys(state.dailyTestsAttempted).filter(k => 
+        state.dailyTestsAttempted[k] && validTests.has(k)
+    ).length;
+
+    // 6. EQUAL WEIGHTAGE SCORE
+    const overallScore = mainPct + blPct + (testCount * 10);
+
+    return { 
+        mainPct, 
+        blPct, 
+        testCount, 
+        overallScore 
+    };
 }
+
 function saveData() {
-    const stats = calculateUserStats(); // Uses the fixed calculator above
+    const stats = calculateUserStats(); 
 
     if(isFirebaseActive && currentUser) {
         const docRef = getSafeDocRef(currentUser.uid);
@@ -1466,7 +1483,7 @@ function saveData() {
         const statusEl = document.getElementById('desktop-sync-status');
         if(statusEl) statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span> Saving...`;
 
-        // 1. Save Personal Data (Private)
+        // 1. Save Personal Data
         setDoc(docRef, {
             tasks: state.tasks,
             dailyTestsAttempted: state.dailyTestsAttempted,
@@ -1480,22 +1497,22 @@ function saveData() {
             if(statusEl) statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Save Failed`;
         });
 
-        // 2. Save Leaderboard Entry (FIXED ERROR HANDLING)
+        // 2. Save Leaderboard Entry (DETAILED SYNC)
         const lbRef = doc(db, 'leaderboard', currentUser.uid);
 
-        // Use the new stats calculated above
         setDoc(lbRef, {
             email: currentUser.email || 'Anonymous',
             displayName: state.displayName || 'Anonymous',
             
-            // SAVE THE NEW FIELDS
+            // X, Y, Z Factors
             mainPct: stats.mainPct,
             blPct: stats.blPct,
             testCount: stats.testCount,
-            overallPct: stats.overallPct, // New Field
-            overallScore: stats.overallScore, // New Field
             
-            currentExam: state.nextExam.name, // CRITICAL for filtering
+            // Score & Reset Key
+            overallScore: stats.overallScore, 
+            currentExam: state.nextExam.name, // Used to filter/reset seasons
+            
             lastUpdated: new Date()
         }, { merge: true }).catch(err => {
             console.error("Leaderboard Save failed:", err);
@@ -1510,8 +1527,6 @@ function saveData() {
     }
     renderAll();
 }
- 
-
 
  // --- PRAYER FUNCTIONS ---
 window.openPrayerModal = function() {
@@ -2621,53 +2636,101 @@ window.fetchLeaderboard = async function() {
         document.getElementById('leaderboard-list').innerHTML = `<div class="p-8 text-center text-red-400">Failed to load rankings.<br>Check Firestore rules.</div>`;
     }
 };
- window.renderLeaderboardList = function() {
+window.renderLeaderboardList = function() {
     const list = document.getElementById('leaderboard-list');
     if(!list) return;
 
-    const myStats = calculateUserStats(); // LIVE local data
+    // 1. Get Live Stats for "You"
+    const myStats = calculateUserStats();
     
-    // Update the Rank Card with live local stats
+    // 2. Update Profile Card (Top Section)
+    const myNameEl = document.getElementById('lb-user-name');
+    if(myNameEl) myNameEl.textContent = state.displayName || (currentUser ? currentUser.email.split('@')[0] : "Guest");
+    
+    // Update Your Pill Stats
     if(document.getElementById('lb-my-exam')) document.getElementById('lb-my-exam').textContent = `${myStats.mainPct}%`;
     if(document.getElementById('lb-my-backlog')) document.getElementById('lb-my-backlog').textContent = `${myStats.blPct}%`;
-    if(document.getElementById('lb-user-name')) document.getElementById('lb-user-name').textContent = state.displayName || "Guest";
+    if(document.getElementById('lb-my-tests')) document.getElementById('lb-my-tests').textContent = myStats.testCount;
+    
+    // Update Your Rank Badge
+    const myRankEl = document.getElementById('lb-my-rank');
+    
+    // 3. FILTER: Only show users in the SAME EXAM SEASON (Reset Logic)
+    const currentExamName = state.nextExam.name;
+    const headerTitle = document.querySelector('#view-leaderboard h1');
+    if(headerTitle) headerTitle.innerHTML = `<i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Leaderboard <span class="hidden md:inline-block text-xs bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded ml-2 align-middle">${currentExamName} Season</span>`;
 
-    let sortedData = [...leaderboardCache];
+    let sortedData = [...leaderboardCache]
+        .filter(u => u.currentExam === currentExamName) // <--- FILTERS OUT OLD DATA
+        .sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
+
+    // Calculate My Rank
     const myId = currentUser ? currentUser.uid : null;
+    const myRankIndex = sortedData.findIndex(u => u.id === myId);
+    if(myRankEl) myRankEl.textContent = myRankIndex > -1 ? `#${myRankIndex + 1}` : '-';
 
-    // Sort by the same score used in our unified math
-    sortedData.sort((a, b) => (b.score || 0) - (a.score || 0));
+    if(sortedData.length === 0) {
+        list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-slate-400 opacity-60">
+            <i data-lucide="flag" class="w-12 h-12 mb-3"></i>
+            <p>New Season (${currentExamName}) Started!<br>Complete a task to join.</p>
+        </div>`;
+        if(window.lucide) lucide.createIcons({ root: list });
+        return;
+    }
 
+    // 4. Render 3-Pill Cards
     list.innerHTML = sortedData.map((user, index) => {
         const isMe = user.id === myId;
-        // THE SYNC FIX: If it's "Me", show my live local % instead of the cached cloud %
-        const displayPct = isMe ? myStats.overallPct : (user.overallPct || 0);
+        const stats = isMe ? myStats : user; // Use live data for yourself
         
-        return `
-            <div class="flex items-center gap-4 p-4 rounded-2xl border ${isMe ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 shadow-lg' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'} transition-all hover:scale-[1.01]">
-                <div class="w-8 text-center font-black text-slate-400">#${index + 1}</div>
-                <div class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-500">
-                    ${(user.displayName || 'G').charAt(0).toUpperCase()}
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-sm font-bold text-slate-900 dark:text-white truncate">
-                        ${user.displayName || 'Guest User'} ${isMe ? '<span class="text-[10px] ml-2 text-brand-500">(You)</span>' : ''}
-                    </div>
-                    <div class="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
-                        <div class="h-full bg-brand-500 transition-all duration-1000" style="width: ${displayPct}%"></div>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="text-sm font-black text-brand-600 dark:text-brand-400">${displayPct}%</div>
-                    <div class="text-[9px] uppercase font-bold text-slate-400">Total</div>
-                </div>
-            </div>`;
-    }).join('');
-    
-    if(window.lucide) lucide.createIcons({ root: list });
-updateSidebarBadges();
+        let rankBadge = `<span class="font-bold text-slate-500 text-sm">#${index + 1}</span>`;
+        let cardBorder = isMe ? "border-brand-500 ring-1 ring-brand-500" : "border-slate-200 dark:border-slate-800";
+        let cardBg = isMe ? "bg-brand-50/50 dark:bg-brand-900/10" : "bg-white dark:bg-slate-900";
+        
+        if (index === 0) {
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-yellow-400 text-yellow-900 flex items-center justify-center font-bold text-sm shadow-sm"><i data-lucide="crown" class="w-4 h-4"></i></div>`;
+            cardBorder = "border-yellow-400/50";
+        } else if (index === 1) rankBadge = `<div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-sm shadow-sm">2</div>`;
+        else if (index === 2) rankBadge = `<div class="w-8 h-8 rounded-full bg-orange-300 text-orange-800 flex items-center justify-center font-bold text-sm shadow-sm">3</div>`;
 
-};    
+        return `
+            <div class="relative flex flex-col gap-3 p-4 rounded-xl border ${cardBorder} ${cardBg} mb-3 transition-all hover:scale-[1.01] shadow-sm">
+                
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="shrink-0 w-8 flex justify-center">${rankBadge}</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                ${user.displayName || 'User'}
+                                ${isMe ? '<span class="bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">You</span>' : ''}
+                            </p>
+                            <p class="text-[10px] text-slate-500 font-medium">Score: ${stats.overallScore || 0}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-center border border-slate-100 dark:border-slate-700">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block">Main</span>
+                        <span class="text-xs font-black text-blue-600 dark:text-blue-400">${stats.mainPct || 0}%</span>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-center border border-slate-100 dark:border-slate-700">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block">Backlog</span>
+                        <span class="text-xs font-black text-orange-600 dark:text-orange-400">${stats.blPct || 0}%</span>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-center border border-slate-100 dark:border-slate-700">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block">Tests</span>
+                        <span class="text-xs font-black text-emerald-600 dark:text-emerald-400">${stats.testCount || 0}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    if(window.lucide) lucide.createIcons({ root: list });
+    updateSidebarBadges();
+};
+     
 // --- PROFILE FUNCTIONS ---
     window.openProfileModal = function() {
         const input = document.getElementById('profile-name-input');
@@ -2864,15 +2927,6 @@ window.renderHeaderPrayerWidget = function() {
 // 🚀 TACTICAL DASHBOARD V4 (Strict Phases + Total %)
 // ==========================================
 window.renderStats = function() {
-
-const globalStats = calculateUserStats();
-    
-    // Sync Sidebar Progress
-    const sidebarBar = document.getElementById('sidebar-progress-bar');
-    const sidebarText = document.getElementById('sidebar-progress-text');
-    if(sidebarBar) sidebarBar.style.width = `${globalStats.overallPct}%`;
-    if(sidebarText) sidebarText.textContent = `${globalStats.overallPct}%`;
-
     const container = document.getElementById('stats-container');
     if (!container) return;
 
