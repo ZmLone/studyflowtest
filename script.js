@@ -2942,64 +2942,56 @@ window.renderTasks = renderTasks;
 
 
 window.renderHeader = function() {
-    // 1. UPDATE BREADCRUMB
-    const userEl = document.getElementById('header-breadcrumb-user');
-    const pageEl = document.getElementById('header-breadcrumb-page'); // ✅ NEW
-    const avatarEl = document.getElementById('header-avatar-display');
-    
-    if (userEl) userEl.textContent = state.displayName || "Guest";
-    if (avatarEl) avatarEl.textContent = (state.displayName || "G").charAt(0).toUpperCase();
+    const container = document.getElementById('header-dynamic-greeting');
+    if (!container) return;
 
-    // ✅ DYNAMIC PAGE TITLE
-    if (pageEl) {
+    // 1. IF OVERVIEW: Show Date Switcher
+    if (state.activeView === 'overview') {
+        const isToday = formatDateKey(state.selectedDate) === formatDateKey(new Date());
+        
+        // Format: "Jan 30" or "Today"
+        const dateDisplay = isToday 
+            ? `<span class="font-extrabold text-brand-600 dark:text-brand-400">Today</span>` 
+            : state.selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+        container.innerHTML = `
+            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm animate-in fade-in zoom-in duration-200">
+                <button onclick="changeDay(-1)" class="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400 transition-all active:scale-90" aria-label="Previous Day">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                
+                <button onclick="goToToday()" class="px-3 py-1 text-xs font-bold text-slate-700 dark:text-slate-200 min-w-[80px] text-center active:scale-95 transition-transform" title="Jump to Today">
+                    ${dateDisplay}
+                </button>
+
+                <button onclick="changeDay(1)" class="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400 transition-all active:scale-90" aria-label="Next Day">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `;
+    } 
+    // 2. OTHER VIEWS: Show Page Title
+    else {
         const titles = {
-            'overview': 'Overview',
             'target': 'Target Syllabus',
             'backlog': 'Recovery Plan',
             'mistakes': 'Mistake Notebook',
             'leaderboard': 'Leaderboard',
-            'namaz': 'Spiritual'
+            'namaz': 'Spiritual Growth'
         };
-        // Update the text based on the current active view
-        pageEl.textContent = titles[state.activeView] || 'StudyFlow';
+        const title = titles[state.activeView] || 'StudyFlow';
+        
+        container.innerHTML = `
+            <h1 class="text-lg font-bold text-slate-900 dark:text-white tracking-tight px-1 flex items-center gap-2 animate-in slide-in-from-left-2 fade-in duration-200">
+                ${title}
+            </h1>
+        `;
     }
 
-    // 2. RENDER WIDGETS
+    // 3. Render Widgets (Prayer Strip)
     renderHeaderPrayerWidget();
-};
-
-// ✅ NEW: Renders the 5-pill prayer strip in the header
-window.renderHeaderPrayerWidget = function() {
-    const container = document.getElementById('header-prayer-widget');
-    if (!container) return;
-
-    const k = formatDateKey(state.selectedDate);
-    const todayData = state.prayers[k] || {};
     
-    const prayers = [
-        { key: 'Fajr', label: 'F' },
-        { key: 'Dhuhr', label: 'D' },
-        { key: 'Asr', label: 'A' },
-        { key: 'Maghrib', label: 'M' },
-        { key: 'Isha', label: 'I' }
-    ];
-
-    container.innerHTML = prayers.map(p => {
-        const isDone = todayData[p.key] === true;
-        
-        let baseClass = "flex-1 md:flex-none h-9 w-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm";
-        
-        let stateClass = isDone 
-            ? "bg-emerald-500 text-white !border-emerald-500 shadow-md shadow-emerald-500/30 scale-105" 
-            : "text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-300 dark:hover:border-brand-700";
-
-        return `
-            <button onclick="togglePrayer('${p.key}')" class="${baseClass} ${stateClass}" title="Mark ${p.key} as done">
-                ${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : p.label}
-            </button>
-        `;
-    }).join('');
-
+    // 4. Refresh Icons
     if(window.lucide) lucide.createIcons({ root: container });
 };
 // ==========================================
