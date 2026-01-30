@@ -2133,7 +2133,8 @@ window.showPointsToast = function(points, current, target, subject, type) {
             } else {
                 showToast("Task added to planner");
             }
-        }
+        };
+
         // ✅ PASTE THESE MISSING FUNCTIONS HERE:
 
         window.deleteTask = function(id) {
