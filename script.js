@@ -2642,173 +2642,323 @@ window.fetchLeaderboard = async function() {
         document.getElementById('leaderboard-list').innerHTML = `<div class="p-8 text-center text-red-400">Failed to load rankings.<br>Check Firestore rules.</div>`;
     }
 };
-
 window.renderLeaderboardList = function() {
-    const container = document.getElementById('leaderboard-list');
-    if(!container) return;
+    const list = document.getElementById('leaderboard-list');
+    if(!list) return;
 
-    // --- 1. SYNC LOGIC: MERGE LIVE DATA BEFORE SORTING ---
+    // 1. Live Recalculate
     const myStats = calculateUserStats();
-    const myId = currentUser ? currentUser.uid : "local_user";
-    const myName = state.displayName || "Me";
-
-    // Create a working copy of the cache
-    let allPlayers = [...leaderboardCache];
-
-    // Check if "I" am already in the list
-    const myIndex = allPlayers.findIndex(u => u.id === myId);
-
-    if (myIndex > -1) {
-        // Update my existing entry with LIVE stats
-        allPlayers[myIndex] = { 
-            ...allPlayers[myIndex], 
-            ...myStats, 
-            displayName: myName // Ensure name is up to date
-        };
-    } else {
-        // If I'm not in the cache yet (new user), add me locally so I see myself
-        allPlayers.push({
-            id: myId,
-            displayName: myName,
-            ...myStats,
-            currentExam: state.nextExam.name // Ensure I appear in the correct filter
-        });
-    }
-
-    // --- 2. FILTER & SORT ---
-    const currentExamName = state.nextExam.name;
     
-    // Filter by Exam Name (Leagues)
-    let sortedData = allPlayers.filter(u => u.currentExam === currentExamName);
-
-    // Sort by Score (Highest First)
-    sortedData.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
-
-    // Find my new live rank
-    const realRank = sortedData.findIndex(u => u.id === myId) + 1;
-
-    // --- 3. RENDER HEADER (Your Stats) ---
-    // We update the header text manually here
-    const headerRankEl = document.getElementById('lb-my-rank');
-    if(headerRankEl) headerRankEl.textContent = realRank > 0 ? `#${realRank}` : '-';
+    // 2. Update Profile Card (Top Section)
+    const myNameEl = document.getElementById('lb-user-name');
+    if(myNameEl) myNameEl.textContent = state.displayName || (currentUser ? currentUser.email.split('@')[0] : "Guest");
     
     if(document.getElementById('lb-my-exam')) document.getElementById('lb-my-exam').textContent = `${myStats.mainPct}%`;
     if(document.getElementById('lb-my-backlog')) document.getElementById('lb-my-backlog').textContent = `${myStats.blPct}%`;
     if(document.getElementById('lb-my-tests')) document.getElementById('lb-my-tests').textContent = myStats.testCount;
 
+    const myId = currentUser ? currentUser.uid : null;
+    let sortedData = [...leaderboardCache];
 
-    // --- 4. RENDER THE NEW UI (PODIUM + LIST) ---
+    // --- LEAGUE FILTER ---
+    const currentExamName = state.nextExam.name;
+    const headerTitle = document.querySelector('#view-leaderboard h1');
+    if(headerTitle) headerTitle.innerHTML = `<i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i> Leaderboard <span class="hidden md:inline-block text-xs bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded ml-2 align-middle">${currentExamName} Season</span>`;
+
+    // Filter strictly by current exam
+    sortedData = sortedData.filter(u => u.currentExam === currentExamName);
+
+    // Sort by Overall Score (High to Low)
+    sortedData.sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
+
+    // Update My Rank Display
+    const myRankEl = document.getElementById('lb-my-rank');
+    const myRankIndex = sortedData.findIndex(u => u.id === myId);
+    if(myRankEl) myRankEl.textContent = myRankIndex > -1 ? `#${myRankIndex + 1}` : '-';
+
     if(sortedData.length === 0) {
-        container.innerHTML = `
-            <div class="flex flex-col items-center justify-center py-12 text-slate-400 opacity-60">
-                <i data-lucide="flag" class="w-12 h-12 mb-3"></i>
-                <p>Season Starting... Be the first!</p>
-            </div>`;
-        if(window.lucide) lucide.createIcons({ root: container });
+        list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-slate-400 opacity-60">
+            <i data-lucide="flag" class="w-12 h-12 mb-3"></i>
+            <p>New Season Started! Be the first to score.</p>
+        </div>`;
+        if(window.lucide) lucide.createIcons({ root: list });
         return;
     }
 
-    let html = '';
-
-    // --- A. THE PODIUM (Top 3) ---
-    if(sortedData.length > 0) {
-        const top3 = sortedData.slice(0, 3);
-        // We need 3 slots even if empty to keep layout
-        const p1 = top3[0];
-        const p2 = top3[1] || null;
-        const p3 = top3[2] || null;
-
-        html += `<div class="flex justify-center items-end gap-4 mb-10 mt-4 px-2">`;
-
-        // Rank 2 (Silver) - Left
-        if(p2) {
-            html += `
-            <div class="flex flex-col items-center w-1/3 max-w-[100px] animate-in slide-in-from-bottom-4 duration-500 delay-100">
-                <div class="w-12 h-12 rounded-full border-2 border-slate-300 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg font-bold text-slate-500 mb-2 shadow-lg relative">
-                    ${p2.displayName.charAt(0).toUpperCase()}
-                    <div class="absolute -bottom-2 bg-slate-300 text-slate-800 text-[10px] font-bold px-2 rounded-full border border-white">#2</div>
-                </div>
-                <div class="text-xs font-bold text-slate-600 dark:text-slate-300 truncate w-full text-center">${p2.displayName}</div>
-                <div class="text-[10px] font-bold text-brand-500">${p2.overallScore || 0} pts</div>
-                <div class="h-16 w-full bg-gradient-to-t from-slate-300 to-slate-100 dark:from-slate-700 dark:to-slate-800 rounded-t-lg mt-2 opacity-50"></div>
-            </div>`;
-        }
-
-        // Rank 1 (Gold) - Center (Bigger)
-        if(p1) {
-            html += `
-            <div class="flex flex-col items-center w-1/3 max-w-[110px] z-10 -mt-6 animate-in slide-in-from-bottom-4 duration-500">
-                <div class="relative">
-                    <i data-lucide="crown" class="w-8 h-8 text-yellow-400 absolute -top-6 left-1/2 -translate-x-1/2 drop-shadow-md animate-bounce"></i>
-                    <div class="w-16 h-16 rounded-full border-4 border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center text-2xl font-black text-yellow-600 dark:text-yellow-400 mb-2 shadow-xl shadow-yellow-500/20">
-                        ${p1.displayName.charAt(0).toUpperCase()}
-                    </div>
-                </div>
-                <div class="text-sm font-black text-slate-900 dark:text-white truncate w-full text-center">${p1.displayName}</div>
-                <div class="text-xs font-bold text-yellow-500">${p1.overallScore || 0} pts</div>
-                <div class="h-24 w-full bg-gradient-to-t from-yellow-400 to-yellow-100 dark:from-yellow-600 dark:to-yellow-900/50 rounded-t-xl mt-2 shadow-lg"></div>
-            </div>`;
-        }
-
-        // Rank 3 (Bronze) - Right
-        if(p3) {
-            html += `
-            <div class="flex flex-col items-center w-1/3 max-w-[100px] animate-in slide-in-from-bottom-4 duration-500 delay-200">
-                <div class="w-12 h-12 rounded-full border-2 border-orange-300 bg-orange-50 dark:bg-orange-900/10 flex items-center justify-center text-lg font-bold text-orange-600 mb-2 shadow-lg relative">
-                    ${p3.displayName.charAt(0).toUpperCase()}
-                    <div class="absolute -bottom-2 bg-orange-300 text-orange-900 text-[10px] font-bold px-2 rounded-full border border-white">#3</div>
-                </div>
-                <div class="text-xs font-bold text-slate-600 dark:text-slate-300 truncate w-full text-center">${p3.displayName}</div>
-                <div class="text-[10px] font-bold text-brand-500">${p3.overallScore || 0} pts</div>
-                <div class="h-12 w-full bg-gradient-to-t from-orange-300 to-orange-100 dark:from-orange-800 dark:to-orange-900/30 rounded-t-lg mt-2 opacity-50"></div>
-            </div>`;
-        }
-
-        html += `</div>`;
-    }
-
-    // --- B. THE CHALLENGERS LIST (Rank 4+) ---
-    if(sortedData.length > 3) {
-        html += `<div class="space-y-2 pb-8">`;
+    // --- NEW MODERN CARD DESIGN ---
+    list.innerHTML = sortedData.map((user, index) => {
+        const isMe = user.id === myId;
         
-        sortedData.slice(3).forEach((user, index) => {
-            const rank = index + 4; // Start at 4
-            const isMe = user.id === myId;
-            const score = user.overallScore || 0;
-            
-            html += `
-            <div class="flex items-center justify-between p-3 rounded-xl border ${isMe ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-800' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'} shadow-sm">
-                <div class="flex items-center gap-4">
-                    <span class="font-bold text-slate-400 w-6 text-center text-sm">#${rank}</span>
+        // Use live stats for "Me", cached for others
+        const stats = isMe ? myStats : user;
+        const mainPct = stats.mainPct || 0;
+        const blPct = stats.blPct || 0;
+        const testCnt = stats.testCount || 0;
+        const overall = stats.overallPct || Math.round((mainPct * 0.7) + (blPct * 0.3));
+
+        // Rank Styling
+        let rankBadge = `<span class="font-bold text-slate-500 text-sm">#${index + 1}</span>`;
+        let cardBorder = isMe ? "border-brand-500 ring-1 ring-brand-500" : "border-slate-200 dark:border-slate-800";
+        let cardBg = isMe ? "bg-brand-50/50 dark:bg-brand-900/10" : "bg-white dark:bg-slate-900";
+        
+        if (index === 0) {
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-yellow-400 text-yellow-900 flex items-center justify-center font-bold text-sm shadow-sm"><i data-lucide="crown" class="w-4 h-4"></i></div>`;
+            cardBorder = "border-yellow-400/50";
+        } else if (index === 1) {
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-sm shadow-sm">2</div>`;
+        } else if (index === 2) {
+            rankBadge = `<div class="w-8 h-8 rounded-full bg-orange-300 text-orange-800 flex items-center justify-center font-bold text-sm shadow-sm">3</div>`;
+        }
+
+        const userName = user.displayName || (user.email ? user.email.split('@')[0] : 'Anonymous');
+        const firstLetter = userName.charAt(0).toUpperCase();
+
+        return `
+            <div class="relative flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-xl border ${cardBorder} ${cardBg} mb-3 transition-all hover:scale-[1.01] hover:shadow-md group">
+                
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="shrink-0 w-8 flex justify-center">${rankBadge}</div>
+                    
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500">
-                            ${user.displayName.charAt(0).toUpperCase()}
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 shadow-inner">
+                            ${firstLetter}
                         </div>
-                        <div class="flex flex-col">
-                            <span class="text-sm font-bold text-slate-700 dark:text-slate-200 ${isMe ? 'text-brand-600 dark:text-brand-400' : ''}">
-                                ${user.displayName} ${isMe ? '(You)' : ''}
-                            </span>
-                            <span class="text-[10px] text-slate-400">Exam: ${user.mainPct || 0}%</span>
+                        <div>
+                            <p class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                ${userName}
+                                ${isMe ? '<span class="bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">You</span>' : ''}
+                            </p>
+                            <p class="text-[10px] text-slate-500 font-medium">League: ${user.currentExam || 'Unknown'}</p>
                         </div>
                     </div>
                 </div>
-                <div class="text-right">
-                    <div class="text-sm font-bold text-slate-900 dark:text-white">${score}</div>
-                    <div class="text-[9px] uppercase font-bold text-slate-400">Pts</div>
-                </div>
-            </div>`;
-        });
-        
-        html += `</div>`;
-    } else {
-        // If fewer than 4 players, add some spacer so the podium doesn't look lonely
-        html += `<div class="text-center text-xs text-slate-400 mt-8 mb-8">More challengers joining soon...</div>`;
-    }
 
-    container.innerHTML = html;
-    if(window.lucide) lucide.createIcons({ root: container });
+                <div class="w-full md:w-48 flex flex-col justify-center">
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400 uppercase mb-1">
+                        <span>Overall Progress</span>
+                        <span class="${index < 3 ? 'text-brand-600 dark:text-brand-400' : ''}">${overall}%</span>
+                    </div>
+                    <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-brand-500 to-indigo-500 rounded-full" style="width: ${overall}%"></div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 justify-between md:justify-end w-full md:w-auto mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800/50">
+                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-slate-800 last:border-0">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Exam</span>
+                        <span class="text-sm font-bold text-brand-600 dark:text-brand-400">${mainPct}%</span>
+                    </div>
+                    <div class="flex flex-col items-center px-3 border-r border-slate-100 dark:border-slate-800 last:border-0">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Backlog</span>
+                        <span class="text-sm font-bold text-orange-500">${blPct}%</span>
+                    </div>
+                    <div class="flex flex-col items-center px-3">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Tests</span>
+                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300">${testCnt}</span>
+                    </div>
+                </div>
+
+            </div>
+        `;
+    }).join('');
+
+    if(window.lucide) lucide.createIcons({ root: list });
+updateSidebarBadges();
 };
 
+     
+// --- PROFILE FUNCTIONS ---
+    window.openProfileModal = function() {
+        const input = document.getElementById('profile-name-input');
+        if(state.displayName) input.value = state.displayName;
+        document.getElementById('profile-modal').classList.remove('hidden');
+        input.focus();
+    };
+
+    window.saveProfileName = function() {
+        const input = document.getElementById('profile-name-input');
+        const newName = input.value.trim();
+        
+        if(newName) {
+            state.displayName = newName;
+            if(isFirebaseActive && currentUser) {
+                const docRef = getSafeDocRef(currentUser.uid);
+                setDoc(docRef, { displayName: newName }, { merge: true });
+            } else {
+                localStorage.setItem('studyflow_username', newName);
+            }
+            saveData();
+        }
+        document.getElementById('profile-modal').classList.add('hidden');
+        renderHeader(); 
+    };
+
+
+window.updateSidebarBadges = function() {
+    // 1. Mistake Badge (Count unresolved)
+    const mistakeCount = (state.mistakes || []).filter(m => !m.resolved).length;
+    const mBadge = document.getElementById('badge-mistakes');
+    if(mBadge) {
+        mBadge.textContent = mistakeCount;
+        if(mistakeCount > 0) mBadge.classList.remove('hidden');
+        else mBadge.classList.add('hidden');
+    }
+
+    // 2. Backlog Phase Badge
+    const bBadge = document.getElementById('badge-backlog');
+    if(bBadge && typeof backlogPlan !== 'undefined') {
+        const planStart = backlogPlan.startDate || new Date();
+        const diffDays = Math.ceil((new Date() - planStart) / (1000 * 60 * 60 * 24)); 
+        let phase = 1;
+        if(diffDays > 45) phase = 4;
+        else if(diffDays > 30) phase = 3;
+        else if(diffDays > 15) phase = 2;
+        
+        bBadge.textContent = `Ph ${phase}`;
+        bBadge.classList.remove('hidden');
+    }
+
+    // 3. Leaderboard Rank (From Cache)
+    const rBadge = document.getElementById('badge-rank');
+    if(rBadge && leaderboardCache.length > 0 && currentUser) {
+        const myRank = leaderboardCache.findIndex(u => u.id === currentUser.uid);
+        if(myRank > -1) {
+            rBadge.textContent = `#${myRank + 1}`;
+            rBadge.classList.remove('hidden');
+        }
+    }
+};
+
+// --- PLANNER FUNCTIONS ---
+
+
+
+window.initScrollHeader = function() {
+    // 🛑 LOGIC DISABLED for GitHub Style
+    const headerEl = document.getElementById('overview-header');
+    if(headerEl) headerEl.style.transform = "none";
+};
+
+document.addEventListener('DOMContentLoaded', init);
+        // Optimization: FOUC listener - Triggered on DOMContentLoaded instead of Load for faster paint
+        document.addEventListener('DOMContentLoaded', () => {
+            // Small timeout to allow Tailwind CDN to parse initial classes
+            setTimeout(() => document.body.classList.add('loaded'), 50);
+        });
+
+        // UTILITY: Debounce for search performance
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // Global search handler with debounce
+        const debouncedRender = debounce((query, type) => {
+            renderSyllabus(type, query);
+        }, 300); // 300ms delay
+
+        window.handleSearch = function(query, type) {
+            debouncedRender(query, type);
+        };
+
+        
+window.renderAll = function() {
+    renderHeader();
+renderHeaderPrayerWidget();
+    renderStats();
+    updateSidebarBadges();
+
+
+    // Performance Optimization: Lazy Rendering
+    if (state.activeView === 'overview') {
+        renderTasks();
+            } else if (state.activeView === 'target') {
+        renderSyllabus('main');
+    } else if (state.activeView === 'backlog') {
+        renderSyllabus('backlog');
+    } else if (state.activeView === 'mistakes') {
+        if(state.activeNotebook) {
+            renderNotebookEntries();
+        } else {
+            updateShelfCounts();
+        }
+    } else if (state.activeView === 'namaz') {
+        renderNamazView();
+    } else if (state.activeView === 'leaderboard') {
+        renderLeaderboardList();
+    }
+    
+    // Re-scan icons if library is loaded
+    if(window.lucide) lucide.createIcons();
+};
+
+window.renderTasks = renderTasks;
+
+
+window.renderHeader = function() {
+    // 1. UPDATE BREADCRUMB
+    const userEl = document.getElementById('header-breadcrumb-user');
+    const pageEl = document.getElementById('header-breadcrumb-page'); // ✅ NEW
+    const avatarEl = document.getElementById('header-avatar-display');
+    
+    if (userEl) userEl.textContent = state.displayName || "Guest";
+    if (avatarEl) avatarEl.textContent = (state.displayName || "G").charAt(0).toUpperCase();
+
+    // ✅ DYNAMIC PAGE TITLE
+    if (pageEl) {
+        const titles = {
+            'overview': 'Overview',
+            'target': 'Target Syllabus',
+            'backlog': 'Recovery Plan',
+            'mistakes': 'Mistake Notebook',
+            'leaderboard': 'Leaderboard',
+            'namaz': 'Spiritual'
+        };
+        // Update the text based on the current active view
+        pageEl.textContent = titles[state.activeView] || 'StudyFlow';
+    }
+
+    // 2. RENDER WIDGETS
+    renderHeaderPrayerWidget();
+};
+
+// ✅ NEW: Renders the 5-pill prayer strip in the header
+window.renderHeaderPrayerWidget = function() {
+    const container = document.getElementById('header-prayer-widget');
+    if (!container) return;
+
+    const k = formatDateKey(state.selectedDate);
+    const todayData = state.prayers[k] || {};
+    
+    const prayers = [
+        { key: 'Fajr', label: 'F' },
+        { key: 'Dhuhr', label: 'D' },
+        { key: 'Asr', label: 'A' },
+        { key: 'Maghrib', label: 'M' },
+        { key: 'Isha', label: 'I' }
+    ];
+
+    container.innerHTML = prayers.map(p => {
+        const isDone = todayData[p.key] === true;
+        
+        let baseClass = "flex-1 md:flex-none h-9 w-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm";
+        
+        let stateClass = isDone 
+            ? "bg-emerald-500 text-white !border-emerald-500 shadow-md shadow-emerald-500/30 scale-105" 
+            : "text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-300 dark:hover:border-brand-700";
+
+        return `
+            <button onclick="togglePrayer('${p.key}')" class="${baseClass} ${stateClass}" title="Mark ${p.key} as done">
+                ${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : p.label}
+            </button>
+        `;
+    }).join('');
+
+    if(window.lucide) lucide.createIcons({ root: container });
+};
 // ==========================================
 // 🚀 TACTICAL DASHBOARD V4 (Strict Phases + Total %)
 // ==========================================
@@ -3723,7 +3873,7 @@ function startSnow() {
     canvas.width = width;
     canvas.height = height;
 
-    const maxFalling = 400; // Constant density
+const maxFalling = 400; 
     const fallingFlakes = [];
     let landedFlakes = []; 
 
