@@ -3086,7 +3086,7 @@ window.renderTasks = renderTasks;
         }
 
 // ==========================================
-// 🚀 TACTICAL DASHBOARD V2 (Execution-Aware)
+// 🚀 TACTICAL DASHBOARD V3 (Smart Analytics)
 // ==========================================
 window.renderStats = function() {
     const container = document.getElementById('stats-container');
@@ -3104,20 +3104,16 @@ window.renderStats = function() {
         let completed = 0;
 
         tasks.forEach(t => {
-            // Find point value for this task
             let points = 0;
             syllabusRef.forEach(chap => {
                 chap.dailyTests.forEach(dt => {
                     dt.subs.forEach(sub => {
-                        // Fuzzy match to catch manual tasks too
                         if (t.text.includes(sub)) {
                              points = getSubtopicPoints(dt, chap.subject, chap.topic);
                         }
                     });
                 });
             });
-            
-            // If it's a valid syllabus task
             if(points > 0) {
                 planned += points;
                 if(t.completed) completed += points;
@@ -3130,12 +3126,9 @@ window.renderStats = function() {
     const execBacklog = getDailyExecution(mathBacklog.syllabusRef);
 
     // --- 2. VELOCITY STATUS LOGIC ---
-    // Rule: You are "On Track" only if you have COMPLETED near the target, not just planned it.
     const getVelocityStatus = (done, target) => {
         if (target <= 0.1) return { label: "GOAL MET", color: "text-emerald-400", bg: "bg-emerald-500", percent: 100 };
-        
         const pct = (done / target) * 100;
-        
         if (pct >= 100) return { label: "CRUSHING IT", color: "text-emerald-400", bg: "bg-emerald-500", percent: Math.min(100, pct) };
         if (pct >= 80) return { label: "ON TRACK", color: "text-teal-400", bg: "bg-teal-500", percent: pct };
         if (pct >= 50) return { label: "WORKING", color: "text-yellow-400", bg: "bg-yellow-500", percent: pct };
@@ -3146,27 +3139,23 @@ window.renderStats = function() {
     const velMain = getVelocityStatus(execMain.completed, mathMain.dailyTargetPoints);
     const velBacklog = getVelocityStatus(execBacklog.completed, mathBacklog.dailyTargetPoints);
 
-    // --- 3. DETAILED SUBJECT ANALYTICS (Split) ---
+    // --- 3. INTELLIGENT SUBJECT BREAKDOWN ---
     const getSubjectBreakdown = (syllabus) => {
         const stats = { 
             Physics: { total: 0, done: 0 }, 
             Chemistry: { total: 0, done: 0 }, 
             Biology: { total: 0, done: 0 } 
         };
-        
-        // Build Lookup Set for Speed
         const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
 
         syllabus.forEach(chap => {
             let subj = chap.subject;
             if(subj === 'Botany' || subj === 'Zoology') subj = 'Biology';
-            
             chap.dailyTests.forEach(dt => {
                 const isTestDone = state.dailyTestsAttempted[dt.name];
                 dt.subs.forEach(sub => {
                     if(stats[subj]) {
                         stats[subj].total++;
-                        // Check exact match or Test Override
                         if(isTestDone || allCompleted.has(`Study: ${chap.topic} - ${sub}`)) {
                             stats[subj].done++;
                         }
@@ -3180,23 +3169,78 @@ window.renderStats = function() {
     const statsMain = getSubjectBreakdown(mathMain.syllabusRef);
     const statsBacklog = getSubjectBreakdown(mathBacklog.syllabusRef);
 
-    // Helper to render a mini bar
-    const renderMiniBar = (label, data, colorClass) => {
+    // --- 4. ANALYTICS HELPER: DETECT WEAKNESS ---
+    const renderSmartSubject = (subj, data, allData) => {
         const pct = data.total > 0 ? Math.round((data.done / data.total) * 100) : 0;
+        
+        // Calculate Average of All Subjects in this Exam
+        let totalPct = 0;
+        let count = 0;
+        Object.values(allData).forEach(d => {
+            if(d.total > 0) {
+                totalPct += (d.done / d.total) * 100;
+                count++;
+            }
+        });
+        const avg = count > 0 ? totalPct / count : 0;
+        
+        // Determine Status
+        let status = "Balanced";
+        let statusColor = "text-slate-400";
+        let barColor = "bg-slate-400";
+        let icon = "minus";
+
+        if(pct < avg - 5) {
+            status = "Lagging";
+            statusColor = "text-rose-500";
+            barColor = "bg-rose-500";
+            icon = "arrow-down";
+        } else if (pct > avg + 5) {
+            status = "Strong";
+            statusColor = "text-emerald-500";
+            barColor = "bg-emerald-500";
+            icon = "arrow-up";
+        } else {
+            // Default colors per subject if balanced
+            if(subj === 'Physics') barColor = "bg-blue-500";
+            if(subj === 'Chemistry') barColor = "bg-cyan-500";
+            if(subj === 'Biology') barColor = "bg-green-500";
+        }
+
         return `
-            <div class="mb-2">
-                <div class="flex justify-between text-[10px] font-bold uppercase mb-1">
-                    <span class="text-slate-500 dark:text-slate-400">${label}</span>
-                    <span class="text-slate-700 dark:text-slate-200">${pct}%</span>
+            <div class="mb-3 last:mb-0 group">
+                <div class="flex justify-between items-end mb-1">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 w-14">${subj}</span>
+                        ${status === 'Lagging' ? `<span class="text-[9px] font-bold px-1 rounded bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-300 flex items-center gap-0.5"><i data-lucide="alert-circle" class="w-2 h-2"></i> Lagging</span>` : ''}
+                        ${status === 'Strong' ? `<span class="text-[9px] font-bold px-1 rounded bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300 flex items-center gap-0.5"><i data-lucide="zap" class="w-2 h-2"></i> Strong</span>` : ''}
+                    </div>
+                    <span class="text-xs font-bold text-slate-700 dark:text-white">${pct}%</span>
                 </div>
                 <div class="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div class="h-full ${colorClass} transition-all duration-1000" style="width: ${pct}%"></div>
+                    <div class="h-full ${barColor} transition-all duration-1000 group-hover:opacity-80" style="width: ${pct}%"></div>
                 </div>
             </div>
         `;
     };
 
-    // --- 4. RENDER HTML ---
+    // Find the absolute weakest subject across both exams
+    const findWeakest = () => {
+        let lowest = 101;
+        let name = "None";
+        const check = (stats) => {
+            Object.entries(stats).forEach(([k, v]) => {
+                const p = v.total > 0 ? (v.done / v.total) * 100 : 0;
+                if(p < lowest) { lowest = p; name = k; }
+            });
+        };
+        check(statsMain);
+        check(statsBacklog);
+        return name;
+    };
+    const weakestSub = findWeakest();
+
+    // --- 5. RENDER HTML ---
     container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
             
@@ -3208,7 +3252,7 @@ window.renderStats = function() {
                 <div class="relative z-10">
                     <div class="flex justify-between items-start mb-4">
                         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-300">
-                            Exam Velocity
+                            Main Target
                         </div>
                         <div class="text-right">
                             <div class="text-2xl font-black leading-none">${mathMain.daysLeft}</div>
@@ -3251,7 +3295,7 @@ window.renderStats = function() {
                 <div class="relative z-10">
                     <div class="flex justify-between items-start mb-4">
                         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 backdrop-blur-md border border-orange-500/20 text-[10px] font-bold uppercase tracking-wider text-orange-200">
-                            Backlog Velocity
+                            Backlog Recovery
                         </div>
                         <div class="text-right">
                             <div class="text-2xl font-black leading-none text-orange-500">${mathBacklog.daysLeft}</div>
@@ -3287,32 +3331,42 @@ window.renderStats = function() {
             </div>
 
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm flex flex-col relative overflow-hidden">
-                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-500"></i> Subject Mastery
-                </h4>
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-brand-500"></i> Subject Analysis
+                    </h4>
+                    ${weakestSub !== "None" ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 animate-pulse">Focus: ${weakestSub}</span>` : ''}
+                </div>
 
                 <div class="grid grid-cols-2 gap-6 h-full">
                     <div>
-                        <div class="text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 mb-3 border-b border-brand-100 dark:border-brand-900/50 pb-1">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-100 dark:border-slate-800 pb-1">
                             Main Exam
                         </div>
-                        <div class="space-y-3">
-                            ${renderMiniBar('Physics', statsMain.Physics, 'bg-blue-500')}
-                            ${renderMiniBar('Chemistry', statsMain.Chemistry, 'bg-cyan-500')}
-                            ${renderMiniBar('Biology', statsMain.Biology, 'bg-emerald-500')}
+                        <div class="space-y-1">
+                            ${renderSmartSubject('Physics', statsMain.Physics, statsMain)}
+                            ${renderSmartSubject('Chemistry', statsMain.Chemistry, statsMain)}
+                            ${renderSmartSubject('Biology', statsMain.Biology, statsMain)}
                         </div>
                     </div>
 
                     <div class="border-l border-slate-100 dark:border-slate-800 pl-6">
-                        <div class="text-[9px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400 mb-3 border-b border-orange-100 dark:border-orange-900/50 pb-1">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-100 dark:border-slate-800 pb-1">
                             Backlog
                         </div>
-                        <div class="space-y-3">
-                            ${renderMiniBar('Physics', statsBacklog.Physics, 'bg-blue-400 opacity-80')}
-                            ${renderMiniBar('Chemistry', statsBacklog.Chemistry, 'bg-cyan-400 opacity-80')}
-                            ${renderMiniBar('Biology', statsBacklog.Biology, 'bg-emerald-400 opacity-80')}
+                        <div class="space-y-1">
+                            ${renderSmartSubject('Physics', statsBacklog.Physics, statsBacklog)}
+                            ${renderSmartSubject('Chemistry', statsBacklog.Chemistry, statsBacklog)}
+                            ${renderSmartSubject('Biology', statsBacklog.Biology, statsBacklog)}
                         </div>
                     </div>
+                </div>
+                
+                <div class="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <p class="text-[10px] text-slate-400 italic text-center">
+                        <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+                        Subjects marked "Lagging" are >5% behind your average pace.
+                    </p>
                 </div>
             </div>
 
@@ -3321,7 +3375,6 @@ window.renderStats = function() {
 
     if(window.lucide) lucide.createIcons({ root: container });
 };
-
  function createTaskElementHTML(t, isSubTask = false) {
             // Updated Styles for "Pill" look
             let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
