@@ -109,6 +109,49 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
             }
         }
 
+// ==========================================
+// ✨ ANIMATED NUMBER COUNTER
+// ==========================================
+function animateNumber(elementId, targetValue, duration = 1000) {
+    const element = document.getElementById(elementId);
+    
+    // If element doesn't exist, just exit
+    if (!element) {
+        console.log('Element not found:', elementId);
+        return;
+    }
+    
+    // Get current value (what's showing now)
+    const currentText = element.textContent || '0';
+    const startValue = parseInt(currentText.replace(/[^0-9]/g, '')) || 0;
+    
+    // Calculate how much to change
+    const difference = targetValue - startValue;
+    const startTime = Date.now();
+    
+    // Function that runs every frame
+    function update() {
+        const currentTime = Date.now();
+        const elapsed = currentTime - startTime;
+        
+        if (elapsed < duration) {
+            // Still animating - calculate current value
+            const progress = elapsed / duration;
+            const currentValue = startValue + (difference * progress);
+            element.textContent = Math.round(currentValue);
+            
+            // Keep animating
+            requestAnimationFrame(update);
+        } else {
+            // Animation done - set final value
+            element.textContent = targetValue;
+        }
+    }
+    
+    // Start the animation!
+    update();
+}
+
  // ==========================================
  // ==========================================
     // 🔐 VIP AUTHENTICATION (Final Fixed Version)
@@ -1733,15 +1776,21 @@ window.renderNamazView = function() {
             const dashboardHTML = `
                 <div class="grid grid-cols-3 gap-3 mb-4">
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
-                        <div class="text-2xl md:text-3xl font-black text-brand-600 dark:text-brand-400">${stats.total}</div>
+                        div id="stat-prayers-total" class="text-2xl md:text-3xl font-black text-brand-600 dark:text-brand-400">${stats.total}</div>
+// Animate the numbers instead of just showing them
+setTimeout(() => {
+    animateNumber('stat-prayers-total', stats.total, 800);
+    animateNumber('stat-consistency', stats.rate, 800);
+    animateNumber('stat-streak', stats.streak, 800);
+}, 100);
                         <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Prayers (30d)</div>
                     </div>
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
-                        <div class="text-2xl md:text-3xl font-black text-emerald-500">${stats.rate}%</div>
+                        <div id="stat-consistency" class="text-2xl md:text-3xl font-black text-emerald-500">${stats.rate}%</div>
                         <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Consistency</div>
                     </div>
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
-                        <div class="text-2xl md:text-3xl font-black text-orange-500">${stats.streak}</div>
+                       <div id="stat-streak" class="text-2xl md:text-3xl font-black text-orange-500">${stats.streak}</div>
                         <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Day Streak</div>
                     </div>
                 </div>
