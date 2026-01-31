@@ -3437,9 +3437,6 @@ window.renderStats = function() {
         }       
 
 function renderTasks() {
-       // Show loading skeleton
-            const skeleton = document.getElementById('task-skeleton');
-            if (skeleton) skeleton.classList.remove('hidden');
 
             const list = document.getElementById('overview-task-list');
             if(!list) return;
@@ -3561,10 +3558,7 @@ function renderTasks() {
             // --- STANDARD TASK RENDERING ---
             if(tasks.length === 0 && readyTests.length === 0) {
                 list.innerHTML = `<div class="h-40 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 text-sm"><i data-lucide="coffee" class="w-8 h-8 mb-2 opacity-50"></i>No focus targets set.</div>`;
-                if(window.lucide) lucide.createIcons({ root: list });
-// Hide skeleton when tasks are rendered
-            if (skeleton) skeleton.classList.add('hidden');
-        
+                if(window.lucide) lucide.createIcons({ root: list });        
                 return;
             }
 
