@@ -3564,7 +3564,7 @@ function renderTasks() {
                 if(window.lucide) lucide.createIcons({ root: list });
 // Hide skeleton when tasks are rendered
             if (skeleton) skeleton.classList.add('hidden');
-        }
+        
                 return;
             }
 
