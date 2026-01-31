@@ -1,17 +1,23 @@
-/* 🔒 Prevent horizontal cut-off on mobile */
 html, body {
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    position: relative;
 }
 
 
 /* Smooth Theme Transition */
         html { transition: background-color 0.3s, color 0.3s; }
         
-        /* Optimization: Prevent FOUC (Flash of Unstyled Content) */
-        body { visibility: hidden; opacity: 0; transition: opacity 0.3s ease-in; }
-        body.loaded { visibility: visible; opacity: 1; }
+        /* ✅ SAFE FOUC prevention (mobile friendly) */
+body {
+    opacity: 0;
+    transition: opacity 0.3s ease-in;
+}
+
+body.loaded {
+    opacity: 1;
+}
 
         .hide-scroll::-webkit-scrollbar { display: none; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
@@ -75,4 +81,14 @@ html, body {
 #view-namaz:not(.hidden) {
     display: flex !important;
     flex-direction: column;
+}
+/* 🧷 Prevent hamburger from going off-screen */
+button,
+[role="button"] {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+.hamburger,
+.menu-btn {
+    right: 12px !important;
 }
