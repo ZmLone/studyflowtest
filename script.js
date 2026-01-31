@@ -1763,6 +1763,12 @@ window.renderNamazView = function() {
 
     let bestName = "None yet";
     let worstName = "All";
+    // Animate the numbers instead of just showing them
+setTimeout(() => {
+    animateNumber('stat-prayers-total', stats.total, 800);
+    animateNumber('stat-consistency', stats.rate, 800);
+    animateNumber('stat-streak', stats.streak, 800);
+}, 100);
     
     if (stats.total > 0) {
         bestName = entries[0][0]; 
@@ -1776,21 +1782,15 @@ window.renderNamazView = function() {
             const dashboardHTML = `
                 <div class="grid grid-cols-3 gap-3 mb-4">
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
-                        div id="stat-prayers-total" class="text-2xl md:text-3xl font-black text-brand-600 dark:text-brand-400">${stats.total}</div>
-// Animate the numbers instead of just showing them
-setTimeout(() => {
-    animateNumber('stat-prayers-total', stats.total, 800);
-    animateNumber('stat-consistency', stats.rate, 800);
-    animateNumber('stat-streak', stats.streak, 800);
-}, 100);
+                        <div class="text-2xl md:text-3xl font-black text-brand-600 dark:text-brand-400">${stats.total}</div>
                         <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Prayers (30d)</div>
                     </div>
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
-                        <div id="stat-consistency" class="text-2xl md:text-3xl font-black text-emerald-500">${stats.rate}%</div>
+                        <div class="text-2xl md:text-3xl font-black text-emerald-500">${stats.rate}%</div>
                         <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Consistency</div>
                     </div>
                     <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
-                       <div id="stat-streak" class="text-2xl md:text-3xl font-black text-orange-500">${stats.streak}</div>
+                        <div class="text-2xl md:text-3xl font-black text-orange-500">${stats.streak}</div>
                         <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Day Streak</div>
                     </div>
                 </div>
