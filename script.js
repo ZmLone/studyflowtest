@@ -1,3 +1,4 @@
+
 window.onerror = function(msg, url, line) {
     console.error("Global Error:", msg);
     const el = document.getElementById('global-error');

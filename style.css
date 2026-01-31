@@ -1,3 +1,10 @@
+/* 🔒 Prevent horizontal cut-off on mobile */
+html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 
 /* Smooth Theme Transition */
         html { transition: background-color 0.3s, color 0.3s; }
