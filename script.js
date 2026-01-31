@@ -8,18 +8,30 @@ window.onerror = function(msg, url, line) {
         txt.textContent = `${msg}`;
     }
 };
-window.showToast = function(message) {
-    // 1. Create Wrapper for POSITIONING (Fixed, Centered, No Animation)
-    // This ensures the element stays perfectly centered regardless of inner animations
+
+  window.showToast = function(message, type = 'success') {
     const wrapper = document.createElement('div');
     wrapper.className = "fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] pointer-events-none";
 
-    // 2. Create Toast for STYLING & ANIMATION
-    // We removed the positioning classes from here to avoid conflicts
+    // Icon based on type
+    const icons = {
+        success: 'check-circle',
+        error: 'alert-circle',
+        info: 'info',
+        warning: 'alert-triangle'
+    };
+    
+    const colors = {
+        success: 'text-emerald-500',
+        error: 'text-red-500',
+        info: 'text-brand-500',
+        warning: 'text-amber-500'
+    };
+
     const toast = document.createElement('div');
     toast.className = "bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-2xl font-bold text-sm shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-auto";
-    toast.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 text-brand-500"></i> ${message}`;
-    
+    toast.innerHTML = `<i data-lucide="${icons[type]}" class="w-5 h-5 ${colors[type]}"></i> ${message}`;  
+
     // 3. Assemble
     wrapper.appendChild(toast);
     document.body.appendChild(wrapper);
