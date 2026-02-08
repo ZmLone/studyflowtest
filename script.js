@@ -1,4 +1,5 @@
 
+
 window.onerror = function(msg, url, line) {
     console.error("Global Error:", msg);
     const el = document.getElementById('global-error');
@@ -535,7 +536,7 @@ const mainSchedule = [
        ]
    },
 
-   // --- UT-11 (FEB 22) ---
+   // --- UT-11 (FEB 22) [EXPANDED SYLLABUS] ---
    {
        name: "UT-11",
        date: new Date('2026-02-22T00:00:00'),
@@ -564,18 +565,24 @@ const mainSchedule = [
                    {name:"DT-19 (Chem-XI)", subs:["Buffer Solutions", "Solubility Product"]}
                ]
            },
+           // EXPANDED: p-Block Elements (XII)
            {
                subject: "Chemistry",
-               topic: "p-Block Elements (XII Rev)",
+               topic: "p-Block Elements (XII)",
                dailyTests: [
-                   {name:"Rev (Chem-XII)", subs:["Group 15 Revision", "Group 16 Revision", "Group 17 Revision", "Group 18 Revision"]}
+                   {name:"DT-10 (Chem-XII)", subs:["Group 15 Elements", "Dinitrogen & Ammonia"]},
+                   {name:"DT-11 (Chem-XII)", subs:["Group 16 Elements", "Dioxygen & Ozone"]},
+                   {name:"DT-12 (Chem-XII)", subs:["Group 17 Elements (Halogens)", "Group 18 Elements (Noble Gases)"]}
                ]
            },
+           // EXPANDED: Organic Revision (Aldehydes, Ketones, Acids)
            {
                subject: "Chemistry",
-               topic: "Organic Revision",
+               topic: "Aldehydes, Ketones & Acids (Rev)",
                dailyTests: [
-                   {name:"Rev (Chem-XII)", subs:["Aldehydes Revision", "Ketones Revision", "Carboxylic Acids Revision"]}
+                   {name:"DT-23 (Chem-XII)", subs:["Aldehydes & Ketones: Prep Methods"]},
+                   {name:"DT-24 (Chem-XII)", subs:["Aldehydes & Ketones: Chemical Properties"]},
+                   {name:"DT-25 (Chem-XII)", subs:["Carboxylic Acids: Prep & Properties"]}
                ]
            },
            {
@@ -594,11 +601,13 @@ const mainSchedule = [
                    {name:"DT-20 (Bot-XII)", subs:["Energy Flow", "Ecological Pyramids"]}
                ]
            },
+           // EXPANDED: Biodiversity
            {
                subject: "Botany",
-               topic: "Biodiversity (Rev)",
+               topic: "Biodiversity",
                dailyTests: [
-                   {name:"Rev (Bot-XII)", subs:["Biodiversity Revision", "Conservation Revision"]}
+                   {name:"DT-21 (Bot-XII)", subs:["Patterns of Biodiversity", "Loss of Biodiversity"]},
+                   {name:"DT-22 (Bot-XII)", subs:["Biodiversity Conservation"]}
                ]
            },
            {
@@ -609,18 +618,24 @@ const mainSchedule = [
                    {name:"DT-22 (Zoo-XII)", subs:["Processes (PCR)", "Downstream Processing"]}
                ]
            },
+           // EXPANDED: Biotech Applications
            {
                subject: "Zoology",
-               topic: "Biotech Apps (Rev)",
+               topic: "Biotech Applications",
                dailyTests: [
-                   {name:"Rev (Zoo-XII)", subs:["Biotech Applications Revision"]}
+                   {name:"DT-23 (Zoo-XII)", subs:["Applications in Agriculture (Bt Cotton)"]},
+                   {name:"DT-24 (Zoo-XII)", subs:["Applications in Medicine (Insulin, Gene Therapy)"]}
                ]
            },
+           // EXPANDED: Human Reproduction (Rev)
            {
                subject: "Zoology",
-               topic: "Human Repro (Rev)",
+               topic: "Human Reproduction (Rev)",
                dailyTests: [
-                   {name:"Rev (Zoo-XII)", subs:["Human Reproduction Revision"]}
+                   {name:"DT-1 (Zoo-XII)", subs:["Male Reproductive System", "Female Reproductive System"]},
+                   {name:"DT-2 (Zoo-XII)", subs:["Gametogenesis (Spermatogenesis/Oogenesis)"]},
+                   {name:"DT-3 (Zoo-XII)", subs:["Menstrual Cycle", "Fertilization & Implantation"]},
+                   {name:"DT-4 (Zoo-XII)", subs:["Pregnancy, Parturition & Lactation"]}
                ]
            }
        ]
@@ -730,7 +745,7 @@ const mainSchedule = [
        ]
    },
 
-   // --- AIATS-7 (MAR 22) ---
+   // --- AIATS-7 (MAR 22) [EXPANDED SYLLABUS] ---
    {
        name: "AIATS-7",
        date: new Date('2026-03-22T00:00:00'),
@@ -745,11 +760,15 @@ const mainSchedule = [
                    {name:"DT-30 (Phy-XII)", subs:["Optical Instruments"]}
                ]
            },
+           // EXPANDED: Modern Physics (Rev)
            {
                subject: "Physics",
-               topic: "Modern Physics (Rev)",
+               topic: "Modern Physics",
                dailyTests: [
-                   {name:"Rev (Phy-XII)", subs:["Dual Nature Revision", "Atoms Revision", "Nuclei Revision"]}
+                   {name:"DT-31 (Phy-XII)", subs:["Dual Nature: Photoelectric Effect"]},
+                   {name:"DT-32 (Phy-XII)", subs:["Dual Nature: Matter Waves"]},
+                   {name:"DT-33 (Phy-XII)", subs:["Atoms: Bohr Model"]},
+                   {name:"DT-34 (Phy-XII)", subs:["Nuclei: Binding Energy & Radioactivity"]}
                ]
            },
            {
@@ -759,26 +778,32 @@ const mainSchedule = [
                    {name:"DT-27 (Chem-XII)", subs:["Carbohydrates", "Proteins", "Nucleic Acids"]}
                ]
            },
+           // EXPANDED: p-Block Elements (Rev)
            {
                subject: "Chemistry",
-               topic: "p-Block (Rev)",
+               topic: "p-Block Elements (Rev)",
                dailyTests: [
-                   {name:"Rev (Chem-XII)", subs:["p-Block Revision"]}
+                   {name:"DT-10 (Chem-XII)", subs:["Group 15 Elements", "Group 16 Elements"]},
+                   {name:"DT-11 (Chem-XII)", subs:["Group 17 Elements", "Group 18 Elements"]}
                ]
            },
+           // EXPANDED: Ecology (Rev)
            {
                subject: "Botany",
-               topic: "Ecology (Rev)",
+               topic: "Ecology Unit (Rev)",
                dailyTests: [
-                   {name:"Rev (Bot-XII)", subs:["Ecology Revision"]}
+                   {name:"DT-17 (Bot-XII)", subs:["Organisms & Pop: Abiotic Factors"]},
+                   {name:"DT-19 (Bot-XII)", subs:["Ecosystem: Structure & Function"]},
+                   {name:"DT-21 (Bot-XII)", subs:["Biodiversity & Conservation"]}
                ]
            },
+           // EXPANDED: Biotech (Rev)
            {
                subject: "Zoology",
-               topic: "Biotech (Rev)",
+               topic: "Biotech Unit (Rev)",
                dailyTests: [
-                   {name:"DT-25 (Zoo-XII)", subs:["Transgenic Animals", "Biopiracy"]},
-                   {name:"Rev (Zoo-XII)", subs:["Biotech Revision"]}
+                   {name:"DT-21 (Zoo-XII)", subs:["Biotech Principles: Tools & Processes"]},
+                   {name:"DT-23 (Zoo-XII)", subs:["Biotech Applications: Agri & Med"]}
                ]
            }
        ]
@@ -826,6 +851,7 @@ const mainSchedule = [
        syllabus: [ { subject: "General", topic: "Full Syllabus NEET Pattern", dailyTests: [{name:"Mock-8", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
    }
 ];
+
 // --- REPLACED BACKLOG PLAN (Detailed & Complete Class 11 Syllabus) ---
 const backlogPlan = {
    name: "60-Day Recovery",
@@ -844,7 +870,7 @@ const backlogPlan = {
                {name:"DT-46 (Phy-XI)", subs:["Periodic Motion & SHM Equation", "Phase & Phase Difference"]},
                {name:"DT-47 (Phy-XI)", subs:["Velocity & Acceleration in SHM", "Graphs of SHM"]},
                {name:"DT-48 (Phy-XI)", subs:["Energy in SHM (KE, PE, Total)", "Spring-Mass Systems (Series/Parallel)"]},
-               {name:"DT-49 (Phy-XI)", subs:["Simple Pendulum", "Damped & Forced Oscillations"]}
+               
            ]
        },
        {
@@ -914,20 +940,12 @@ const backlogPlan = {
                {name:"DT-34 (Phy-XI)", subs:["Hooke's Law & Moduli of Elasticity", "Elastic Potential Energy"]}
            ]
        },
-       {
-           phase: 2, unit: "Bulk Matter", subject: "Physics", topic: "Mechanical Properties of Fluids",
-           dailyTests: [
-               {name:"DT-35 (Phy-XI)", subs:["Pressure & Pascal's Law", "Archimedes Principle"]},
-               {name:"DT-36 (Phy-XI)", subs:["Streamline Flow & Continuity Eq", "Bernoulli's Principle"]},
-               {name:"DT-37 (Phy-XI)", subs:["Viscosity & Stokes Law", "Surface Tension & Capillarity"]}
-           ]
-       },
-       {
+              {
            phase: 2, unit: "Bulk Matter", subject: "Physics", topic: "Thermal Properties of Matter",
            dailyTests: [
                {name:"DT-38 (Phy-XI)", subs:["Temperature & Scales", "Thermal Expansion (Solids/Liquids)"]},
                {name:"DT-39 (Phy-XI)", subs:["Calorimetry & Phase Change", "Heat Transfer (Conduction/Convection)"]},
-               {name:"DT-40 (Phy-XI)", subs:["Radiation & Newton's Law of Cooling", "Wien's Displacement Law"]}
+               {name:"DT-40 (Phy-XI)", subs:["Radiation & Newton's Law of Cooling"]}
            ]
        },
 
@@ -1097,16 +1115,7 @@ const backlogPlan = {
        // ============================================================
 
        // --- PHYSICS: Unit 5 & 6 (Mechanics II) ---
-       {
-           phase: 4, unit: "Mechanics II", subject: "Physics", topic: "System of Particles (Rotation)",
-           dailyTests: [
-               {name:"DT-22 (Phy-XI)", subs:["Centre of Mass (Discrete/Continuous)", "Motion of CoM"]},
-               {name:"DT-23 (Phy-XI)", subs:["Vector Product & Angular Velocity", "Torque & Angular Momentum"]},
-               {name:"DT-24 (Phy-XI)", subs:["Moment of Inertia", "Theorems of Parallel/Perpendicular Axes"]},
-               {name:"DT-25 (Phy-XI)", subs:["Kinematics of Rotation", "Rolling Motion"]}
-           ]
-       },
-       {
+              {
            phase: 4, unit: "Mechanics II", subject: "Physics", topic: "Gravitation",
            dailyTests: [
                {name:"DT-28 (Phy-XI)", subs:["Newton's Law of Gravitation", "Acceleration due to Gravity (g)"]},
@@ -1348,6 +1357,17 @@ window.checkSyllabusOverlap = function() {
     }
 };
 function init() {
+    
+    // Add this inside init()
+setInterval(() => {
+    const now = new Date();
+    // Check if it's exactly 5:00 PM (or just past it)
+    if (now.getHours() === 17 && now.getMinutes() === 0 && now.getSeconds() < 5) {
+        setupSchedule(); // Re-run the selection logic
+        renderAll();     // Update the UI
+        showToast("📅 Syllabus updated for next target!");
+    }
+}, 5000); // Checks every 5 seconds`
     setupSchedule(); 
     initScrollHeader(); 
     checkSyllabusOverlap();
@@ -1667,239 +1687,426 @@ window.updateHeaderPrayerBtn = function() {
     if(count === 5) el.className = "bg-yellow-400 text-black text-[9px] px-1.5 py-0.5 rounded ml-1 font-bold shadow-sm";
     else el.className = "bg-emerald-600 text-white text-[9px] px-1.5 py-0.5 rounded ml-1";
 };
-// --- SPIRITUAL DASHBOARD LOGIC ---
+
+ // ==========================================
+// 🌙 RAMADAN & SPIRITUAL ENGINE V2.0 (Srinagar Edition)
+// ==========================================
+
+// 1. DATA: RAMADAN 2026 CALENDAR (SRINAGAR)
+// derived from your uploaded screenshot
+const ramadanCalendar2026 = [
+    { day: 1, date: "2026-02-19", sehri: "05:47 AM", iftar: "06:19 PM" },
+    { day: 2, date: "2026-02-20", sehri: "05:46 AM", iftar: "06:20 PM" },
+    { day: 3, date: "2026-02-21", sehri: "05:45 AM", iftar: "06:21 PM" },
+    { day: 4, date: "2026-02-22", sehri: "05:44 AM", iftar: "06:22 PM" },
+    { day: 5, date: "2026-02-23", sehri: "05:43 AM", iftar: "06:23 PM" },
+    { day: 6, date: "2026-02-24", sehri: "05:42 AM", iftar: "06:24 PM" },
+    { day: 7, date: "2026-02-25", sehri: "05:41 AM", iftar: "06:24 PM" },
+    { day: 8, date: "2026-02-26", sehri: "05:39 AM", iftar: "06:25 PM" },
+    { day: 9, date: "2026-02-27", sehri: "05:38 AM", iftar: "06:26 PM" },
+    { day: 10, date: "2026-02-28", sehri: "05:37 AM", iftar: "06:27 PM" },
+    { day: 11, date: "2026-03-01", sehri: "05:36 AM", iftar: "06:28 PM" },
+    { day: 12, date: "2026-03-02", sehri: "05:35 AM", iftar: "06:29 PM" },
+    { day: 13, date: "2026-03-03", sehri: "05:33 AM", iftar: "06:30 PM" },
+    { day: 14, date: "2026-03-04", sehri: "05:32 AM", iftar: "06:30 PM" },
+    { day: 15, date: "2026-03-05", sehri: "05:31 AM", iftar: "06:31 PM" },
+    { day: 16, date: "2026-03-06", sehri: "05:30 AM", iftar: "06:32 PM" },
+    { day: 17, date: "2026-03-07", sehri: "05:28 AM", iftar: "06:33 PM" },
+    { day: 18, date: "2026-03-08", sehri: "05:27 AM", iftar: "06:34 PM" },
+    { day: 19, date: "2026-03-09", sehri: "05:26 AM", iftar: "06:34 PM" },
+    { day: 20, date: "2026-03-10", sehri: "05:24 AM", iftar: "06:35 PM" },
+    { day: 21, date: "2026-03-11", sehri: "05:23 AM", iftar: "06:36 PM" },
+    { day: 22, date: "2026-03-12", sehri: "05:22 AM", iftar: "06:37 PM" },
+    { day: 23, date: "2026-03-13", sehri: "05:20 AM", iftar: "06:38 PM" },
+    { day: 24, date: "2026-03-14", sehri: "05:19 AM", iftar: "06:38 PM" },
+    { day: 25, date: "2026-03-15", sehri: "05:18 AM", iftar: "06:39 PM" },
+    { day: 26, date: "2026-03-16", sehri: "05:16 AM", iftar: "06:40 PM" },
+    { day: 27, date: "2026-03-17", sehri: "05:15 AM", iftar: "06:41 PM" },
+    { day: 28, date: "2026-03-18", sehri: "05:13 AM", iftar: "06:42 PM" },
+    { day: 29, date: "2026-03-19", sehri: "05:12 AM", iftar: "06:42 PM" },
+    { day: 30, date: "2026-03-20", sehri: "05:10 AM", iftar: "06:43 PM" }
+];
+
+// 2. DATA: EXTENSIVE HADITH COLLECTION (Sahih Bukhari & Muslim)
+const hadithCollection = [
+    { t: "The difference between a man and shirk and kufr is the abandoning of the Prayer.", s: "Sahih Muslim" },
+    { t: "Actions are judged by intentions.", s: "Sahih Bukhari" },
+    { t: "The strong believer is better and more beloved to Allah than the weak believer, while there is good in both.", s: "Sahih Muslim" },
+    { t: "None of you truly believes until he loves for his brother what he loves for himself.", s: "Sahih Bukhari" },
+    { t: "He who prays the two cool prayers (Asr and Fajr) will enter Paradise.", s: "Sahih Bukhari" },
+    { t: "Cleanliness is half of faith.", s: "Sahih Muslim" },
+    { t: "The best of you are those who learn the Quran and teach it.", s: "Sahih Bukhari" },
+    { t: "A good word is charity.", s: "Sahih Bukhari" },
+    { t: "Do not get angry.", s: "Sahih Bukhari" },
+    { t: "He who does not show mercy to our young ones and recognize the rights of our elders is not one of us.", s: "Sahih Bukhari" },
+    { t: "The most beloved of deeds to Allah are those that are most consistent, even if they are small.", s: "Sahih Bukhari" },
+    { t: "Whoever fasts Ramadan out of faith and hope for reward, his past sins will be forgiven.", s: "Sahih Bukhari" },
+    { t: "When Ramadan enters, the gates of Paradise are opened, the gates of Hellfire are closed and the devils are chained.", s: "Sahih Bukhari" },
+    { t: "Eat Suhoor, for in Suhoor there is blessing.", s: "Sahih Bukhari" },
+    { t: "Whoever does not give up false statements (i.e. telling lies), and evil deeds, and speaking bad words to others, Allah is not in need of his (fasting) leaving his food and drink.", s: "Sahih Bukhari" },
+    { t: "Umrah in Ramadan is equal (in reward) to Hajj with me.", s: "Sahih Bukhari" },
+    { t: "The five daily prayers and the Friday Prayer to the Friday Prayer are expiations for what is between them, as long as major sins are avoided.", s: "Sahih Muslim" },
+    { t: "Whoever establishes prayers during the nights of Ramadan faithfully out of sincere faith and hoping to attain Allah's rewards (not for showing off), all his past sins will be forgiven.", s: "Sahih Bukhari" },
+    { t: "Search for the Night of Qadr in the odd nights of the last ten days of Ramadan.", s: "Sahih Bukhari" },
+    { t: "Be in this world as if you were a stranger or a traveler.", s: "Sahih Bukhari" },
+    { t: "Take advantage of five before five: your youth before your old age, your health before your sickness, your wealth before your poverty, your free time before your busyness, and your life before your death.", s: "Sahih Al-Jami" },
+    { t: "Richness is not having many possessions, but richness is being content with oneself.", s: "Sahih Bukhari" },
+    { t: "Allah is Beautiful and He loves beauty.", s: "Sahih Muslim" },
+    { t: "Do not waste water even if you were at a running stream.", s: "Sunan Ibn Majah" },
+    { t: "Fear Allah wherever you may be; follow up a bad deed with a good deed which will wipe it out, and behave well towards the people.", s: "At-Tirmidhi" },
+    { t: "The best among you are those who have the best manners and character.", s: "Sahih Bukhari" },
+    { t: "Modesty brings nothing but good.", s: "Sahih Bukhari" },
+    { t: "A Muslim is the one from whose tongue and hands the Muslims are safe.", s: "Sahih Bukhari" },
+    { t: "Do not envy one another, and do not inflate prices for one another, and do not hate one another.", s: "Sahih Muslim" },
+    { t: "Allah helps His slave as long as he helps his brother.", s: "Sahih Muslim" },
+    { t: "There are two blessings which many people lose: (They are) Health and free time for doing good.", s: "Sahih Bukhari" },
+    { t: "Seven people will be shaded by Allah under His shade on the day when there will be no shade except His.", s: "Sahih Bukhari" },
+    { t: "The world is a prison for the believer and a paradise for the unbeliever.", s: "Sahih Muslim" },
+    { t: "Make things easy for people and not difficult. Give people good news and bring them joy, and do not turn them away.", s: "Sahih Bukhari" }
+];
+
+// 3. MAIN RENDER FUNCTION
+// 3. MAIN RENDER FUNCTION (UPDATED WITH ISLAMIC THEME CLASSES)
 window.renderNamazView = function() {
-    // --- PART 1: THE "HOLY LIGHT" RAMADAN TIMER ---
-    if (typeof window.ramadanTimerInterval === 'undefined') window.ramadanTimerInterval = null;
+    // --- A. RAMADAN COUNTDOWN (Target: Feb 19, 2026) ---
+    const ramadanDate = new Date('2026-02-19T00:00:00'); // Srinagar Start Date
+    
     if (window.ramadanTimerInterval) clearInterval(window.ramadanTimerInterval);
 
-    const countEl = document.getElementById('ramadan-days-left');
-    const ramadanDate = new Date('2026-02-17T00:00:00');
+    const container = document.getElementById('view-namaz');
+    if (!container) return;
+    
+    const sleepPref = localStorage.getItem('studyflow_sehri_buffer') || '2'; 
 
-    // 1. VISUAL UPGRADE: Make the card glow
-    if (countEl) {
-        const card = countEl.closest('.rounded-3xl'); // Find the main card container
-        if (card) {
-            // Apply new "Ramadan" styling (Brighter Green + Gold Glow + Glass Border)
-            card.className = "bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-800 rounded-3xl p-8 text-white shadow-2xl shadow-emerald-400/40 relative overflow-hidden group border border-emerald-400/30 transition-all duration-500";
+    let html = `
+    <header class="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20">
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="moon-star" class="w-6 h-6 text-emerald-500"></i> Spiritual Insights
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Track prayers & Prepare for Ramadan 2026</p>
+    </header>
+
+    <div class="flex-1 overflow-y-auto custom-scroll p-4 md:p-8 pb-32">
+        <div class="max-w-5xl mx-auto space-y-8">
             
-            // Find the background lantern and make it Golden
-            const lanternContainer = card.querySelector('.absolute');
-            if(lanternContainer) {
-                // Add a golden drop-shadow to the lantern icon
-                lanternContainer.innerHTML = '<i data-lucide="lamp-ceiling" class="w-64 h-64 text-amber-200/20 drop-shadow-[0_0_30px_rgba(251,191,36,0.4)] transform rotate-12 transition-transform duration-700 group-hover:rotate-0"></i>';
-                if(window.lucide) lucide.createIcons({ root: lanternContainer });
-            }
-        }
-    }
+            <div class="relative overflow-hidden rounded-3xl p-8 shadow-2xl group transition-all duration-500 border border-emerald-500/30 bg-emerald-900">
+                <div class="absolute inset-0 bg-pattern-islamic opacity-20 z-0"></div>
+                <div class="absolute inset-0 bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-900 opacity-90 z-0"></div>
+                
+                <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 animate-pulse-slow"></div>
+                
+                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+                    <div class="float-majestic">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider mb-3 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse"></span> 19 Feb 2026 (Srinagar)
+                        </div>
+                        <h2 class="text-4xl md:text-6xl font-black text-gradient-gold drop-shadow-sm mb-2 font-serif tracking-tight">Ramadan 2026</h2>
+                        <p class="text-emerald-100/80 text-sm max-w-md mx-auto md:mx-0 font-medium italic">"O you who have believed, decreed upon you is fasting... that you may become righteous."</p>
+                    </div>
+                    
+                    <div id="ramadan-timer-display" class="flex gap-3">
+                        </div>
+                </div>
+            </div>
 
-    const updateTimer = () => {
+            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-5">
+                    <i data-lucide="clock" class="w-32 h-32 rotate-12"></i>
+                </div>
+
+                <div class="relative z-10">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+                        <i data-lucide="bed-double" class="w-5 h-5 text-indigo-500"></i> Sehri Sleep Planner
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Wake Up Buffer (Before Sehri)</label>
+                            <div class="flex gap-2" id="buffer-buttons">
+                                <button onclick="setBuffer('1')" class="flex-1 py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all">1 Hr Before</button>
+                                <button onclick="setBuffer('2')" class="flex-1 py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all">2 Hrs Before</button>
+                                <button onclick="setBuffer('3')" class="flex-1 py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all">3 Hrs Before</button>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">Calculates bedtime to get exactly <b class="text-indigo-500">5 hours</b> of sleep.</p>
+                        </div>
+
+                        <div id="sleep-suggestion-box" class="bg-indigo-600 rounded-2xl p-5 text-white shadow-xl shadow-indigo-500/20 flex flex-col justify-center items-center text-center">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-6 flex items-center justify-between">
+                        <span class="flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-500"></i> Prayer Consistency (30 Days)</span>
+                        <span id="stat-total-prayers" class="text-emerald-600 dark:text-emerald-400 text-xs bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded-full">0 Offered</span>
+                    </h3>
+                    
+                    <div class="space-y-5" id="prayer-bars-container">
+                        </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-amber-50 dark:bg-amber-900/10 rounded-3xl p-6 border border-amber-100 dark:border-amber-900/30 text-center relative h-full flex flex-col justify-center">
+                        <i data-lucide="quote" class="w-8 h-8 text-amber-300 dark:text-amber-800/50 absolute top-6 left-6"></i>
+                        <h3 class="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-4">Daily Hadith</h3>
+                        <p class="text-lg font-medium text-slate-800 dark:text-slate-200 font-serif leading-relaxed italic mb-4" id="daily-hadith-text">...</p>
+                        <div class="inline-block px-3 py-1 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-[10px] font-bold text-amber-700 dark:text-amber-400" id="daily-hadith-source">...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 dark:border-slate-800 pt-8">
+                <button onclick="document.getElementById('calendar-grid').classList.toggle('hidden')" class="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-brand-600 transition-colors mx-auto w-full justify-center p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> View Full Srinagar Ramadan Calendar (2026)
+                    <i data-lucide="chevron-down" class="w-4 h-4 ml-1"></i>
+                </button>
+                <div id="calendar-grid" class="hidden mt-6 grid grid-cols-2 md:grid-cols-5 gap-3 animate-in slide-in-from-top-4 fade-in duration-300">
+                    ${ramadanCalendar2026.map(d => `
+                        <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-center">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">Day ${d.day} • ${d.date.substring(5)}</div>
+                            <div class="flex justify-center gap-3 mt-1">
+                                <div><div class="text-[10px] text-slate-500 uppercase">Sehri</div><div class="text-sm font-bold text-slate-800 dark:text-white">${d.sehri}</div></div>
+                                <div class="w-px bg-slate-200 dark:bg-slate-600"></div>
+                                <div><div class="text-[10px] text-slate-500 uppercase">Iftar</div><div class="text-sm font-bold text-slate-800 dark:text-white">${d.iftar}</div></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+        </div>
+    </div>`;
+
+    container.innerHTML = html; 
+    
+    // --- B. START LOGIC (WITH NEW BOX STYLING) ---
+    startRamadanTimer(ramadanDate);
+    updateSleepCalculator(sleepPref);
+    calculateAndRenderStats();
+    renderUniqueHadith();
+
+    if(window.lucide) lucide.createIcons({ root: container });
+};
+
+// 4. HELPER: TIMER LOGIC (WITH GLASS-EMERALD CLASS)
+window.startRamadanTimer = function(targetDate) {
+    const display = document.getElementById('ramadan-timer-display');
+    
+    const update = () => {
         const now = new Date();
-        const diff = ramadanDate - now;
+        const diff = targetDate - now;
+
         if (diff <= 0) {
-            if(countEl) countEl.innerHTML = "<span class='text-amber-200 font-bold text-2xl drop-shadow-md'>Ramadan Mubarak! 🌙</span>";
+            display.innerHTML = "<span class='text-white font-bold text-2xl animate-pulse'>Ramadan Mubarak! 🌙</span>";
             return;
         }
+
         const d = Math.floor(diff / (1000 * 60 * 60 * 24));
         const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const s = Math.floor((diff % (1000 * 60)) / 1000);
-        
-        // NEW STYLING: Gold Borders & Brighter Text
-        const makeBox = (val, label) => `
-            <div class="flex flex-col items-center justify-center bg-black/20 rounded-xl border border-amber-200/30 p-2 min-w-[55px] md:min-w-[65px] backdrop-blur-md shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                <span class="text-2xl md:text-3xl font-bold text-white font-mono leading-none drop-shadow-sm">${String(val).padStart(2, '0')}</span>
-                <span class="text-[9px] font-bold text-amber-300 uppercase mt-1 tracking-widest">${label}</span>
-            </div>`;
-            
-        if (countEl) {
-            if (countEl.parentElement && countEl.nextElementSibling) {
-                countEl.nextElementSibling.style.display = 'none';
-                countEl.parentElement.classList.remove('p-4', 'min-w-[120px]');
-                countEl.parentElement.classList.add('p-0', 'pl-0', 'md:pl-6'); // Adjust alignment
-            }
-            countEl.innerHTML = `
-                <div class="flex gap-2 items-center">
-                    ${makeBox(d,'Day')}
-                    <span class="text-amber-200/60 font-bold text-xl pb-4 animate-pulse">:</span>
-                    ${makeBox(h,'Hr')}
-                    <span class="text-amber-200/60 font-bold text-xl pb-4 animate-pulse">:</span>
-                    ${makeBox(m,'Min')}
-                    <span class="text-amber-200/60 font-bold text-xl pb-4 animate-pulse hidden md:block">:</span>
-                    ${makeBox(s,'Sec')}
-                </div>`;
-        }
+
+        // APPLIED: glass-emerald class here
+        const boxClass = "glass-emerald flex flex-col items-center justify-center rounded-xl p-2 md:p-3 min-w-[60px] md:min-w-[70px] transition-transform hover:scale-105";
+        const numClass = "text-2xl md:text-3xl font-black text-white font-mono leading-none drop-shadow-md";
+        const labelClass = "text-[9px] font-bold text-emerald-200 uppercase mt-1 tracking-widest";
+
+        display.innerHTML = `
+            <div class="${boxClass}"><span class="${numClass}">${d}</span><span class="${labelClass}">Days</span></div>
+            <div class="${boxClass}"><span class="${numClass}">${h}</span><span class="${labelClass}">Hrs</span></div>
+            <div class="${boxClass}"><span class="${numClass}">${m}</span><span class="${labelClass}">Mins</span></div>
+            <div class="${boxClass}"><span class="${numClass}">${s}</span><span class="${labelClass}">Secs</span></div>
+        `;
     };
-    updateTimer();
-    window.ramadanTimerInterval = setInterval(updateTimer, 1000);
-
-
-    // --- PART 2: DATA DASHBOARD (Preserved) ---
-    const calculateStats = (days) => {
-        const counts = { Fajr: 0, Dhuhr: 0, Asr: 0, Maghrib: 0, Isha: 0 };
-        let total = 0, streak = 0, streakBroken = false;
-        for(let i=0; i<days; i++) {
-            const d = new Date(); d.setDate(d.getDate() - i);
-            const k = formatDateKey(d);
-            let dailyCount = 0;
-            if(state.prayers && state.prayers[k]) {
-                const p = state.prayers[k];
-                ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].forEach(name => {
-                    if(p[name]) { counts[name]++; dailyCount++; }
-                });
-            }
-            total += dailyCount;
-            if(!streakBroken) {
-                if(dailyCount > 0) streak++;
-                else if(i > 0) streakBroken = true;
-            }
-        }
-        return { counts, total, streak, rate: Math.round((total / (days * 5)) * 100) };
-    };
-
-    const stats = calculateStats(30);
-    const entries = Object.entries(stats.counts);
-    entries.sort((a, b) => b[1] - a[1]);
-
-    let bestName = "None yet";
-    let worstName = "All";
-    // Animate the numbers instead of just showing them
-setTimeout(() => {
-    animateNumber('stat-prayers-total', stats.total, 800);
-    animateNumber('stat-consistency', stats.rate, 800);
-    animateNumber('stat-streak', stats.streak, 800);
-}, 100);
     
-    if (stats.total > 0) {
-        bestName = entries[0][0]; 
-        worstName = stats.rate === 100 ? "None!" : entries[entries.length-1][0];
-    }
-
-    const oldInsightCard = document.getElementById('insight-best');
-    if (oldInsightCard) {
-        const gridContainer = oldInsightCard.closest('.grid');
-        if (gridContainer && !gridContainer.classList.contains('dashboard-active')) {
-            const dashboardHTML = `
-                <div class="grid grid-cols-3 gap-3 mb-4">
-                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
-                        <div class="text-2xl md:text-3xl font-black text-brand-600 dark:text-brand-400">${stats.total}</div>
-                        <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Prayers (30d)</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
-                        <div class="text-2xl md:text-3xl font-black text-emerald-500">${stats.rate}%</div>
-                        <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Consistency</div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-center shadow-sm">
-                        <div class="text-2xl md:text-3xl font-black text-orange-500">${stats.streak}</div>
-                        <div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Day Streak</div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-3 shadow-sm">
-                        <div class="p-3 bg-green-100 dark:bg-green-900/20 rounded-full text-green-600 dark:text-green-400"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
-                        <div><div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Strongest</div><div class="text-lg font-bold text-slate-900 dark:text-white">${bestName}</div></div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-3 shadow-sm">
-                        <div class="p-3 bg-red-100 dark:bg-red-900/20 rounded-full text-red-600 dark:text-red-400"><i data-lucide="alert-circle" class="w-5 h-5"></i></div>
-                        <div><div class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Needs Focus</div><div class="text-lg font-bold text-slate-900 dark:text-white">${worstName}</div></div>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-4">
-                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2"><i data-lucide="bar-chart-2" class="w-4 h-4 text-slate-400"></i> Prayer Frequency</h3>
-                    <div class="space-y-4">
-                        ${['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map(p => {
-                            const count = stats.counts[p] || 0;
-                            const pct = (count / 30) * 100;
-                            let color = pct >= 80 ? 'bg-emerald-500' : (pct >= 50 ? 'bg-brand-500' : 'bg-orange-400');
-                            return `<div><div class="flex justify-between text-xs font-bold mb-1.5"><span class="text-slate-600 dark:text-slate-300 w-16">${p}</span><span class="text-slate-400">${count}/30 days</span></div><div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div class="h-full ${color} transition-all duration-1000" style="width: ${pct}%"></div></div></div>`;
-                        }).join('')}
-                    </div>
-                </div>`;
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = dashboardHTML;
-            wrapper.classList.add('dashboard-active');
-            gridContainer.replaceWith(wrapper);
-            if(window.lucide) lucide.createIcons({ root: wrapper });
-        }
-    }
-
-    renderDailyHadith();
+    update();
+    window.ramadanTimerInterval = setInterval(update, 1000);
 };
 
-function calculatePrayerStats() {
-    if(!state.prayers) return;
+// 4. HELPER: SLEEP CALCULATOR LOGIC
+window.setBuffer = function(hours) {
+    localStorage.setItem('studyflow_sehri_buffer', hours);
+    updateSleepCalculator(hours);
+    
+    // Update button visual states
+    const btns = document.getElementById('buffer-buttons').querySelectorAll('button');
+    btns.forEach(b => {
+        if(b.textContent.includes(hours)) {
+            b.className = "flex-1 py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 shadow-sm";
+        } else {
+            b.className = "flex-1 py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all border-slate-200 dark:border-slate-700 text-slate-400 hover:border-indigo-300 hover:bg-slate-50 dark:hover:bg-slate-800";
+        }
+    });
+};
 
-    const counts = { Fajr: 0, Dhuhr: 0, Asr: 0, Maghrib: 0, Isha: 0 };
-    const totalDays = 30; // Look back period
-    let daysChecked = 0;
+window.updateSleepCalculator = function(bufferHours) {
+    const box = document.getElementById('sleep-suggestion-box');
+    if(!box) return;
 
-    // Iterate backwards 30 days
-    for(let i=0; i<totalDays; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const k = formatDateKey(d);
-        
-        if(state.prayers[k]) {
-            daysChecked++;
-            const p = state.prayers[k];
-            if(p.Fajr) counts.Fajr++;
-            if(p.Dhuhr) counts.Dhuhr++;
-            if(p.Asr) counts.Asr++;
-            if(p.Maghrib) counts.Maghrib++;
-            if(p.Isha) counts.Isha++;
+    // 1. Determine "Active" Sehri Day
+    // If current time is AFTER today's Sehri, we plan for TOMORROW.
+    // If before, we plan for TODAY.
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    
+    // Default to first day if outside calendar range
+    let targetDay = ramadanCalendar2026.find(d => d.date >= todayStr) || ramadanCalendar2026[0];
+    
+    // Check precise timing if strictly inside Ramadan
+    const sehriTimeStr = targetDay.sehri; // "05:47 AM"
+    
+    // Parse time
+    let [tPart, mod] = sehriTimeStr.split(' ');
+    let [h, m] = tPart.split(':');
+    let hNum = parseInt(h);
+    if(hNum === 12) hNum = 0; // handle 12 AM edge case
+    
+    const sehriDate = new Date(targetDay.date);
+    sehriDate.setHours(hNum, parseInt(m), 0);
+    
+    // If today's sehri has passed, look at next day in array
+    if(now > sehriDate) {
+        const nextIdx = ramadanCalendar2026.indexOf(targetDay) + 1;
+        if(nextIdx < ramadanCalendar2026.length) {
+            targetDay = ramadanCalendar2026[nextIdx];
+            
+            // Re-parse for new target
+            [tPart, mod] = targetDay.sehri.split(' ');
+            [h, m] = tPart.split(':');
+            hNum = parseInt(h);
+            if(hNum === 12) hNum = 0;
+            
+            sehriDate.setTime(new Date(targetDay.date).getTime());
+            sehriDate.setHours(hNum, parseInt(m), 0);
         }
     }
 
-    // Determine Best & Worst
-    let bestName = "None yet";
-    let bestCount = -1;
-    let worstName = "None";
-    let worstCount = 999;
+    // Calculate Wake Up Time (Sehri - Buffer)
+    const wakeUpDate = new Date(sehriDate);
+    wakeUpDate.setHours(sehriDate.getHours() - parseInt(bufferHours));
 
-    Object.entries(counts).forEach(([name, count]) => {
-        if(count > bestCount) { bestCount = count; bestName = name; }
-        if(count < worstCount) { worstCount = count; worstName = name; }
-    });
+    // Calculate Sleep Time (Wake Up - 5 hours)
+    const sleepDate = new Date(wakeUpDate);
+    sleepDate.setHours(wakeUpDate.getHours() - 5);
 
-    // Update UI
-    const bestEl = document.getElementById('insight-best');
-    const worstEl = document.getElementById('insight-worst');
+    // Format Times
+    const fmt = (d) => d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const isToday = sleepDate.getDate() === now.getDate();
+    const dayLabel = isToday ? "Tonight" : "Tomorrow Night";
 
-    if(bestEl) {
-        if (bestCount === 0) bestEl.textContent = "Start Today";
-        else bestEl.textContent = bestName;
+    box.innerHTML = `
+        <div class="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">For Sehri (${targetDay.sehri})</div>
+        <div class="text-4xl font-black mb-1 animate-in zoom-in duration-300">${fmt(sleepDate)}</div>
+        <div class="text-sm font-medium opacity-90">Sleep by this time ${dayLabel}</div>
+        <div class="mt-4 pt-4 border-t border-white/20 w-full flex justify-between text-xs">
+            <span>Wake Up: <b>${fmt(wakeUpDate)}</b></span>
+            <span>Sleep Duration: <b>5 hrs</b></span>
+        </div>
+    `;
+};
+
+// 5. HELPER: TIMER LOGIC (With Holy Light Visuals)
+window.startRamadanTimer = function(targetDate) {
+    const display = document.getElementById('ramadan-timer-display');
+    
+    const update = () => {
+        const now = new Date();
+        const diff = targetDate - now;
+
+        if (diff <= 0) {
+            display.innerHTML = "<span class='text-white font-bold text-2xl'>Ramadan Mubarak! 🌙</span>";
+            return;
+        }
+
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const boxClass = "flex flex-col items-center justify-center bg-black/30 backdrop-blur-md rounded-xl border border-emerald-400/30 p-2 md:p-3 min-w-[60px] md:min-w-[70px] shadow-lg";
+        const numClass = "text-2xl md:text-3xl font-black text-white font-mono leading-none";
+        const labelClass = "text-[9px] font-bold text-emerald-300 uppercase mt-1 tracking-widest";
+
+        display.innerHTML = `
+            <div class="${boxClass}"><span class="${numClass}">${d}</span><span class="${labelClass}">Days</span></div>
+            <div class="${boxClass}"><span class="${numClass}">${h}</span><span class="${labelClass}">Hrs</span></div>
+            <div class="${boxClass}"><span class="${numClass}">${m}</span><span class="${labelClass}">Mins</span></div>
+            <div class="${boxClass}"><span class="${numClass}">${s}</span><span class="${labelClass}">Secs</span></div>
+        `;
+    };
+    
+    update();
+    window.ramadanTimerInterval = setInterval(update, 1000);
+};
+
+// 6. HELPER: ADVANCED STATS (Heatmap Style)
+window.calculateAndRenderStats = function() {
+    const counts = { Fajr: 0, Dhuhr: 0, Asr: 0, Maghrib: 0, Isha: 0 };
+    let totalOffered = 0;
+    const totalDays = 30; // Look back period
+
+    // Analyze Data
+    for(let i=0; i<totalDays; i++) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const k = formatDateKey(d);
+        if(state.prayers && state.prayers[k]) {
+            const p = state.prayers[k];
+            ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].forEach(name => {
+                if(p[name]) { counts[name]++; totalOffered++; }
+            });
+        }
     }
 
-    if(worstEl) {
-        if (bestCount === 0) worstEl.textContent = "All Prayers";
-        else if (worstCount === bestCount) worstEl.textContent = "Consistent"; // All equal
-        else worstEl.textContent = worstName;
+    // Update "Total" Badge
+    const totalBadge = document.getElementById('stat-total-prayers');
+    if(totalBadge) totalBadge.innerText = `${totalOffered} Offered`;
+
+    // Calculate Percentages & Render Bars
+    const container = document.getElementById('prayer-bars-container');
+    if(container) {
+        container.innerHTML = Object.entries(counts).map(([name, count]) => {
+            const pct = (count / totalDays) * 100;
+            let barColor = 'bg-emerald-500'; 
+            if(pct < 50) barColor = 'bg-orange-500';
+            if(pct < 20) barColor = 'bg-red-500';
+
+            return `
+            <div>
+                <div class="flex justify-between text-xs font-bold mb-1.5">
+                    <span class="text-slate-700 dark:text-slate-300 w-20">${name}</span>
+                    <span class="text-slate-400">${count}/${totalDays} days</span>
+                </div>
+                <div class="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div class="h-full ${barColor} shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all duration-1000 relative" style="width: ${pct}%">
+                        <div class="absolute inset-0 bg-white/20 w-full -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
     }
-}
+};
 
-function renderDailyHadith() {
-    const hadiths = [
-        { text: "The difference between a man and shirk and kufr is the abandoning of the Prayer.", source: "Sahih Muslim" },
-        { text: "The first matter that the slave will be brought to account for on the Day of Judgment is the Prayer.", source: "Sahih Al-Jami" },
-        { text: "He who prays the two cool prayers (Asr and Fajr) will enter Paradise.", source: "Sahih Bukhari" },
-        { text: "No one who prays before the rising of the sun and before its setting will enter the Fire.", source: "Sahih Muslim" },
-        { text: "Between faith and unbelief is abandoning the prayer.", source: "Sahih Muslim" },
-        { text: "Whoever misses the Asr prayer, it is as if he has lost his family and his wealth.", source: "Sahih Bukhari" }
-    ];
-
-    // Pick based on day of month to rotate consistently
-    const dayIndex = new Date().getDate() % hadiths.length;
-    const selected = hadiths[dayIndex];
+// 7. HELPER: UNIQUE HADITH ROTATION
+window.renderUniqueHadith = function() {
+    // Generate a consistent index based on the day of the year
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = now - start;
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+    
+    // Use modulus to cycle through the array
+    const index = dayOfYear % hadithCollection.length;
+    const selected = hadithCollection[index];
 
     const textEl = document.getElementById('daily-hadith-text');
     const sourceEl = document.getElementById('daily-hadith-source');
 
-    if(textEl) textEl.textContent = `"${selected.text}"`;
-    if(sourceEl) sourceEl.textContent = selected.source;
-}
-        
+    if(textEl) textEl.textContent = `"${selected.t}"`;
+    if(sourceEl) sourceEl.textContent = selected.s;
+};       
 
 
 // ======================================================
@@ -2008,27 +2215,30 @@ function calculateSmartMath(type) {
     return { daysLeft, totalPoints, remainingPoints, dailyTargetPoints, pendingTasks, syllabusRef: syllabus };
 }   
   
-        // --- 3. HELPER: CALCULATE POINTS ALREADY IN PLANNER ---
-        function getPlannerPointsForToday(mode, syllabusRef) {
-            const k = formatDateKey(state.selectedDate);
-            const tasks = state.tasks[k] || [];
-            let sum = 0;
+       // --- 3. HELPER: CALCULATE POINTS ALREADY IN PLANNER ---
+function getPlannerPointsForToday(mode, syllabusRef) {
+    const k = formatDateKey(state.selectedDate);
+    const tasks = state.tasks[k] || [];
+    let sum = 0;
 
-            tasks.forEach(t => {
-                // Try to find this task in the syllabus to get its point value
-                // We scan the syllabusRef passed from calculateSmartMath
-                syllabusRef.forEach(chap => {
-                    chap.dailyTests.forEach(dt => {
-                        dt.subs.forEach(sub => {
-                            if (t.text.includes(sub)) {
-                                sum += getSubtopicPoints(dt, chap.subject, chap.topic);
-                            }
-                        });
-                    });
+    tasks.forEach(t => {
+        // ✅ CRITICAL FIX: Only count tasks that match the requested mode
+        // If mode is 'main', ignore 'backlog' tasks, and vice versa.
+        if (t.type !== mode) return; 
+
+        // Try to find this task in the syllabus to get its point value
+        syllabusRef.forEach(chap => {
+            chap.dailyTests.forEach(dt => {
+                dt.subs.forEach(sub => {
+                    if (t.text.includes(sub)) {
+                        sum += getSubtopicPoints(dt, chap.subject, chap.topic);
+                    }
                 });
             });
-            return sum;
-        }
+        });
+    });
+    return sum;
+}
 
   // ==========================================
 // ⚡ MODERN SMART MIX CONTROLLER
@@ -2055,7 +2265,7 @@ window.generateSmartMix = function(mode = 'main') {
 
     let currentPoints = 0;
     let mixPool = [];
-    const SAFE_CAP = 12; 
+    const SAFE_CAP = 50; 
 
     while (currentPoints < pointsNeeded && mixPool.length < SAFE_CAP && math.pendingTasks.length > 0) {
         const heavySubject = Object.keys(subjectLoad).reduce((a, b) => 
@@ -3105,7 +3315,6 @@ window.renderStats = function() {
     if (!container) return;
 
     // --- 1. DETERMINE ACTIVE BACKLOG PHASE ---
-    // We calculate this first to filter data correctly
     const planStart = (typeof backlogPlan !== 'undefined') ? backlogPlan.startDate : new Date();
     const now = new Date();
     const diffTime = now - planStart;
@@ -3117,7 +3326,6 @@ window.renderStats = function() {
     else if(diffDays > 15) currentPhase = 2;
 
     // --- 2. PREPARE SYLLABUS DATA ---
-    // Main Exam: Uses everything
     const mainSyllabus = state.nextExam ? state.nextExam.syllabus : [];
     
     // Backlog: STRICTLY filter to ONLY the current phase
@@ -3126,9 +3334,6 @@ window.renderStats = function() {
         : [];
 
     // --- 3. CORE CALCULATIONS ---
-    // We re-use the smart math logic but pass our filtered syllabus
-    // Note: calculateSmartMath usually grabs data internally, so we simulate it here for stats
-    
     const getDailyData = (syllabus) => {
         const k = formatDateKey(state.selectedDate);
         const tasks = state.tasks[k] || [];
@@ -3151,7 +3356,7 @@ window.renderStats = function() {
     };
 
     const execMain = getDailyData(mainSyllabus);
-    const execBacklog = getDailyData(backlogSyllabus); // Uses filtered list
+    const execBacklog = getDailyData(backlogSyllabus);
 
     // Recalculate Targets based on filtered lists
     const getTarget = (syllabus, endDateStr) => {
@@ -3184,10 +3389,8 @@ window.renderStats = function() {
         };
     };
 
-    // Dates: Main Exam vs Current Phase End
-    const mainStats = getTarget(mainSyllabus, '2026-02-07T00:00:00');
-    
-    // Calculate Phase End Date dynamically
+    // Dates: Main Exam vs Phase End
+    const mainStats = getTarget(mainSyllabus, state.nextExam.date);    
     const phaseEndDate = new Date(planStart);
     phaseEndDate.setDate(planStart.getDate() + (currentPhase * 15));
     const backlogStats = getTarget(backlogSyllabus, phaseEndDate);
@@ -3206,7 +3409,7 @@ window.renderStats = function() {
     const velMain = getVelocityStatus(execMain.completed, mainStats.dailyTarget);
     const velBacklog = getVelocityStatus(execBacklog.completed, backlogStats.dailyTarget);
 
-    // --- 5. SUBJECT ANALYTICS (Filtered) ---
+    // --- 5. SUBJECT ANALYTICS ---
     const getSubjectBreakdown = (syllabus) => {
         const stats = { Physics: {t:0, d:0}, Chemistry: {t:0, d:0}, Biology: {t:0, d:0} };
         const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
@@ -3232,9 +3435,8 @@ window.renderStats = function() {
     };
 
     const statsMain = getSubjectBreakdown(mainSyllabus);
-    const statsBacklog = getSubjectBreakdown(backlogSyllabus); // Strict Phase Filtering Applied Here
+    const statsBacklog = getSubjectBreakdown(backlogSyllabus);
 
-    // Helper for rendering Subject Bars
     const renderSmartSubject = (subj, data, allData) => {
         const pct = data.total > 0 ? Math.round((data.done / data.total) * 100) : 0;
         
@@ -3270,7 +3472,6 @@ window.renderStats = function() {
         `;
     };
 
-    // Find Weakest Subject
     let weakestSub = "None";
     let lowest = 101;
     [statsMain, statsBacklog].forEach(grp => Object.entries(grp).forEach(([k, v]) => {
@@ -3278,7 +3479,7 @@ window.renderStats = function() {
         if(p < lowest) { lowest = p; weakestSub = k; }
     }));
 
-    // --- 6. RENDER HTML ---
+    // --- 6. RENDER HTML (CORRECTED) ---
     container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
             
@@ -3289,8 +3490,13 @@ window.renderStats = function() {
                 
                 <div class="relative z-10">
                     <div class="flex justify-between items-start mb-6">
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-300">
-                            Main Target
+                        <div>
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                                ${state.nextExam.name}
+                            </div>
+                            <div class="text-sm font-bold text-white pl-0.5">
+                                ${state.nextExam.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            </div>
                         </div>
                         <div class="text-right">
                             <div class="text-2xl font-black leading-none">${mainStats.daysLeft}</div>
@@ -3420,6 +3626,7 @@ window.renderStats = function() {
 
     if(window.lucide) lucide.createIcons({ root: container });
 };
+
  function createTaskElementHTML(t, isSubTask = false) {
             // Updated Styles for "Pill" look
             let wrapperClass = "group flex items-center justify-between p-3 rounded-2xl transition-all duration-200 border relative overflow-hidden ";
@@ -4388,3 +4595,37 @@ window.renderPointsAnalytics = function() {
 
     if(window.lucide) lucide.createIcons({ root: container });
 };
+// --- NEW LAMP LOGIC ---
+window.toggleLamp = function() {
+    const modal = document.getElementById('auth-modal');
+    const chain = document.getElementById('pull-chain-trigger');
+    const bulb = document.getElementById('lamp-bulb');
+    
+    // 1. Animate Chain (Visual Feedback)
+    chain.classList.remove('pull-anim');
+    void chain.offsetWidth; // Trigger reflow to restart animation
+    chain.classList.add('pull-anim');
+
+    // 2. Play Sound
+    // Simple click sound
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(e => console.log("Audio play failed (interaction needed)"));
+
+    // 3. Toggle Light State (Delay slightly for physics feel)
+    setTimeout(() => {
+        modal.classList.toggle('lights-on');
+        
+        // Haptic feedback for mobile
+        if (navigator.vibrate) navigator.vibrate(15);
+    }, 200);
+};
+
+// Ensure modal starts hidden/dark correctly on load
+document.addEventListener('DOMContentLoaded', () => {
+    // If not logged in, show auth modal in dark mode
+    if (!currentUser) {
+        document.getElementById('auth-modal').classList.remove('hidden');
+        document.getElementById('auth-modal').classList.remove('lights-on');
+    }
+});

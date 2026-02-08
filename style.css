@@ -637,3 +637,187 @@ button {
         transition-duration: 0.01ms !important;
     }
 }
+/* ========================================
+   🌙 SPIRITUAL & RAMADAN THEME ADDITIONS
+   ======================================== */
+
+/* 1. Golden Text Gradient (for "Ramadan 2026" Title) */
+.text-gradient-gold {
+    background: linear-gradient(135deg, #FFF 0%, #fcd34d 40%, #fbbf24 60%, #FFF 100%);
+    background-size: 200% auto;
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: shine-gold 5s linear infinite;
+}
+
+@keyframes shine-gold {
+    to { background-position: 200% center; }
+}
+
+/* 2. "Noor" (Holy Light) Pulse Animation */
+.animate-pulse-slow {
+    animation: pulse-glow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 1; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+    50% { opacity: 0.8; box-shadow: 0 0 50px rgba(16, 185, 129, 0.6); }
+}
+
+/* 3. Emerald Glass Effect (For Timer Boxes) */
+.glass-emerald {
+    background: rgba(6, 78, 59, 0.4); /* Dark Emerald Tint */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* 4. Geometric Pattern Overlay (CSS Only backup for the image) */
+.bg-pattern-islamic {
+    background-color: transparent;
+    background-image: 
+        radial-gradient(circle at 50% 50%, transparent 0%, transparent 60%, rgba(16, 185, 129, 0.05) 61%),
+        linear-gradient(45deg, rgba(16, 185, 129, 0.03) 25%, transparent 25%, transparent 75%, rgba(16, 185, 129, 0.03) 75%),
+        linear-gradient(45deg, rgba(16, 185, 129, 0.03) 25%, transparent 25%, transparent 75%, rgba(16, 185, 129, 0.03) 75%);
+    background-size: 40px 40px;
+    background-position: 0 0, 0 0, 20px 20px;
+}
+
+/* 5. Majestic Float Animation (For Cards) */
+.float-majestic {
+    animation: float-majestic 8s ease-in-out infinite;
+}
+
+@keyframes float-majestic {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+/* 6. Shimmer Animation for Stats Bars */
+@keyframes shimmer {
+    100% { transform: translateX(100%); }
+}
+
+/* 7. Scrollbar hide fix for the calendar grid */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+/* ===========================
+   THE DARK ROOM & LAMP ANIMATION
+   =========================== */
+
+/* State: LIGHTS ON */
+#auth-modal.lights-on {
+    background-color: #f8fafc !important; /* Light Slate/White Background */
+}
+
+/* 1. Lamp Structure Changes when Lit */
+#auth-modal.lights-on .lamp-shade {
+    background: linear-gradient(to right, #fbbf24, #f59e0b); /* Amber/Gold Shade */
+    border-bottom-color: #b45309;
+}
+#auth-modal.lights-on .lamp-stand,
+#auth-modal.lights-on .lamp-base {
+    background: #d4d4d8; /* Silver/Metal stand when lit */
+}
+#auth-modal.lights-on #lamp-bulb {
+    background-color: #fff;
+    opacity: 1;
+    box-shadow: 0 0 50px 20px rgba(255, 255, 255, 0.8);
+}
+#auth-modal.lights-on #lamp-glow {
+    background-color: rgba(251, 191, 36, 0.3); /* The warm glow on the wall */
+    width: 600px;
+    height: 600px;
+    opacity: 1;
+}
+
+/* 2. Chain Physics Animation */
+.pull-anim {
+    animation: chainPull 0.4s ease-in-out;
+}
+
+@keyframes chainPull {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(20px); }
+    100% { transform: translateY(0); }
+}
+
+/* 3. Panel Reveal Animation */
+#auth-modal.lights-on #login-panel {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    pointer-events: auto;
+}
+
+/* 4. Text/Hint Changes */
+/* 4. Text/Hint Changes - Hides text when lamp is on */
+#auth-modal.lights-on #lamp-hint {
+    opacity: 0;
+    animation: none; /* Stops the pulse so it stays hidden */
+    pointer-events: none; /* Prevents clicking invisible text */
+    transform: translateY(10px); /* Slight drop effect as it fades */
+}
+
+/* 5. Login Card - Adapt to Light Mode */
+#auth-modal.lights-on #login-panel .backdrop-blur-2xl {
+    background-color: rgba(255, 255, 255, 0.8); /* White glass */
+    border-color: rgba(251, 191, 36, 0.3); /* Gold border */
+    box-shadow: 0 25px 50px -12px rgba(251, 191, 36, 0.25); /* Warm shadow */
+}
+
+#auth-modal.lights-on #login-panel h2 {
+    color: #1e293b; /* Dark text */
+}
+#auth-modal.lights-on #login-panel input {
+    background-color: #f1f5f9; /* Light grey input */
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+#auth-modal.lights-on #login-panel input:focus {
+    background-color: #fff;
+    border-color: #f59e0b;
+}
+#auth-modal.lights-on #login-panel .text-slate-400 {
+    color: #64748b;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    #lamp-glow { top: 80px; width: 200px; height: 200px; }
+    #login-panel { position: relative; margin-top: -40px; }
+}
+/* =========================================
+   MOBILE: SLIDE & ZOOM ANIMATION
+   ========================================= */
+@media (max-width: 768px) {
+    
+    /* 1. Push Lamp to the Left Side */
+    #auth-modal.lights-on #lamp-column {
+        transform: translateX(-70%); /* Moves lamp half off-screen */
+    }
+
+    /* 2. Pull Login Form Center & Make it Bigger */
+    #auth-modal.lights-on #login-panel {
+        /* - Translate X: Moves it left to fill the gap left by the lamp
+           - Scale 1.35: Counteracts the parent's scale-0.65 so the form is readable 
+        */
+        transform: translateX(-35%) scale(1.4) !important;
+        opacity: 1;
+        pointer-events: auto;
+   }
+    
+    /* 3. SENSITIVITY FIX: Massive Hit Area for Chain (Mobile Only) */
+    /* This ensures touches near the chain are registered */
+    #pull-chain-trigger {
+        width: 80px !important; 
+        background-color: transparent;
+        touch-action: manipulation;
+    }
+}
