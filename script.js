@@ -4595,24 +4595,57 @@ window.renderPointsAnalytics = function() {
 
     if(window.lucide) lucide.createIcons({ root: container });
 };
-// --- NEW LAMP LOGIC ---
+// --- PRELOAD SOUND (Place this outside the function) ---
+// This ensures the sound is ready the moment the user clicks
+const lampSound = new Audio('lamp.mp3');
+lampSound.volume = 0.6; // Adjust volume (0.0 to 1.0)
+// --- NEW LAMP LOGIC (With Built-in Sound Generator) ---
 window.toggleLamp = function() {
     const modal = document.getElementById('auth-modal');
     const chain = document.getElementById('pull-chain-trigger');
-    const bulb = document.getElementById('lamp-bulb');
     
     // 1. Animate Chain (Visual Feedback)
     chain.classList.remove('pull-anim');
     void chain.offsetWidth; // Trigger reflow to restart animation
     chain.classList.add('pull-anim');
 
-    // 2. Play Sound
-    // Simple click sound
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-    audio.volume = 0.5;
-    audio.play().catch(e => console.log("Audio play failed (interaction needed)"));
+    // 2. Play Generated Switch Sound (No external file needed)
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            const ctx = new AudioContext();
+            
+            // Oscillator 1: The "Click" (High snap)
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(1200, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
 
-    // 3. Toggle Light State (Delay slightly for physics feel)
+            // Oscillator 2: The "Thud" (Low mechanical sound)
+            const thud = ctx.createOscillator();
+            const thudGain = ctx.createGain();
+            thud.type = 'sine';
+            thud.frequency.setValueAtTime(200, ctx.currentTime);
+            thud.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
+            thudGain.gain.setValueAtTime(0.1, ctx.currentTime);
+            thudGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+            thud.connect(thudGain);
+            thudGain.connect(ctx.destination);
+            thud.start();
+            thud.stop(ctx.currentTime + 0.15);
+        }
+    } catch (e) {
+        console.warn("AudioContext not supported or blocked");
+    }
+
+    // 3. Toggle Light State
     setTimeout(() => {
         modal.classList.toggle('lights-on');
         

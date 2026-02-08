@@ -800,7 +800,7 @@ button {
     
     /* 1. Push Lamp to the Left Side */
     #auth-modal.lights-on #lamp-column {
-        transform: translateX(-70%); /* Moves lamp half off-screen */
+        transform: translateX(-50%); /* Moves lamp half off-screen */
     }
 
     /* 2. Pull Login Form Center & Make it Bigger */
@@ -808,16 +808,18 @@ button {
         /* - Translate X: Moves it left to fill the gap left by the lamp
            - Scale 1.35: Counteracts the parent's scale-0.65 so the form is readable 
         */
-        transform: translateX(-35%) scale(1.4) !important;
+        transform: translateX(-15%) scale(1.15) !important;
         opacity: 1;
         pointer-events: auto;
-   }
+    }
     
     /* 3. SENSITIVITY FIX: Massive Hit Area for Chain (Mobile Only) */
-    /* This ensures touches near the chain are registered */
+    /* This overrides the width/margin just in case, ensuring touch works */
     #pull-chain-trigger {
-        width: 80px !important; 
+        width: 90px !important; 
+        margin-left: -1.8rem !important; /* Center the 80px box (-40px) */
         background-color: transparent;
         touch-action: manipulation;
     }
 }
+
