@@ -196,16 +196,16 @@
             <div class="active-indicator hidden absolute right-2 w-1.5 h-1.5 rounded-full bg-brand-500 shadow-sm"></div>
         </button>
 
-        <button id="nav-target" onclick="switchView('target')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 hover:translate-x-1">
-            <i data-lucide="crosshair" class="w-5 h-5 transition-colors group-hover:text-blue-500"></i>
-            <span>Next Target</span>
-        </button>
+       <button id="nav-ongoing" onclick="switchView('ongoing')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 hover:translate-x-1">
+    <i data-lucide="loader-2" class="w-5 h-5 transition-colors group-hover:text-blue-500"></i>
+    <span>Ongoing Target</span>
+    <span class="ml-auto bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded-md">Now</span>
+</button>
 
-      <button id="nav-backlog" onclick="switchView('backlog')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 hover:translate-x-1">
-    <i data-lucide="history" class="w-5 h-5 transition-colors group-hover:text-orange-500"></i>
-    <span>Backlog Plan</span>
-    <span id="badge-backlog" class="ml-auto bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold px-2 py-0.5 rounded-md hidden">Ph 1</span>
-</button>  
+<button id="nav-upcoming" onclick="switchView('upcoming')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-orange-600 dark:hover:text-orange-400 transition-all duration-200 hover:translate-x-1">
+    <i data-lucide="calendar-clock" class="w-5 h-5 transition-colors group-hover:text-orange-500"></i>
+    <span>Upcoming Target</span>
+</button> 
      <button id="nav-mistakes" onclick="switchView('mistakes')" class="group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-200 hover:translate-x-1">
     <i data-lucide="book" class="w-5 h-5 transition-colors group-hover:text-rose-500"></i>
     <span>Mistake Notebook</span>
@@ -346,70 +346,29 @@
 </div>
  
 
-<div id="view-target" class="hidden flex-1 flex flex-col min-h-screen overflow-x-hidden bg-white dark:bg-slate-900 transition-colors min-h-0">
-        
-            <header class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-slate-50/50 dark:bg-slate-900/50">
-                <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 tracking-wide">Main Track</span>
-                    </div>
-                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white" id="syllabus-title">Syllabus</h2>
-                </div>
-                
-                <div class="flex-1 max-w-md w-full relative group">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
-                    </div>
-                    <input type="text" 
-                        onkeyup="handleSearch(this.value, 'main')" 
-                        placeholder="Search topics (e.g., 'Thermodynamics')..." 
-                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-white rounded-xl py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all shadow-sm"
-                    >
-                </div>
-
-                <div class="text-right hidden md:block">
-                    <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Exam Date</div>
-                    <div class="text-lg font-bold text-slate-900 dark:text-white" id="syllabus-date">...</div>
-                    <div class="text-xs font-bold text-brand-600 dark:text-brand-400 mt-1" id="syllabus-days-left">...</div>
-                </div>
-            </header>
-            <div id="main-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4">
-                </div>
+<div id="view-ongoing" class="hidden flex-1 flex flex-col min-h-screen overflow-x-hidden bg-slate-50 dark:bg-slate-950 transition-colors min-h-0">
+    <header class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-20">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="loader-2" class="w-6 h-6 text-blue-500"></i> Ongoing Targets
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" id="ongoing-date-display">Current Active Goals</p>
         </div>
+    </header>
+    <div id="ongoing-grid" class="flex-1 overflow-y-auto p-6 custom-scroll grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max"></div>
+</div>
 
-        <div id="view-backlog" class="hidden flex-1 flex flex-col min-h-screen overflow-x-hidden bg-white dark:bg-slate-900 transition-colors min-h-0">
-
-            <header class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-orange-50/30 dark:bg-orange-900/10">
-                <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 tracking-wide">Recovery Plan</span>
-                    </div>
- <h2 class="text-2xl font-bold text-slate-900 dark:text-white">60-Day Recovery</h2>
-                </div>
-
-                <div class="flex-1 max-w-md w-full relative group">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="search" class="w-4 h-4 text-slate-400 group-focus-within:text-orange-500 transition-colors"></i>
-                    </div>
-                    <input type="text" 
-                        onkeyup="handleSearch(this.value, 'backlog')" 
-                        placeholder="Search backlog..." 
-                        class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-white rounded-xl py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm"
-                    >
-                </div>
-
-              <div class="text-right hidden md:block">
-    <div class="text-sm font-medium text-slate-500 dark:text-slate-400">Current Phase Target</div>
-    <h3 id="backlog-deadline-display" class="text-lg font-bold text-slate-900 dark:text-white">Calculating...</h3>
-    
-    <div id="backlog-phase-label" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 mt-1">
-        Loading...
-    </div>
-</div> 
-            </header>
-            <div id="backlog-syllabus-container" class="flex-1 overflow-y-auto p-8 custom-scroll space-y-4">
-                </div>
+<div id="view-upcoming" class="hidden flex-1 flex flex-col min-h-screen overflow-x-hidden bg-slate-50 dark:bg-slate-950 transition-colors min-h-0">
+    <header class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-20">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="calendar-clock" class="w-6 h-6 text-orange-500"></i> Future Roadmap
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" id="upcoming-date-display">Planning Ahead</p>
         </div>
+    </header>
+    <div id="upcoming-grid" class="flex-1 overflow-y-auto p-6 custom-scroll grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max"></div>
+</div>
 
         <div id="view-mistakes" class="hidden flex-1 flex flex-col min-h-screen overflow-x-hidden bg-slate-50 dark:bg-slate-950 transition-colors relative min-h-0">
     

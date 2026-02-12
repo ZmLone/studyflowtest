@@ -306,24 +306,26 @@ body.loaded {
 /* ========================================
    ✅ FORCE GLOBAL SCROLLING
    ======================================== */
-#view-overview, #view-target, #view-backlog, #view-mistakes, #view-leaderboard, #view-namaz {
+/* ✅ FORCE GLOBAL SCROLLING: Updated for New Views */
+#view-overview, 
+#view-ongoing, 
+#view-upcoming, 
+#view-mistakes, 
+#view-leaderboard, 
+#view-namaz, 
+#view-points {
     overflow: visible !important;
     height: auto !important;
     display: none;
 }
 
-.custom-scroll {
-    overflow: visible !important;
-    height: auto !important;
-    padding-top: 0 !important;
-}
-
 #view-overview:not(.hidden), 
-#view-target:not(.hidden), 
-#view-backlog:not(.hidden), 
+#view-ongoing:not(.hidden), 
+#view-upcoming:not(.hidden), 
 #view-mistakes:not(.hidden), 
 #view-leaderboard:not(.hidden), 
-#view-namaz:not(.hidden) {
+#view-namaz:not(.hidden), 
+#view-points:not(.hidden) {
     display: flex !important;
     flex-direction: column;
 }
@@ -822,4 +824,3 @@ button {
         touch-action: manipulation;
     }
 }
-

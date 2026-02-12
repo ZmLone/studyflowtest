@@ -272,936 +272,715 @@ if (localStorage.theme === 'light') {
 
 
         // --- DATA ---
-const mainSchedule = [
-   // --- CURRENT ACTIVE TARGET: AIATS-4 (JAN 18) ---
-   {
-       name: "AIATS-4",
-       date: new Date('2026-01-18T00:00:00'),
-       syllabus: [
-           // --- PHYSICS ---
-           { 
-               subject: "Physics", 
-               topic: "Thermal Properties of Matter", 
-               dailyTests: [
-                   {name:"DT-38 (Phy-XI)", subs:["Temperature", "Ideal Gas Equation", "Thermal Expansion"]},
-                   {name:"DT-39 (Phy-XI)", subs:["Calorimetry", "Change of State"]},
-                   {name:"DT-40 (Phy-XI)", subs:["Heat Transfer: Conduction", "Heat Transfer: Convection"]},
-                   {name:"DT-41 (Phy-XI)", subs:["Heat Transfer: Radiation", "Stefan's Law", "Wien's Law"]}
-               ] 
-           },
-           { 
-               subject: "Physics", 
-               topic: "Thermodynamics", 
-               dailyTests: [
-                   {name:"DT-42 (Phy-XI)", subs:["First Law of Thermodynamics", "Internal Energy"]},
-                   {name:"DT-43 (Phy-XI)", subs:["Thermodynamic Processes"]},
-                   {name:"DT-44 (Phy-XI)", subs:["Heat Engines", "Carnot Engine", "Second Law of Thermodynamics"]}
-               ] 
-           },
-           { 
-               subject: "Physics", 
-               topic: "Kinetic Theory", 
-               dailyTests: [
-                   {name:"DT-45 (Phy-XI)", subs:["Kinetic Theory Postulates", "Law of Equipartition of Energy", "Mean Free Path"]}
-               ] 
-           },
-           { 
-               subject: "Physics", 
-               topic: "Oscillations", 
-               dailyTests: [
-                   {name:"DT-46 (Phy-XI)", subs:["SHM Equation", "Uniform Circular Motion"]},
-                   {name:"DT-47 (Phy-XI)", subs:["Energy in SHM", "Force Law"]},
-                   {name:"DT-48 (Phy-XI)", subs:["Simple Pendulum", "Spring Systems"]}
-               ] 
-           },
-           { 
-               subject: "Physics", 
-               topic: "Waves", 
-               dailyTests: [
-                   {name:"DT-49 (Phy-XI)", subs:["Transverse Waves", "Longitudinal Waves"]},
-                   {name:"DT-50 (Phy-XI)", subs:["Speed of Travelling Wave"]},
-                   {name:"DT-51 (Phy-XI)", subs:["Superposition Principle", "Reflection of Waves", "Beats"]}
-               ] 
-           },
+const syllabusDatabase = {
+    // === CARD: AIATS 7 ===
+    "aiats7": {
+        title: "AIATS 7 Syllabus (Feb 12 - Feb 22)",
+        subjects: [
+            {
+                name: "Physics",
+                chapters: [
+                    {
+                        title: "Ray Optics",
+                        tests: [
+                            { id: "DT-27 (Phy-XII)", topics: "Reflection of light, Spherical mirrors, Refraction" },
+                            { id: "DT-28 (Phy-XII)", topics: "Total internal reflection, Refraction at spherical surface, Lenses" },
+                            { id: "DT-29 (Phy-XII)", topics: "Refraction through prism, Dispersion, Optical Instruments (Eye)" },
+                            { id: "DT-30 (Phy-XII)", topics: "Telescope, Microscope" }
+                        ]
+                    },
+                    {
+                        title: "Wave Optics",
+                        tests: [
+                            { id: "DT-31 (Phy-XII)", topics: "Huygens Principle, Interference, Young's experiment" },
+                            { id: "DT-32 (Phy-XII)", topics: "Diffraction, Polarization" }
+                        ]
+                    },
+                    {
+                        title: "Dual Nature of Radiation",
+                        tests: [
+                            { id: "DT-33 (Phy-XII)", topics: "Photoelectric effect, Einstein's equation, Photons" },
+                            { id: "DT-34 (Phy-XII)", topics: "Wave nature of matter, Davisson Germer Experiment" }
+                        ]
+                    },
+                    {
+                        title: "Atoms & Nuclei",
+                        tests: [
+                            { id: "DT-35 (Phy-XII)", topics: "Rutherford model, Bohr model, Line spectra" },
+                            { id: "DT-36 (Phy-XII)", topics: "Binding energy, Nuclear force, Radioactivity" }
+                        ]
+                    },
+                    {
+                        title: "Semiconductors",
+                        tests: [
+                            { id: "DT-37 (Phy-XII)", topics: "Intrinsic/Extrinsic semiconductors, P-N Junction diode" },
+                            { id: "DT-38 (Phy-XII)", topics: "Junction diode as rectifier, Special purpose diodes" }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "Chemistry",
+                chapters: [
+                    {
+                        title: "p-Block Elements (Group 15-18)",
+                        tests: [
+                            { id: "DT-10 (Chem-XII)", topics: "Group 15: N2, NH3, Oxides of Nitrogen, HNO3" },
+                            { id: "DT-11 (Chem-XII)", topics: "Ozone, Sulphur forms, Group 16 compounds" },
+                            { id: "DT-12 (Chem-XII)", topics: "Group 17 (Halogens), Group 18 (Inert Gases)" }
+                        ]
+                    },
+                    {
+                        title: "Biomolecules",
+                        tests: [
+                            { id: "DT-27 (Chem-XII)", topics: "Carbohydrates, Amino acids" }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "Botany",
+                chapters: [
+                    {
+                        title: "Organisms and Populations",
+                        tests: [
+                            { id: "DT-17 (Bot-XII)", topics: "Biomes, Abiotic factors, Adaptations" },
+                            { id: "DT-18 (Bot-XII)", topics: "Population characteristics, Growth models, Interactions" }
+                        ]
+                    },
+                    {
+                        title: "Ecosystem",
+                        tests: [
+                            { id: "DT-19 (Bot-XII)", topics: "Structure, Productivity, Decomposition" },
+                            { id: "DT-20 (Bot-XII)", topics: "Energy flow, Ecological pyramids" }
+                        ]
+                    },
+                    {
+                        title: "Biodiversity",
+                        tests: [
+                            { id: "DT-21 (Bot-XII)", topics: "Levels, Patterns, Importance of biodiversity" },
+                            { id: "DT-22 (Bot-XII)", topics: "Loss of biodiversity and conservation" }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "Zoology",
+                chapters: [
+                    {
+                        title: "Biotechnology: Principles",
+                        tests: [
+                            { id: "DT-21 (Zoo-XII)", topics: "Tools of recombinant DNA technology" },
+                            { id: "DT-22 (Zoo-XII)", topics: "Cloning vectors, Processes of recombinant DNA" }
+                        ]
+                    },
+                    {
+                        title: "Biotechnology: Applications",
+                        tests: [
+                            { id: "DT-23 (Zoo-XII)", topics: "Agriculture: Bt Cotton, Pest resistant plants" },
+                            { id: "DT-24 (Zoo-XII)", topics: "Medicine: Insulin, Gene Therapy, Diagnosis" },
+                            { id: "DT-25 (Zoo-XII)", topics: "Transgenic Animals, Ethical Issues" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
 
-           // --- CHEMISTRY ---
-           { 
-               subject: "Chemistry", 
-               topic: "Solutions", 
-               dailyTests: [
-                   {name:"DT-1 (Chem-XII)", subs:["Henry's Law", "Raoult's Law"]},
-                   {name:"DT-2 (Chem-XII)", subs:["Colligative Properties", "Van't Hoff Factor"]}
-               ] 
-           },
-           { 
-               subject: "Chemistry", 
-               topic: "Chemical Kinetics", 
-               dailyTests: [
-                   {name:"DT-7 (Chem-XII)", subs:["Rate Laws", "Order of Reaction", "Integrated Rate Equation"]},
-                   {name:"DT-8 (Chem-XII)", subs:["Pseudo 1st Order Reaction", "Arrhenius Equation"]},
-                   {name:"DT-9 (Chem-XII)", subs:["Effect of Catalyst", "Collision Theory"]}
-               ] 
-           },
-           { 
-               subject: "Chemistry", 
-               topic: "GOC: Organic Basics", 
-               dailyTests: [
-                   {name:"DT-23 (Chem-XI)", subs:["IUPAC Nomenclature"]},
-                   {name:"DT-24 (Chem-XI)", subs:["Isomerism", "Nucleophiles & Electrophiles"]},
-                   {name:"DT-25 (Chem-XI)", subs:["Inductive Effect", "Resonance", "Hyperconjugation"]},
-                   {name:"DT-26 (Chem-XI)", subs:["Carbocation", "Carbanion", "Free Radicals"]},
-                   {name:"DT-27 (Chem-XI)", subs:["Purification Methods", "Qualitative Analysis", "Quantitative Analysis"]}
-               ] 
-           },
+    // === CARD: ORGANIC CHEMISTRY ===
+    "org_chem": {
+        title: "Organic Chemistry Target (Feb 12 - Mar 08)",
+        subjects: [
+            {
+                name: "Chemistry (Class XII)",
+                chapters: [
+                    {
+                        title: "Haloalkanes and Haloarenes",
+                        tests: [
+                            { id: "DT-17 (Chem-XII)", topics: "Nomenclature, Nature of C-X bond, Preparation, Optical activity" },
+                            { id: "DT-18 (Chem-XII)", topics: "Elimination reactions, Reaction with Na" },
+                            { id: "DT-19 (Chem-XII)", topics: "Aromatic nucleophilic substitution, Polyhalogen compounds" }
+                        ]
+                    },
+                    {
+                        title: "Alcohols, Phenols and Ethers",
+                        tests: [
+                            { id: "DT-20 (Chem-XII)", topics: "Nomenclature, Preparation of alcohols" },
+                            { id: "DT-21 (Chem-XII)", topics: "Preparation of aromatic alcohols, Reactions of phenols" },
+                            { id: "DT-22 (Chem-XII)", topics: "Preparation & properties of Ethers" }
+                        ]
+                    },
+                    {
+                        title: "Aldehydes, Ketones & Carboxylic Acids",
+                        tests: [
+                            { id: "DT-23 (Chem-XII)", topics: "Nomenclature, Carbonyl group, Nucleophilic addition" },
+                            { id: "DT-24 (Chem-XII)", topics: "Halogenation, Carboxylic acids preparation & properties" }
+                        ]
+                    },
+                    {
+                        title: "Amines",
+                        tests: [
+                            { id: "DT-25 (Chem-XII)", topics: "Structure, Nomenclature, Preparation" },
+                            { id: "DT-26 (Chem-XII)", topics: "Chemical reactions, Diazonium salts" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
 
-           // --- BOTANY ---
-           { 
-               subject: "Botany", 
-               topic: "Photosynthesis in Higher Plants", 
-               dailyTests: [
-                   {name:"DT-26 (Bot-XI)", subs:["Light Reaction", "Electron Transport System (ETS)"]},
-                   {name:"DT-27 (Bot-XI)", subs:["C3 Cycle", "C4 Cycle", "Photorespiration"]}
-               ] 
-           },
-           { 
-               subject: "Botany", 
-               topic: "Respiration in Plants", 
-               dailyTests: [
-                   {name:"DT-28 (Bot-XI)", subs:["Glycolysis", "Fermentation", "Krebs Cycle"]},
-                   {name:"DT-29 (Bot-XI)", subs:["ETS", "Oxidative Phosphorylation", "Respiratory Quotient"]}
-               ] 
-           },
-           { 
-               subject: "Botany", 
-               topic: "Plant Growth & Development", 
-               dailyTests: [
-                   {name:"DT-30 (Bot-XI)", subs:["Growth Phases", "Growth Rates", "Differentiation"]},
-                   {name:"DT-31 (Bot-XI)", subs:["Auxins", "Gibberellins", "Cytokinins"]},
-                   {name:"DT-32 (Bot-XI)", subs:["Ethylene", "Abscisic Acid (ABA)", "Seed Germination"]}
-               ] 
-           },
+    
+    
+    
+    // === CARD: CLASS 11 BIOLOGY ===
+    "bio_11": {
+        title: "Class 11 Biology Target (Feb 12 - Mar 15)",
+        subjects: [
+            {
+                name: "Botany (Class XI)",
+                chapters: [
+                    {
+                        title: "Cell: The Unit of Life",
+                        tests: [
+                            { id: "DT-1 (Bot-XI)", topics: "Cell theory, Prokaryotic vs Eukaryotic cells" },
+                            { id: "DT-2 (Bot-XI)", topics: "Plasma membrane, Cell wall, Endomembrane system" },
+                            { id: "DT-3 (Bot-XI)", topics: "Mitochondria, Plastid, Ribosome, Cytoskeleton" },
+                            { id: "DT-4 (Bot-XI)", topics: "Centrosome, Cilia, Nucleus, Chromosomes" }
+                        ]
+                    },
+                    {
+                        title: "Cell Cycle & Cell Division",
+                        tests: [
+                            { id: "DT-5 (Bot-XI)", topics: "Cell cycle phases, Mitosis, Cytokinesis" },
+                            { id: "DT-6 (Bot-XI)", topics: "Meiosis I & II, Significance" }
+                        ]
+                    },
+                    {
+                        title: "The Living World",
+                        tests: [
+                            { id: "DT-7 (Bot-XI)", topics: "Characteristics of life, Taxonomy, Systematics" },
+                            { id: "DT-8 (Bot-XI)", topics: "Taxonomic categories" }
+                        ]
+                    },
+                    {
+                        title: "Biological Classification",
+                        tests: [
+                            { id: "DT-9 (Bot-XI)", topics: "Monera, Bacteria structure & life process" },
+                            { id: "DT-10 (Bot-XI)", topics: "Reproduction in bacteria, Mycoplasma" },
+                            { id: "DT-11 (Bot-XI)", topics: "Protista (Chrysophytes, Euglenoids, Protozoans)" },
+                            { id: "DT-12 (Bot-XI)", topics: "Fungi classes (Phyco, Asco, Basidio, Deutero)" },
+                            { id: "DT-13 (Bot-XI)", topics: "Virus, Viroids, Lichens" }
+                        ]
+                    },
+                    {
+                        title: "Morphology of Flowering Plants",
+                        tests: [
+                            { id: "DT-14 (Bot-XI)", topics: "Root types, Stem modifications" },
+                            { id: "DT-15 (Bot-XI)", topics: "Leaf, Inflorescence, Flower symmetry" },
+                            { id: "DT-16 (Bot-XI)", topics: "Floral parts, Aestivation, Placentation, Fruits" },
+                            { id: "DT-17 (Bot-XI)", topics: "Seed structure, Families (Solanaceae, Fabaceae etc.)" }
+                        ]
+                    },
+                    {
+                        title: "Anatomy of Flowering Plants",
+                        tests: [
+                            { id: "DT-18 (Bot-XI)", topics: "Tissues (Parenchyma, Collenchyma), Xylem" },
+                            { id: "DT-19 (Bot-XI)", topics: "Phloem, Tissue systems, Vascular bundles" },
+                            { id: "DT-20 (Bot-XI)", topics: "Internal structure of Dicot/Monocot root, stem, leaf" },
+                            { id: "DT-21 (Bot-XI)", topics: "Secondary Growth (Complete Chapter)" }
+                        ]
+                    },
+                    {
+                        title: "Plant Kingdom",
+                        tests: [
+                            { id: "DT-22 (Bot-XI)", topics: "Classification systems, Algae characters" },
+                            { id: "DT-23 (Bot-XI)", topics: "Algae classes (Chloro, Phaeo, Rhodo)" },
+                            { id: "DT-24 (Bot-XI)", topics: "Bryophytes & Pteridophytes" },
+                            { id: "DT-25 (Bot-XI)", topics: "Gymnosperms" }
+                        ]
+                    },
+                    {
+                        title: "Plant Physiology",
+                        tests: [
+                            { id: "DT-26 (Bot-XI)", topics: "Photosynthesis: Pigments, Light reaction" },
+                            { id: "DT-27 (Bot-XI)", topics: "Photosynthesis: Dark reaction (C3, C4), Photorespiration" },
+                            { id: "DT-28 (Bot-XI)", topics: "Respiration: Glycolysis, Krebs cycle" },
+                            { id: "DT-29 (Bot-XI)", topics: "Respiration: ETS, Amphibolic pathway" },
+                            { id: "DT-30 (Bot-XI)", topics: "Growth phases, Differentiation" },
+                            { id: "DT-31 (Bot-XI)", topics: "Hormones: Auxins, Gibberellins, Cytokinins" },
+                            { id: "DT-32 (Bot-XI)", topics: "Hormones: Ethylene, ABA, Photoperiodism" }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "Zoology (Class XI)",
+                chapters: [
+                    {
+                        title: "Structural Organisation (Tissues)",
+                        tests: [
+                            { id: "DT-1 (Zoo-XI)", topics: "Epithelial Tissue: Simple & Compound" },
+                            { id: "DT-2 (Zoo-XI)", topics: "Connective Tissue: Bone, Cartilage, Blood" },
+                            { id: "DT-3 (Zoo-XI)", topics: "Muscular & Nervous Tissue: Neuron structure" }
+                        ]
+                    },
+                    {
+                        title: "Biomolecules",
+                        tests: [
+                            { id: "DT-4 (Zoo-XI)", topics: "Carbohydrates: Monosaccharides, Polysaccharides" },
+                            { id: "DT-5 (Zoo-XI)", topics: "Proteins (Structure), Lipids, Nucleic Acids" },
+                            { id: "DT-6 (Zoo-XI)", topics: "Enzymes: Mechanism, Factors affecting activity" }
+                        ]
+                    },
+                    {
+                        title: "Breathing & Exchange of Gases",
+                        tests: [
+                            { id: "DT-7 (Zoo-XI)", topics: "Respiratory organs, Human Respiratory System" },
+                            { id: "DT-8 (Zoo-XI)", topics: "Mechanism of Breathing, Respiratory Volumes" },
+                            { id: "DT-9 (Zoo-XI)", topics: "Exchange & Transport of Gases, Disorders" }
+                        ]
+                    },
+                    {
+                        title: "Body Fluids & Circulation",
+                        tests: [
+                            { id: "DT-10 (Zoo-XI)", topics: "Blood composition, Coagulation, Lymph" },
+                            { id: "DT-11 (Zoo-XI)", topics: "Human Heart Structure, Circulatory pathways" },
+                            { id: "DT-12 (Zoo-XI)", topics: "Cardiac Cycle, ECG, Heart sounds" },
+                            { id: "DT-13 (Zoo-XI)", topics: "Double circulation, Regulation, Disorders" }
+                        ]
+                    },
+                    {
+                        title: "Excretory Products & Elimination",
+                        tests: [
+                            { id: "DT-14 (Zoo-XI)", topics: "Modes of Excretion, Human Excretory System" },
+                            { id: "DT-15 (Zoo-XI)", topics: "Nephron Structure (Cortical vs Juxtamedullary)" },
+                            { id: "DT-16 (Zoo-XI)", topics: "Urine Formation, Counter current mechanism" },
+                            { id: "DT-17 (Zoo-XI)", topics: "Regulation of Kidney Function (RAAS, ADH)" },
+                            { id: "DT-18 (Zoo-XI)", topics: "Micturition, Urine composition, Dialysis" }
+                        ]
+                    },
+                    {
+                        title: "Locomotion & Movement",
+                        tests: [
+                            { id: "DT-19 (Zoo-XI)", topics: "Types of Movement, Muscle Contraction Mechanism" },
+                            { id: "DT-20 (Zoo-XI)", topics: "Axial Skeleton: Skull, Vertebral column, Ribs" },
+                            { id: "DT-21 (Zoo-XI)", topics: "Appendicular Skeleton, Joints, Disorders" }
+                        ]
+                    },
+                    {
+                        title: "Neural Control & Coordination",
+                        tests: [
+                            { id: "DT-22 (Zoo-XI)", topics: "Neuron types, Nerve Impulse Transmission" },
+                            { id: "DT-23 (Zoo-XI)", topics: "Central Neural System: Brain Structure" },
+                            { id: "DT-24 (Zoo-XI)", topics: "Spinal Cord, PNS, ANS (Sympathetic/Parasympathetic)" }
+                        ]
+                    },
+                    {
+                        title: "Chemical Coordination & Integration",
+                        tests: [
+                            { id: "DT-25 (Zoo-XI)", topics: "Hypothalamus, Pituitary Gland & Hormones" },
+                            { id: "DT-26 (Zoo-XI)", topics: "Thyroid, Parathyroid, Adrenal Glands" },
+                            { id: "DT-27 (Zoo-XI)", topics: "Pancreas, Pineal, Thymus" },
+                            { id: "DT-28 (Zoo-XI)", topics: "Gonads, Hormone Mechanism (Steroid vs Protein)" }
+                        ]
+                    },
+                    {
+                        title: "Animal Kingdom (Non-Chordates)",
+                        tests: [
+                            { id: "DT-29 (Zoo-XI)", topics: "Basis of Classification (Symmetry, Coelom)" },
+                            { id: "DT-30 (Zoo-XI)", topics: "Porifera: Canal system, Spicules" },
+                            { id: "DT-31 (Zoo-XI)", topics: "Cnidaria: Metagenesis, Corals" },
+                            { id: "DT-32 (Zoo-XI)", topics: "Ctenophora & Platyhelminthes" },
+                            { id: "DT-33 (Zoo-XI)", topics: "Aschelminthes & Annelida" },
+                            { id: "DT-34 (Zoo-XI)", topics: "Arthropoda & Mollusca" },
+                            { id: "DT-35 (Zoo-XI)", topics: "Echinodermata & Hemichordata" }
+                        ]
+                    },
+                    {
+                        title: "Animal Kingdom (Chordates)",
+                        tests: [
+                            { id: "DT-36 (Zoo-XI)", topics: "Chordata features, Cyclostomata, Pisces" },
+                            { id: "DT-37 (Zoo-XI)", topics: "Amphibia: General characters" },
+                            { id: "DT-38 (Zoo-XI)", topics: "Reptilia: General characters, Snakes" },
+                            { id: "DT-39 (Zoo-XI)", topics: "Aves: General characters" },
+                            { id: "DT-40 (Zoo-XI)", topics: "Mammalia: General characters" }
+                        ]
+                    },
+                    {
+                        title: "Structural Organisation (Morphology)",
+                        tests: [
+                            { id: "DT-41 (Zoo-XI)", topics: "Cockroach: Morphology (Head, Thorax, Abdomen)" },
+                            { id: "DT-42 (Zoo-XI)", topics: "Cockroach: Digestive, Resp, Circ Systems" },
+                            { id: "DT-43 (Zoo-XI)", topics: "Cockroach: Excretory, Nervous, Repro Systems" },
+                            { id: "DT-44 (Zoo-XI)", topics: "Frog: Morphology & Anatomy (Complete)" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    
+    // === CARD: AIATS 6 ===
+    "aiats6": {
+        title: "AIATS 6 Syllabus (Feb 23 - Mar 08)",
+        subjects: [
+            {
+                name: "Physics",
+                chapters: [
+                    {
+                        title: "Moving Charges and Magnetism",
+                        tests: [
+                            { id: "DT-16 (Phy-XII)", topics: "Motion in magnetic field, Velocity selector" },
+                            { id: "DT-17 (Phy-XII)", topics: "Biot-savart's law, Cyclotron, Current element" },
+                            { id: "DT-18 (Phy-XII)", topics: "Ampere's Circuital Law, Solenoid, Toroid" },
+                            { id: "DT-19 (Phy-XII)", topics: "Torque on current loop, Moving coil Galvanometer" }
+                        ]
+                    },
+                    {
+                        title: "Magnetism and Matter",
+                        tests: [
+                            { id: "DT-20 (Phy-XII)", topics: "Bar magnet, Magnetism and Gauss's Law" },
+                            { id: "DT-21 (Phy-XII)", topics: "Earth's magnetism, Magnetic properties of materials" }
+                        ]
+                    },
+                    {
+                        title: "Electromagnetic Induction",
+                        tests: [
+                            { id: "DT-22 (Phy-XII)", topics: "Faraday's laws, Lenz's law, Motional EMF" },
+                            { id: "DT-23 (Phy-XII)", topics: "Eddy currents, Self & Mutual Inductance" }
+                        ]
+                    },
+                    {
+                        title: "Alternating Current",
+                        tests: [
+                            { id: "DT-24 (Phy-XII)", topics: "AC voltage applied to Resistor/Inductor/Capacitor" },
+                            { id: "DT-25 (Phy-XII)", topics: "LCR circuit, Power in AC, Transformers" }
+                        ]
+                    },
+                    {
+                        title: "Electromagnetic Waves",
+                        tests: [
+                            { id: "DT-26 (Phy-XII)", topics: "Displacement current, EM Spectrum" }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "Chemistry",
+                chapters: [
+                    {
+                        title: "d and f-Block Elements",
+                        tests: [
+                            { id: "DT-13 (Chem-XII)", topics: "General properties, KMnO4 and K2Cr2O7" },
+                            { id: "DT-14 (Chem-XII)", topics: "Lanthanoids, Actinoids, Applications" }
+                        ]
+                    },
+                    {
+                        title: "Coordination Compounds",
+                        tests: [
+                            { id: "DT-15 (Chem-XII)", topics: "Werner's theory, Nomenclature, Isomerism" },
+                            { id: "DT-16 (Chem-XII)", topics: "VBT, CFT, Bonding in metal carbonyls" }
+                        ]
+                    },
+                    {
+                        title: "Amines",
+                        tests: [
+                            { id: "DT-25 (Chem-XII)", topics: "Structure, Nomenclature, Preparation" },
+                            { id: "DT-26 (Chem-XII)", topics: "Chemical reactions, Diazonium salts" }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "Botany",
+                chapters: [
+                    {
+                        title: "Molecular Basis of Inheritance",
+                        tests: [
+                            { id: "DT-10 (Bot-XII)", topics: "DNA Structure, Packaging" },
+                            { id: "DT-11 (Bot-XII)", topics: "Search for genetic material, RNA World, Replication" },
+                            { id: "DT-12 (Bot-XII)", topics: "Transcription (Prokaryotes & Eukaryotes)" },
+                            { id: "DT-13 (Bot-XII)", topics: "Genetic Code, t-RNA, Translation" },
+                            { id: "DT-14 (Bot-XII)", topics: "Gene Regulation (Operon), HGP, DNA Fingerprinting" }
+                        ]
+                    },
+                    {
+                        title: "Microbes in Human Welfare",
+                        tests: [
+                            { id: "DT-15 (Bot-XII)", topics: "Microbes in household & industrial products" },
+                            { id: "DT-16 (Bot-XII)", topics: "Sewage treatment, Biogas, Biofertilizers" }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "Zoology",
+                chapters: [
+                    {
+                        title: "Evolution",
+                        tests: [
+                            { id: "DT-10 (Zoo-XII)", topics: "Origin of Life, Theories (Miller's Experiment)" },
+                            { id: "DT-11 (Zoo-XII)", topics: "Evidences: Morphological, Embryological" },
+                            { id: "DT-12 (Zoo-XII)", topics: "Hardy Weinberg Principle, Adaptive Radiation" },
+                            { id: "DT-13 (Zoo-XII)", topics: "Speciation, Geological time scale" },
+                            { id: "DT-14 (Zoo-XII)", topics: "Human Evolution" }
+                        ]
+                    },
+                    {
+                        title: "Human Health & Disease",
+                        tests: [
+                            { id: "DT-15 (Zoo-XII)", topics: "Common Diseases: Bacterial, Viral, Fungal" },
+                            { id: "DT-16 (Zoo-XII)", topics: "Malaria Life Cycle, Immunity types" },
+                            { id: "DT-17 (Zoo-XII)", topics: "Vaccination, Allergies, Lymphoid Organs" },
+                            { id: "DT-18 (Zoo-XII)", topics: "AIDS: Cause, Symptoms, Prevention" },
+                            { id: "DT-19 (Zoo-XII)", topics: "Cancer: Detection & Treatment" },
+                            { id: "DT-20 (Zoo-XII)", topics: "Drugs & Alcohol Abuse" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+"phy_electro": {
+        title: "Physics: Electrostatics & Current (Mar 09 - Mar 15)",
+        subjects: [
+            {
+                name: "Physics (Class XII)",
+                chapters: [
+                    {
+                        title: "Electric Charges and Fields",
+                        tests: [
+                            { id: "DT-1 (Phy-XII)", topics: "Electric charges, Conductors, Insulators, Properties of charge" },
+                            { id: "DT-2 (Phy-XII)", topics: "Coulomb's law, Force between multiple charges" },
+                            { id: "DT-3 (Phy-XII)", topics: "Electric Field, Field due to system of charges" },
+                            { id: "DT-4 (Phy-XII)", topics: "Electric field lines, Electric Dipole, Dipole in uniform field" },
+                            { id: "DT-5 (Phy-XII)", topics: "Electric flux, Gauss's Law & its Applications" }
+                        ]
+                    },
+                    {
+                        title: "Electrostatic Potential and Capacitance",
+                        tests: [
+                            { id: "DT-6 (Phy-XII)", topics: "Electrostatic potential, Potential due to point charge" },
+                            { id: "DT-7 (Phy-XII)", topics: "Equipotential surfaces, Potential energy of system of charges" },
+                            { id: "DT-8 (Phy-XII)", topics: "Electrostatics of conductors, Dielectrics and polarization" },
+                            { id: "DT-9 (Phy-XII)", topics: "Capacitors and capacitance, Parallel plate capacitor" },
+                            { id: "DT-10 (Phy-XII)", topics: "Combination of capacitors, Energy stored, Van de Graff Generator" }
+                        ]
+                    },
+                    {
+                        title: "Current Electricity",
+                        tests: [
+                            { id: "DT-11 (Phy-XII)", topics: "Electric current, Ohm's law, Drift velocity, Resistivity" },
+                            { id: "DT-12 (Phy-XII)", topics: "Combination of resistors (Series and Parallel)" },
+                            { id: "DT-13 (Phy-XII)", topics: "Cells, EMF, Internal resistance, Cells in series/parallel" },
+                            { id: "DT-14 (Phy-XII)", topics: "Kirchhoff's laws and applications" },
+                            { id: "DT-15 (Phy-XII)", topics: "Wheatstone bridge, Meter Bridge" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    // === CARD: REMAINING CHEMISTRY (Mar 09 - Mar 15) ===
+    "rem_chem": {
+        title: "Remaining Chemistry (Mar 09 - Mar 15)",
+        subjects: [
+            {
+                name: "Chemistry (Class XI)",
+                chapters: [
+                    {
+                        title: "Some Basic Concepts of Chemistry",
+                        tests: [
+                            { id: "DT-1 (Chem-XI)", topics: "Laws of chemical combination, Dalton's theory, Mole concept basics" },
+                            { id: "DT-2 (Chem-XI)", topics: "Mole concept detailed" },
+                            { id: "DT-3 (Chem-XI)", topics: "Stoichiometry, Empirical formula" },
+                            { id: "DT-4 (Chem-XI)", topics: "Limiting reagents, Concentration terms (Molarity, Molality)" }
+                        ]
+                    },
+                    {
+                        title: "Structure of Atom",
+                        tests: [
+                            { id: "DT-5 (Chem-XI)", topics: "Bohr's model, Photoelectric effect, Dual nature" },
+                            { id: "DT-6 (Chem-XI)", topics: "Quantum numbers, Orbitals, Aufbau principle" },
+                            { id: "DT-7 (Chem-XI)", topics: "Electronic configuration, Pauli's & Hund's rules" }
+                        ]
+                    },
+                    {
+                        title: "Classification of Elements",
+                        tests: [
+                            { id: "DT-8 (Chem-XI)", topics: "Periodic table history, s, p, d, f blocks" },
+                            { id: "DT-9 (Chem-XI)", topics: "Periodic trends: Radius, Ionization Enthalpy, Electronegativity" }
+                        ]
+                    },
+                    {
+                        title: "Chemical Bonding",
+                        tests: [
+                            { id: "DT-10 (Chem-XI)", topics: "VSEPR Theory, Hybridization, Dipole moment" },
+                            { id: "DT-11 (Chem-XI)", topics: "Valence Bond Theory, Resonance" },
+                            { id: "DT-12 (Chem-XI)", topics: "Hybridization types, Sigma & Pi bonds" },
+                            { id: "DT-13 (Chem-XI)", topics: "Molecular Orbital Theory (MOT), Hydrogen bonding" }
+                        ]
+                    },
+                    {
+                        title: "Thermodynamics",
+                        tests: [
+                            { id: "DT-14 (Chem-XI)", topics: "First Law, Internal Energy, Work & Heat" },
+                            { id: "DT-15 (Chem-XI)", topics: "Hess's Law, Enthalpy of reactions" },
+                            { id: "DT-16 (Chem-XI)", topics: "Entropy, Second Law, Gibbs Free Energy" }
+                        ]
+                    },
+                    {
+                        title: "Equilibrium",
+                        tests: [
+                            { id: "DT-17 (Chem-XI)", topics: "Chemical Equilibrium, Le Chatelier's Principle" },
+                            { id: "DT-18 (Chem-XI)", topics: "Ionic Equilibrium, pH, Acids & Bases" },
+                            { id: "DT-19 (Chem-XI)", topics: "Buffer Solutions, Solubility Product" }
+                        ]
+                    },
+                    {
+                        title: "Redox Reactions",
+                        tests: [
+                            { id: "DT-20 (Chem-XI)", topics: "Oxidation Numbers, Balancing Redox Reactions" },
+                            { id: "DT-21 (Chem-XI)", topics: "Electrochemical cells, Titrations" }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "Chemistry (Class XII)",
+                chapters: [
+                    {
+                        title: "Solutions",
+                        tests: [
+                            { id: "DT-1 (Chem-XII)", topics: "Concentration terms, Henry's Law, Raoult's Law" },
+                            { id: "DT-2 (Chem-XII)", topics: "Colligative Properties, van't Hoff Factor" }
+                        ]
+                    },
+                    {
+                        title: "Electrochemistry",
+                        tests: [
+                            { id: "DT-3 (Chem-XII)", topics: "Nernst Equation, Electrochemical Cells" },
+                            { id: "DT-4 (Chem-XII)", topics: "Gibbs Energy, Equilibrium Constant" },
+                            { id: "DT-5 (Chem-XII)", topics: "Conductance, Kohlrausch Law" },
+                            { id: "DT-6 (Chem-XII)", topics: "Electrolysis, Batteries, Corrosion" }
+                        ]
+                    },
+                    {
+                        title: "Chemical Kinetics",
+                        tests: [
+                            { id: "DT-7 (Chem-XII)", topics: "Rate Law, Order, Half-life (Zero & First Order)" },
+                            { id: "DT-8 (Chem-XII)", topics: "Arrhenius Equation, Activation Energy" },
+                            { id: "DT-9 (Chem-XII)", topics: "Collision Theory" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    // === CARD: CLASS 11 PHYSICS (Selected Chapters) ===
+    "phy_11_sel": {
+        title: "Class 11 Physics (Selected) (Mar 16 - Mar 27)",
+        subjects: [
+            {
+                name: "Physics (Class XI)",
+                chapters: [
+                    {
+                        title: "Units & Measurements",
+                        tests: [
+                            { id: "DT-1 (Phy-XI)", topics: "Units, Errors in measurement" },
+                            { id: "DT-2 (Phy-XI)", topics: "Significant figures" },
+                            { id: "DT-3 (Phy-XI)", topics: "Dimensional analysis and applications" }
+                        ]
+                    },
+                    {
+                        title: "Motion in a Straight Line",
+                        tests: [
+                            { id: "DT-4 (Phy-XI)", topics: "Path length, Displacement, Average velocity" },
+                            { id: "DT-5 (Phy-XI)", topics: "Instantaneous velocity, Calculus, Graphs" },
+                            { id: "DT-6 (Phy-XI)", topics: "Kinematic equations" },
+                            { id: "DT-7 (Phy-XI)", topics: "Motion under gravity" },
+                            { id: "DT-8 (Phy-XI)", topics: "Relative velocity" }
+                        ]
+                    },
+                    {
+                        title: "Motion in a Plane",
+                        tests: [
+                            { id: "DT-9 (Phy-XI)", topics: "Vectors: Addition, Subtraction, Resolution" },
+                            { id: "DT-10 (Phy-XI)", topics: "Motion in a plane with constant acceleration" },
+                            { id: "DT-11 (Phy-XI)", topics: "Relative velocity in two dimensions" },
+                            { id: "DT-12 (Phy-XI)", topics: "Projectile motion: Range, Height, Time of flight" },
+                            { id: "DT-13 (Phy-XI)", topics: "Uniform circular motion" }
+                        ]
+                    },
+                    {
+                        title: "Work, Energy & Power",
+                        tests: [
+                            { id: "DT-20 (Phy-XI)", topics: "Work, Kinetic Energy, Work-Energy Theorem" },
+                            { id: "DT-21 (Phy-XI)", topics: "Potential Energy, Spring force" },
+                            { id: "DT-22 (Phy-XI)", topics: "Conservation of Mechanical Energy, Vertical Circle" },
+                            { id: "DT-23 (Phy-XI)", topics: "Power" },
+                            { id: "DT-24 (Phy-XI)", topics: "Collisions (1D and 2D), Elastic & Inelastic" }
+                        ]
+                    },
+                    {
+                        title: "Gravitation",
+                        tests: [
+                            { id: "DT-30 (Phy-XI)", topics: "Kepler's laws, Universal law, Acceleration due to gravity" },
+                            { id: "DT-31 (Phy-XI)", topics: "Gravitational Potential, Escape Speed, Satellites" }
+                        ]
+                    },
+                    {
+                        title: "Mechanical Properties of Solids",
+                        tests: [
+                            { id: "DT-32 (Phy-XI)", topics: "Stress & Strain, Hooke's Law, Young's Modulus" },
+                            { id: "DT-33 (Phy-XI)", topics: "Elastic Potential Energy, Applications" }
+                        ]
+                    },
+                    {
+                        title: "Thermal Properties of Matter",
+                        tests: [
+                            { id: "DT-38 (Phy-XI)", topics: "Temperature, Thermal Expansion, Gas Equation" },
+                            { id: "DT-39 (Phy-XI)", topics: "Specific Heat, Calorimetry, Change of State" },
+                            { id: "DT-40 (Phy-XI)", topics: "Heat Transfer: Conduction, Convection" },
+                            { id: "DT-41 (Phy-XI)", topics: "Radiation, Stefan's Law, Newton's Law of Cooling" }
+                        ]
+                    },
+                    {
+                        title: "Thermodynamics",
+                        tests: [
+                            { id: "DT-42 (Phy-XI)", topics: "Zeroth Law, First Law, Internal Energy" },
+                            { id: "DT-43 (Phy-XI)", topics: "Thermodynamic Processes" },
+                            { id: "DT-44 (Phy-XI)", topics: "Second Law, Heat Engines, Carnot Engine" }
+                        ]
+                    },
+                    {
+                        title: "Kinetic Theory",
+                        tests: [
+                            { id: "DT-45 (Phy-XI)", topics: "Ideal Gas, Law of Equipartition, Mean Free Path" }
+                        ]
+                    },
+                    {
+                        title: "Oscillations",
+                        tests: [
+                            { id: "DT-46 (Phy-XI)", topics: "Periodic Motion, SHM vs Uniform Circular Motion" },
+                            { id: "DT-47 (Phy-XI)", topics: "Velocity, Acceleration, Energy in SHM" },
+                            { id: "DT-48 (Phy-XI)", topics: "Simple Pendulum, Systems executing SHM" }
+                        ]
+                    },
+                    {
+                        title: "Waves",
+                        tests: [
+                            { id: "DT-49 (Phy-XI)", topics: "Transverse & Longitudinal Waves" },
+                            { id: "DT-50 (Phy-XI)", topics: "Progressive Wave Equation, Speed of Wave" },
+                            { id: "DT-51 (Phy-XI)", topics: "Superposition, Reflection, Beats" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
 
-           // --- ZOOLOGY ---
-           { 
-               subject: "Zoology", 
-               topic: "Chemical Coordination", 
-               dailyTests: [
-                   {name:"DT-25 (Zoo-XI)", subs:["Hypothalamus", "Pituitary Gland"]},
-                   {name:"DT-26 (Zoo-XI)", subs:["Thyroid Gland", "Parathyroid Gland", "Adrenal Gland"]},
-                   {name:"DT-27 (Zoo-XI)", subs:["Pineal Gland", "Thymus", "Pancreas"]},
-                   {name:"DT-28 (Zoo-XI)", subs:["Gonads", "Mechanism of Hormone Action"]}
-               ] 
-           },
-           { 
-               subject: "Zoology", 
-               topic: "Animal Kingdom", 
-               dailyTests: [
-                   {name:"DT-29 (Zoo-XI)", subs:["Basis of Classification"]},
-                   {name:"DT-30 (Zoo-XI)", subs:["Porifera (Sponges)"]},
-                   {name:"DT-31 (Zoo-XI)", subs:["Cnidaria (Coelenterata)"]},
-                   {name:"DT-32 (Zoo-XI)", subs:["Ctenophora", "Platyhelminthes"]},
-                   {name:"DT-33 (Zoo-XI)", subs:["Aschelminthes", "Annelida"]},
-                   {name:"DT-34 (Zoo-XI)", subs:["Arthropoda", "Mollusca"]},
-                   {name:"DT-35 (Zoo-XI)", subs:["Echinodermata", "Hemichordata"]},
-                   {name:"DT-36 (Zoo-XI)", subs:["Chordata Basics", "Cyclostomata", "Pisces"]},
-                   {name:"DT-37 (Zoo-XI)", subs:["Amphibia"]},
-                   {name:"DT-38 (Zoo-XI)", subs:["Reptilia"]},
-                   {name:"DT-39 (Zoo-XI)", subs:["Aves (Birds)"]},
-                   {name:"DT-40 (Zoo-XI)", subs:["Mammalia"]}
-               ] 
-           },
-           { 
-               subject: "Zoology", 
-               topic: "Structural Org (Animals)", 
-               dailyTests: [
-                   {name:"DT-41 (Zoo-XI)", subs:["Cockroach: Morphology"]},
-                   {name:"DT-42 (Zoo-XI)", subs:["Cockroach: Digestive System", "Cockroach: Respiratory System", "Cockroach: Circulatory System"]},
-                   {name:"DT-43 (Zoo-XI)", subs:["Cockroach: Nervous System", "Cockroach: Reproductive System", "Cockroach: Excretory System"]},
-                   {name:"DT-44 (Zoo-XI)", subs:["Frog: Morphology", "Frog: Anatomy (All Systems)"]}
-               ] 
-           }
-       ]
-   },
-
-   // --- AIATS-5 (FEB 8) ---
-   {
-       name: "AIATS-5",
-       date: new Date('2026-02-08T00:00:00'),
-       syllabus: [
-           {
-               subject: "Physics",
-               topic: "Electrostatics",
-               dailyTests: [
-                   {name:"DT-1 (Phy-XII)", subs:["Electric Charges"]},
-                   {name:"DT-2 (Phy-XII)", subs:["Coulomb's Law"]},
-                   {name:"DT-3 (Phy-XII)", subs:["Electric Field"]},
-                   {name:"DT-4 (Phy-XII)", subs:["Field Lines", "Electric Dipole"]},
-                   {name:"DT-5 (Phy-XII)", subs:["Electric Flux", "Gauss's Law"]},
-                   {name:"DT-6 (Phy-XII)", subs:["Electrostatic Potential"]},
-                   {name:"DT-7 (Phy-XII)", subs:["Equipotential Surfaces"]},
-                   {name:"DT-8 (Phy-XII)", subs:["Conductors", "Dielectrics", "Polarization"]},
-                   {name:"DT-9 (Phy-XII)", subs:["Capacitors"]},
-                   {name:"DT-10 (Phy-XII)", subs:["Combination of Capacitors", "Van de Graff Generator"]}
-               ]
-           },
-           {
-               subject: "Physics",
-               topic: "Current Electricity",
-               dailyTests: [
-                   {name:"DT-11 (Phy-XII)", subs:["Ohm's Law", "Drift Velocity"]},
-                   {name:"DT-12 (Phy-XII)", subs:["Resistors Combination"]},
-                   {name:"DT-13 (Phy-XII)", subs:["Cells", "EMF", "Internal Resistance"]},
-                   {name:"DT-14 (Phy-XII)", subs:["Kirchhoff's Laws"]},
-                   {name:"DT-15 (Phy-XII)", subs:["Wheatstone Bridge", "Potentiometer"]}
-               ]
-           },
-           {
-               subject: "Chemistry",
-               topic: "Hydrocarbons (XI)",
-               dailyTests: [
-                   {name:"DT-28 (Chem-XI)", subs:["Alkanes: Prep & Properties"]},
-                   {name:"DT-29 (Chem-XI)", subs:["Alkenes: Prep & Properties"]},
-                   {name:"DT-30 (Chem-XI)", subs:["Alkynes", "Aromatic Hydrocarbons"]}
-               ]
-           },
-           {
-               subject: "Chemistry",
-               topic: "Haloalkanes & Haloarenes",
-               dailyTests: [
-                   {name:"DT-16 (Chem-XII)", subs:["Haloalkanes: Prep", "Physical Properties"]},
-                   {name:"DT-17 (Chem-XII)", subs:["SN1 Mechanism", "SN2 Mechanism"]},
-                   {name:"DT-18 (Chem-XII)", subs:["Elimination Reactions", "Reaction with Metals"]},
-                   {name:"DT-19 (Chem-XII)", subs:["Haloarenes"]}
-               ]
-           },
-           {
-               subject: "Chemistry",
-               topic: "Alcohols, Phenols & Ethers",
-               dailyTests: [
-                   {name:"DT-20 (Chem-XII)", subs:["Alcohols Prep", "Nomenclature"]},
-                   {name:"DT-21 (Chem-XII)", subs:["Phenols Prep", "Phenols Reactions"]},
-                   {name:"DT-22 (Chem-XII)", subs:["Ethers Prep", "Ethers Properties"]}
-               ]
-           },
-           {
-               subject: "Chemistry",
-               topic: "Aldehydes, Ketones & Carboxylic",
-               dailyTests: [
-                   {name:"DT-23 (Chem-XII)", subs:["Aldehydes Prep", "Ketones Prep", "Nucleophilic Addition"]},
-                   {name:"DT-24 (Chem-XII)", subs:["Carboxylic Acids", "Aldehyde Oxidation"]}
-               ]
-           },
-           {
-               subject: "Botany",
-               topic: "Sexual Reproduction in Plants",
-               dailyTests: [
-                   {name:"DT-1 (Bot-XII)", subs:["Flower Structure", "Microsporogenesis"]},
-                   {name:"DT-2 (Bot-XII)", subs:["Pistil", "Megasporangium (Ovule)"]},
-                   {name:"DT-3 (Bot-XII)", subs:["Pollination"]},
-                   {name:"DT-4 (Bot-XII)", subs:["Outbreeding Devices", "Double Fertilization"]},
-                   {name:"DT-5 (Bot-XII)", subs:["Seed", "Fruit", "Apomixis"]}
-               ]
-           },
-           {
-               subject: "Botany",
-               topic: "Principles of Inheritance",
-               dailyTests: [
-                   {name:"DT-6 (Bot-XII)", subs:["Mendelian Genetics", "Incomplete Dominance"]},
-                   {name:"DT-7 (Bot-XII)", subs:["Co-dominance", "Epistasis"]},
-                   {name:"DT-8 (Bot-XII)", subs:["Linkage", "Mutation"]},
-                   {name:"DT-9 (Bot-XII)", subs:["Genetic Disorders", "Pedigree Analysis"]}
-               ]
-           },
-           {
-               subject: "Zoology",
-               topic: "Human Reproduction",
-               dailyTests: [
-                   {name:"DT-1 (Zoo-XII)", subs:["Male Reproductive System"]},
-                   {name:"DT-2 (Zoo-XII)", subs:["Female Reproductive System"]},
-                   {name:"DT-3 (Zoo-XII)", subs:["Spermatogenesis"]},
-                   {name:"DT-4 (Zoo-XII)", subs:["Oogenesis"]},
-                   {name:"DT-5 (Zoo-XII)", subs:["Menstrual Cycle"]},
-                   {name:"DT-6 (Zoo-XII)", subs:["Pregnancy", "Parturition"]}
-               ]
-           },
-           {
-               subject: "Zoology",
-               topic: "Reproductive Health",
-               dailyTests: [
-                   {name:"DT-7 (Zoo-XII)", subs:["Population Stabilization"]},
-                   {name:"DT-8 (Zoo-XII)", subs:["Contraception Methods"]},
-                   {name:"DT-9 (Zoo-XII)", subs:["Infertility", "STIs", "ART"]}
-               ]
-           }
-       ]
-   },
-
-   // --- UT-11 (FEB 22) [EXPANDED SYLLABUS] ---
-   {
-       name: "UT-11",
-       date: new Date('2026-02-22T00:00:00'),
-       syllabus: [
-           {
-               subject: "Physics",
-               topic: "Nuclei",
-               dailyTests: [
-                   {name:"DT-36 (Phy-XII)", subs:["Binding Energy", "Radioactivity"]}
-               ]
-           },
-           {
-               subject: "Physics",
-               topic: "Semiconductors",
-               dailyTests: [
-                   {name:"DT-37 (Phy-XII)", subs:["Diode Basics", "PN Junction"]},
-                   {name:"DT-38 (Phy-XII)", subs:["Rectifiers", "Transistors (Intro)"]}
-               ]
-           },
-           {
-               subject: "Chemistry",
-               topic: "Equilibrium (XI)",
-               dailyTests: [
-                   {name:"DT-17 (Chem-XI)", subs:["Chemical Equilibrium"]},
-                   {name:"DT-18 (Chem-XI)", subs:["Ionic Equilibrium", "pH Scale"]},
-                   {name:"DT-19 (Chem-XI)", subs:["Buffer Solutions", "Solubility Product"]}
-               ]
-           },
-           // EXPANDED: p-Block Elements (XII)
-           {
-               subject: "Chemistry",
-               topic: "p-Block Elements (XII)",
-               dailyTests: [
-                   {name:"DT-10 (Chem-XII)", subs:["Group 15 Elements", "Dinitrogen & Ammonia"]},
-                   {name:"DT-11 (Chem-XII)", subs:["Group 16 Elements", "Dioxygen & Ozone"]},
-                   {name:"DT-12 (Chem-XII)", subs:["Group 17 Elements (Halogens)", "Group 18 Elements (Noble Gases)"]}
-               ]
-           },
-           // EXPANDED: Organic Revision (Aldehydes, Ketones, Acids)
-           {
-               subject: "Chemistry",
-               topic: "Aldehydes, Ketones & Acids (Rev)",
-               dailyTests: [
-                   {name:"DT-23 (Chem-XII)", subs:["Aldehydes & Ketones: Prep Methods"]},
-                   {name:"DT-24 (Chem-XII)", subs:["Aldehydes & Ketones: Chemical Properties"]},
-                   {name:"DT-25 (Chem-XII)", subs:["Carboxylic Acids: Prep & Properties"]}
-               ]
-           },
-           {
-               subject: "Botany",
-               topic: "Organisms & Populations",
-               dailyTests: [
-                   {name:"DT-17 (Bot-XII)", subs:["Abiotic Factors"]},
-                   {name:"DT-18 (Bot-XII)", subs:["Population Interactions", "Growth Models"]}
-               ]
-           },
-           {
-               subject: "Botany",
-               topic: "Ecosystem",
-               dailyTests: [
-                   {name:"DT-19 (Bot-XII)", subs:["Structure", "Productivity"]},
-                   {name:"DT-20 (Bot-XII)", subs:["Energy Flow", "Ecological Pyramids"]}
-               ]
-           },
-           // EXPANDED: Biodiversity
-           {
-               subject: "Botany",
-               topic: "Biodiversity",
-               dailyTests: [
-                   {name:"DT-21 (Bot-XII)", subs:["Patterns of Biodiversity", "Loss of Biodiversity"]},
-                   {name:"DT-22 (Bot-XII)", subs:["Biodiversity Conservation"]}
-               ]
-           },
-           {
-               subject: "Zoology",
-               topic: "Biotech: Principles",
-               dailyTests: [
-                   {name:"DT-21 (Zoo-XII)", subs:["Tools (Enzymes)", "Vectors"]},
-                   {name:"DT-22 (Zoo-XII)", subs:["Processes (PCR)", "Downstream Processing"]}
-               ]
-           },
-           // EXPANDED: Biotech Applications
-           {
-               subject: "Zoology",
-               topic: "Biotech Applications",
-               dailyTests: [
-                   {name:"DT-23 (Zoo-XII)", subs:["Applications in Agriculture (Bt Cotton)"]},
-                   {name:"DT-24 (Zoo-XII)", subs:["Applications in Medicine (Insulin, Gene Therapy)"]}
-               ]
-           },
-           // EXPANDED: Human Reproduction (Rev)
-           {
-               subject: "Zoology",
-               topic: "Human Reproduction (Rev)",
-               dailyTests: [
-                   {name:"DT-1 (Zoo-XII)", subs:["Male Reproductive System", "Female Reproductive System"]},
-                   {name:"DT-2 (Zoo-XII)", subs:["Gametogenesis (Spermatogenesis/Oogenesis)"]},
-                   {name:"DT-3 (Zoo-XII)", subs:["Menstrual Cycle", "Fertilization & Implantation"]},
-                   {name:"DT-4 (Zoo-XII)", subs:["Pregnancy, Parturition & Lactation"]}
-               ]
-           }
-       ]
-   },
-
-   // --- AIATS-6 (MAR 8) ---
-   {
-       name: "AIATS-6",
-       date: new Date('2026-03-08T00:00:00'),
-       syllabus: [
-           {
-               subject: "Physics",
-               topic: "Moving Charges & Magnetism",
-               dailyTests: [
-                   {name:"DT-16 (Phy-XII)", subs:["Magnetic Force"]},
-                   {name:"DT-17 (Phy-XII)", subs:["Biot-Savart Law"]},
-                   {name:"DT-18 (Phy-XII)", subs:["Ampere's Law"]},
-                   {name:"DT-19 (Phy-XII)", subs:["Torque on Loop", "Galvanometer"]}
-               ]
-           },
-           {
-               subject: "Physics",
-               topic: "Magnetism & Matter",
-               dailyTests: [
-                   {name:"DT-20 (Phy-XII)", subs:["Magnetic Dipole", "Magnetic Flux"]},
-                   {name:"DT-21 (Phy-XII)", subs:["Earth's Magnetism", "Magnetic Properties"]}
-               ]
-           },
-           {
-               subject: "Physics",
-               topic: "EMI",
-               dailyTests: [
-                   {name:"DT-22 (Phy-XII)", subs:["Faraday's Law", "Lenz's Law"]},
-                   {name:"DT-23 (Phy-XII)", subs:["Inductance", "Eddy Currents"]}
-               ]
-           },
-           {
-               subject: "Physics",
-               topic: "Alternating Current",
-               dailyTests: [
-                   {name:"DT-24 (Phy-XII)", subs:["LCR Circuit", "Phasors"]},
-                   {name:"DT-25 (Phy-XII)", subs:["Power in AC", "Transformers"]}
-               ]
-           },
-           {
-               subject: "Physics",
-               topic: "EM Waves",
-               dailyTests: [
-                   {name:"DT-26 (Phy-XII)", subs:["EM Spectrum", "Properties of EM Waves"]}
-               ]
-           },
-           {
-               subject: "Chemistry",
-               topic: "d & f Block Elements",
-               dailyTests: [
-                   {name:"DT-13 (Chem-XII)", subs:["d-Block Properties", "KMnO4 / K2Cr2O7"]},
-                   {name:"DT-14 (Chem-XII)", subs:["f-Block (Lanthanoids)", "Actinoids"]}
-               ]
-           },
-           {
-               subject: "Chemistry",
-               topic: "Coordination Compounds",
-               dailyTests: [
-                   {name:"DT-15 (Chem-XII)", subs:["Nomenclature", "Isomerism"]},
-                   {name:"DT-16 (Chem-XII)", subs:["Bonding (VBT)", "Crystal Field Theory (CFT)"]}
-               ]
-           },
-           {
-               subject: "Chemistry",
-               topic: "Amines",
-               dailyTests: [
-                   {name:"DT-25 (Chem-XII)", subs:["Amines Preparation", "Physical Properties"]},
-                   {name:"DT-26 (Chem-XII)", subs:["Chemical Reactions", "Diazonium Salts"]}
-               ]
-           },
-           {
-               subject: "Botany",
-               topic: "Molecular Basis of Inheritance",
-               dailyTests: [
-                   {name:"DT-10 (Bot-XII)", subs:["DNA Structure", "Packaging"]},
-                   {name:"DT-11 (Bot-XII)", subs:["Replication", "RNA World"]},
-                   {name:"DT-12 (Bot-XII)", subs:["Transcription"]},
-                   {name:"DT-13 (Bot-XII)", subs:["Translation", "Genetic Code"]},
-                   {name:"DT-14 (Bot-XII)", subs:["Regulation (Lac Operon)", "DNA Fingerprinting"]}
-               ]
-           },
-           {
-               subject: "Botany",
-               topic: "Microbes in Human Welfare",
-               dailyTests: [
-                   {name:"DT-15 (Bot-XII)", subs:["Household Products", "Industrial Products"]},
-                   {name:"DT-16 (Bot-XII)", subs:["Sewage Treatment", "Biogas Production"]}
-               ]
-           },
-           {
-               subject: "Zoology",
-               topic: "Human Health & Disease",
-               dailyTests: [
-                   {name:"DT-15 (Zoo-XII)", subs:["Pathogens (Bacteria/Virus/Fungi)"]},
-                   {name:"DT-16 (Zoo-XII)", subs:["Immunity", "Malaria Life Cycle"]},
-                   {name:"DT-17 (Zoo-XII)", subs:["Vaccination", "Allergy"]},
-                   {name:"DT-18 (Zoo-XII)", subs:["AIDS"]},
-                   {name:"DT-19 (Zoo-XII)", subs:["Cancer"]},
-                   {name:"DT-20 (Zoo-XII)", subs:["Drugs", "Alcohol Abuse"]}
-               ]
-           }
-       ]
-   },
-
-   // --- AIATS-7 (MAR 22) [EXPANDED SYLLABUS] ---
-   {
-       name: "AIATS-7",
-       date: new Date('2026-03-22T00:00:00'),
-       syllabus: [
-           {
-               subject: "Physics",
-               topic: "Ray Optics",
-               dailyTests: [
-                   {name:"DT-27 (Phy-XII)", subs:["Reflection (Mirrors)"]},
-                   {name:"DT-28 (Phy-XII)", subs:["Refraction (Lenses)"]},
-                   {name:"DT-29 (Phy-XII)", subs:["Prism", "Dispersion"]},
-                   {name:"DT-30 (Phy-XII)", subs:["Optical Instruments"]}
-               ]
-           },
-           // EXPANDED: Modern Physics (Rev)
-           {
-               subject: "Physics",
-               topic: "Modern Physics",
-               dailyTests: [
-                   {name:"DT-31 (Phy-XII)", subs:["Dual Nature: Photoelectric Effect"]},
-                   {name:"DT-32 (Phy-XII)", subs:["Dual Nature: Matter Waves"]},
-                   {name:"DT-33 (Phy-XII)", subs:["Atoms: Bohr Model"]},
-                   {name:"DT-34 (Phy-XII)", subs:["Nuclei: Binding Energy & Radioactivity"]}
-               ]
-           },
-           {
-               subject: "Chemistry",
-               topic: "Biomolecules",
-               dailyTests: [
-                   {name:"DT-27 (Chem-XII)", subs:["Carbohydrates", "Proteins", "Nucleic Acids"]}
-               ]
-           },
-           // EXPANDED: p-Block Elements (Rev)
-           {
-               subject: "Chemistry",
-               topic: "p-Block Elements (Rev)",
-               dailyTests: [
-                   {name:"DT-10 (Chem-XII)", subs:["Group 15 Elements", "Group 16 Elements"]},
-                   {name:"DT-11 (Chem-XII)", subs:["Group 17 Elements", "Group 18 Elements"]}
-               ]
-           },
-           // EXPANDED: Ecology (Rev)
-           {
-               subject: "Botany",
-               topic: "Ecology Unit (Rev)",
-               dailyTests: [
-                   {name:"DT-17 (Bot-XII)", subs:["Organisms & Pop: Abiotic Factors"]},
-                   {name:"DT-19 (Bot-XII)", subs:["Ecosystem: Structure & Function"]},
-                   {name:"DT-21 (Bot-XII)", subs:["Biodiversity & Conservation"]}
-               ]
-           },
-           // EXPANDED: Biotech (Rev)
-           {
-               subject: "Zoology",
-               topic: "Biotech Unit (Rev)",
-               dailyTests: [
-                   {name:"DT-21 (Zoo-XII)", subs:["Biotech Principles: Tools & Processes"]},
-                   {name:"DT-23 (Zoo-XII)", subs:["Biotech Applications: Agri & Med"]}
-               ]
-           }
-       ]
-   },
-
-   // --- FULL SYLLABUS MOCK TESTS ---
-   {
-       name: "FST-1",
-       date: new Date('2026-03-27T00:00:00'),
-       syllabus: [ { subject: "General", topic: "Full Syllabus (XI + XII)", dailyTests: [{name:"Mock-1", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
-   },
-   {
-       name: "AIATS-8",
-       date: new Date('2026-04-05T00:00:00'),
-       syllabus: [ { subject: "General", topic: "Full Syllabus NEET Pattern", dailyTests: [{name:"Mock-2", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
-   },
-   {
-       name: "FST-2",
-       date: new Date('2026-04-10T00:00:00'),
-       syllabus: [ { subject: "General", topic: "Full Syllabus (XI + XII)", dailyTests: [{name:"Mock-3", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
-   },
-   {
-       name: "AIATS-9",
-       date: new Date('2026-04-12T00:00:00'),
-       syllabus: [ { subject: "General", topic: "Full Syllabus NEET Pattern", dailyTests: [{name:"Mock-4", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
-   },
-   {
-       name: "FST-3",
-       date: new Date('2026-04-17T00:00:00'),
-       syllabus: [ { subject: "General", topic: "Full Syllabus (XI + XII)", dailyTests: [{name:"Mock-5", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
-   },
-   {
-       name: "AIATS-10",
-       date: new Date('2026-04-19T00:00:00'),
-       syllabus: [ { subject: "General", topic: "Full Syllabus NEET Pattern", dailyTests: [{name:"Mock-6", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
-   },
-   {
-       name: "FST-4",
-       date: new Date('2026-04-24T00:00:00'),
-       syllabus: [ { subject: "General", topic: "Full Syllabus (XI + XII)", dailyTests: [{name:"Mock-7", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
-   },
-   {
-       name: "AIATS-11",
-       date: new Date('2026-04-26T00:00:00'),
-       syllabus: [ { subject: "General", topic: "Full Syllabus NEET Pattern", dailyTests: [{name:"Mock-8", subs:["Complete Physics", "Complete Chemistry", "Complete Biology"]}] } ]
-   }
-];
-
-// --- REPLACED BACKLOG PLAN (Detailed & Complete Class 11 Syllabus) ---
-const backlogPlan = {
-   name: "60-Day Recovery",
-   startDate: new Date('2026-01-29T00:00:00'), // Starts Jan 29
-   date: new Date('2026-03-30T00:00:00'), 
-   syllabus: [
-       // ============================================================
-       // PHASE 1: Jan 29 - Feb 12 (15 Days)
-       // Focus: Oscillations, Waves, Cell Biology, Atomic Structure
-       // ============================================================
-       
-       // --- PHYSICS: Unit 10 (Oscillations & Waves) ---
-       {
-           phase: 1, unit: "Oscillations & Waves", subject: "Physics", topic: "Oscillations",
-           dailyTests: [
-               {name:"DT-46 (Phy-XI)", subs:["Periodic Motion & SHM Equation", "Phase & Phase Difference"]},
-               {name:"DT-47 (Phy-XI)", subs:["Velocity & Acceleration in SHM", "Graphs of SHM"]},
-               {name:"DT-48 (Phy-XI)", subs:["Energy in SHM (KE, PE, Total)", "Spring-Mass Systems (Series/Parallel)"]},
-               
-           ]
-       },
-       {
-           phase: 1, unit: "Oscillations & Waves", subject: "Physics", topic: "Waves",
-           dailyTests: [
-               {name:"DT-50 (Phy-XI)", subs:["Transverse & Longitudinal Waves", "Equation of Travelling Wave"]},
-               {name:"DT-51 (Phy-XI)", subs:["Speed of Wave (String/Sound)", "Newton's Formula & Laplace Correction"]},
-               {name:"DT-52 (Phy-XI)", subs:["Superposition Principle", "Reflection of Waves"]},
-               {name:"DT-53 (Phy-XI)", subs:["Standing Waves (Organ Pipes)", "Beats & Doppler Effect"]}
-           ]
-       },
-
-       // --- BIOLOGY: Unit 3 (Cell Structure & Function) ---
-       {
-           phase: 1, unit: "Cell Structure", subject: "Biology", topic: "Cell: The Unit of Life",
-           dailyTests: [
-               {name:"DT-1 (Bot-XI)", subs:["Cell Theory", "Prokaryotic Cell Structure"]},
-               {name:"DT-2 (Bot-XI)", subs:["Eukaryotic Cell Membrane", "Cell Wall & Endomembrane System"]},
-               {name:"DT-3 (Bot-XI)", subs:["Mitochondria & Plastids", "Ribosomes & Cytoskeleton"]},
-               {name:"DT-4 (Bot-XI)", subs:["Cilia, Flagella & Centrosomes", "Nucleus & Chromosomes"]}
-           ]
-       },
-       {
-           phase: 1, unit: "Cell Structure", subject: "Biology", topic: "Biomolecules",
-           dailyTests: [
-               {name:"DT-10 (Zoo-XI)", subs:["Carbohydrates (Mono/Di/Poly)", "Lipids & Fatty Acids"]},
-               {name:"DT-11 (Zoo-XI)", subs:["Amino Acids & Proteins (Structure)", "Nucleic Acids (DNA/RNA)"]},
-               {name:"DT-12 (Zoo-XI)", subs:["Enzymes: Mechanism of Action", "Factors Affecting Enzymes"]}
-           ]
-       },
-       {
-           phase: 1, unit: "Cell Structure", subject: "Biology", topic: "Cell Cycle & Division",
-           dailyTests: [
-               {name:"DT-5 (Bot-XI)", subs:["Cell Cycle Phases (G1, S, G2, G0)", "Mitosis & Cytokinesis"]},
-               {name:"DT-6 (Bot-XI)", subs:["Meiosis I (Prophase I details)", "Meiosis II & Significance"]}
-           ]
-       },
-
-       // --- CHEMISTRY: Unit 2 & Redox ---
-       {
-           phase: 1, unit: "Atomic Structure", subject: "Chemistry", topic: "Structure of Atom",
-           dailyTests: [
-               {name:"DT-4 (Chem-XI)", subs:["Sub-atomic particles", "Bohr's Atomic Model"]},
-               {name:"DT-5 (Chem-XI)", subs:["Dual Nature of Matter", "Heisenberg's Uncertainty Principle"]},
-               {name:"DT-6 (Chem-XI)", subs:["Quantum Numbers (n,l,m,s)", "Shapes of Orbitals"]},
-               {name:"DT-7 (Chem-XI)", subs:["Electronic Configuration Rules", "Stability of Half/Full Filled"]}
-           ]
-       },
-       {
-           phase: 1, unit: "Physical Chem", subject: "Chemistry", topic: "Redox Reactions",
-           dailyTests: [
-               {name:"DT-18 (Chem-XI)", subs:["Oxidation Number Concept", "Types of Redox Reactions"]},
-               {name:"DT-19 (Chem-XI)", subs:["Balancing Redox Reactions", "Electrochemical Cell Basics"]}
-           ]
-       },
-
-       // ============================================================
-       // PHASE 2: Feb 13 - Feb 27 (15 Days)
-       // Focus: Bulk Matter, Diversity, Periodic Table, Morphology
-       // ============================================================
-       
-       // --- PHYSICS: Unit 7 & 8 (Properties of Matter) ---
-       {
-           phase: 2, unit: "Bulk Matter", subject: "Physics", topic: "Mechanical Properties of Solids",
-           dailyTests: [
-               {name:"DT-33 (Phy-XI)", subs:["Elasticity & Plasticity", "Stress-Strain Curve"]},
-               {name:"DT-34 (Phy-XI)", subs:["Hooke's Law & Moduli of Elasticity", "Elastic Potential Energy"]}
-           ]
-       },
-              {
-           phase: 2, unit: "Bulk Matter", subject: "Physics", topic: "Thermal Properties of Matter",
-           dailyTests: [
-               {name:"DT-38 (Phy-XI)", subs:["Temperature & Scales", "Thermal Expansion (Solids/Liquids)"]},
-               {name:"DT-39 (Phy-XI)", subs:["Calorimetry & Phase Change", "Heat Transfer (Conduction/Convection)"]},
-               {name:"DT-40 (Phy-XI)", subs:["Radiation & Newton's Law of Cooling"]}
-           ]
-       },
-
-       // --- BIOLOGY: Unit 1 & 2 (Diversity & Structural Org) ---
-       {
-           phase: 2, unit: "Diversity", subject: "Biology", topic: "The Living World",
-           dailyTests: [
-               {name:"DT-1 (Bot-XI-Rev)", subs:["What is Living?", "Taxonomic Categories & Aids"]}
-           ]
-       },
-       {
-           phase: 2, unit: "Diversity", subject: "Biology", topic: "Biological Classification",
-           dailyTests: [
-               {name:"DT-2 (Bot-XI-Rev)", subs:["Kingdom Monera (Bacteria)", "Kingdom Protista"]},
-               {name:"DT-3 (Bot-XI-Rev)", subs:["Kingdom Fungi", "Viruses, Viroids & Lichens"]}
-           ]
-       },
-       {
-           phase: 2, unit: "Diversity", subject: "Biology", topic: "Plant Kingdom",
-           dailyTests: [
-               {name:"DT-4 (Bot-XI-Rev)", subs:["Algae (Green, Brown, Red)", "Bryophytes (Mosses, Liverworts)"]},
-               {name:"DT-5 (Bot-XI-Rev)", subs:["Pteridophytes", "Gymnosperms & Angiosperms Cycle"]}
-           ]
-       },
-       {
-           phase: 2, unit: "Diversity", subject: "Biology", topic: "Animal Kingdom",
-           dailyTests: [
-               {name:"DT-1 (Zoo-XI)", subs:["Basis of Classification", "Porifera, Cnidaria, Ctenophora"]},
-               {name:"DT-2 (Zoo-XI)", subs:["Platyhelminthes to Annelida", "Arthropoda to Hemichordata"]},
-               {name:"DT-3 (Zoo-XI)", subs:["Chordata: Cyclostomata to Pisces", "Amphibia & Reptilia"]},
-               {name:"DT-4 (Zoo-XI)", subs:["Aves & Mammalia"]}
-           ]
-       },
-       {
-           phase: 2, unit: "Structural Org", subject: "Biology", topic: "Morphology of Flowering Plants",
-           dailyTests: [
-               {name:"DT-6 (Bot-XI-Rev)", subs:["Root & Stem Modifications", "Leaf Structure & Venation"]},
-               {name:"DT-7 (Bot-XI-Rev)", subs:["Inflorescence & Flower Parts", "Fruits & Seeds"]},
-               {name:"DT-8 (Bot-XI-Rev)", subs:["Families: Solanaceae, Fabaceae", "New Families: Malvaceae, Compositae"]}
-           ]
-       },
-       {
-           phase: 2, unit: "Structural Org", subject: "Biology", topic: "Anatomy of Flowering Plants",
-           dailyTests: [
-               {name:"DT-9 (Bot-XI-Rev)", subs:["Meristematic & Permanent Tissues", "Tissue Systems"]},
-               {name:"DT-10 (Bot-XI-Rev)", subs:["Dicot vs Monocot Root/Stem/Leaf", "Secondary Growth"]}
-           ]
-       },
-       {
-           phase: 2, unit: "Structural Org", subject: "Biology", topic: "Structural Org. in Animals",
-           dailyTests: [
-               {name:"DT-5 (Zoo-XI)", subs:["Animal Tissues (Epithelial/Connective)", "Muscle & Neural Tissue"]},
-               {name:"DT-6 (Zoo-XI)", subs:["Frog: Morphology & Anatomy"]}
-           ]
-       },
-
-       // --- CHEMISTRY: Unit 3 (Periodic Table) ---
-       {
-           phase: 2, unit: "Inorganic", subject: "Chemistry", topic: "Classification of Elements",
-           dailyTests: [
-               {name:"DT-8 (Chem-XI)", subs:["Modern Periodic Law", "IUPAC Nomenclature >100"]},
-               {name:"DT-9 (Chem-XI)", subs:["Periodic Trends: Atomic Radius", "Ionization Enthalpy Trends"]},
-               {name:"DT-10 (Chem-XI)", subs:["Electron Gain Enthalpy", "Electronegativity & Valency"]}
-           ]
-       },
-
-       // ============================================================
-       // PHASE 3: Feb 28 - Mar 14 (15 Days)
-       // Focus: Mechanics Core, Chemical Bonding, Plant Phys, GOC
-       // ============================================================
-
-       // --- PHYSICS: Unit 2, 3, 4 (Mechanics Part 1) ---
-       {
-           phase: 3, unit: "Mechanics I", subject: "Physics", topic: "Units & Measurements",
-           dailyTests: [
-               {name:"DT-1 (Phy-XI)", subs:["Units & Dimensions", "Dimensional Analysis Applications"]},
-               {name:"DT-2 (Phy-XI)", subs:["Errors in Measurement", "Significant Figures & Vernier Calipers"]}
-           ]
-       },
-       {
-           phase: 3, unit: "Mechanics I", subject: "Physics", topic: "Motion in a Straight Line",
-           dailyTests: [
-               {name:"DT-3 (Phy-XI)", subs:["Distance, Displacement, Speed", "Velocity-Time Graphs"]},
-               {name:"DT-4 (Phy-XI)", subs:["Equations of Motion", "Motion Under Gravity & Relative Velocity"]}
-           ]
-       },
-       {
-           phase: 3, unit: "Mechanics I", subject: "Physics", topic: "Motion in a Plane",
-           dailyTests: [
-               {name:"DT-5 (Phy-XI)", subs:["Vectors: Addition & Resolution", "Dot & Cross Product"]},
-               {name:"DT-6 (Phy-XI)", subs:["Projectile Motion (Ground-to-Ground)", "Horizontal Projectile"]},
-               {name:"DT-7 (Phy-XI)", subs:["Uniform Circular Motion (Kinematics)"]}
-           ]
-       },
-       {
-           phase: 3, unit: "Mechanics I", subject: "Physics", topic: "Laws of Motion",
-           dailyTests: [
-               {name:"DT-13 (Phy-XI)", subs:["Newton's Laws & Impulse", "Conservation of Momentum"]},
-               {name:"DT-14 (Phy-XI)", subs:["Equilibrium of Forces & Lami's", "Friction (Static/Kinetic)"]},
-               {name:"DT-15 (Phy-XI)", subs:["Dynamics of Circular Motion (Banking)", "Connected Bodies"]}
-           ]
-       },
-       {
-           phase: 3, unit: "Mechanics I", subject: "Physics", topic: "Work, Energy & Power",
-           dailyTests: [
-               {name:"DT-16 (Phy-XI)", subs:["Work by Constant/Variable Force", "Work-Energy Theorem"]},
-               {name:"DT-17 (Phy-XI)", subs:["Potential Energy & Springs", "Power"]},
-               {name:"DT-18 (Phy-XI)", subs:["Collisions (1D & 2D)", "Vertical Circular Motion"]}
-           ]
-       },
-
-       // --- CHEMISTRY: Unit 4 & GOC ---
-       {
-           phase: 3, unit: "Inorganic/Physical", subject: "Chemistry", topic: "Chemical Bonding",
-           dailyTests: [
-               {name:"DT-11 (Chem-XI)", subs:["Ionic Bond & Lattice Energy", "Covalent Bond & Lewis Structures"]},
-               {name:"DT-12 (Chem-XI)", subs:["VSEPR Theory & Geometry", "Valence Bond Theory"]},
-               {name:"DT-13 (Chem-XI)", subs:["Hybridisation (sp, sp2, sp3, etc)", "Dipole Moment"]},
-               {name:"DT-14 (Chem-XI)", subs:["Molecular Orbital Theory (MOT)", "Hydrogen Bonding"]}
-           ]
-       },
-       {
-           phase: 3, unit: "Organic", subject: "Chemistry", topic: "GOC (General Organic Chem)",
-           dailyTests: [
-               {name:"DT-23 (Chem-XI)", subs:["IUPAC Nomenclature (Aliphatic/Cyclic)", "Functional Groups"]},
-               {name:"DT-24 (Chem-XI)", subs:["Isomerism: Structural", "Isomerism: Stereoisomerism"]},
-               {name:"DT-25 (Chem-XI)", subs:["Inductive & Electromeric Effects", "Resonance & Mesomeric Effect"]},
-               {name:"DT-26 (Chem-XI)", subs:["Hyperconjugation", "Reaction Intermediates (Carbocations etc)"]},
-               {name:"DT-27 (Chem-XI)", subs:["Purification Methods", "Quantitative Analysis (Dumas/Kjeldahl)"]}
-           ]
-       },
-       {
-           phase: 3, unit: "Organic", subject: "Chemistry", topic: "Hydrocarbons",
-           dailyTests: [
-               {name:"DT-28 (Chem-XI)", subs:["Alkanes: Prep & Properties", "Conformations of Ethane"]},
-               {name:"DT-29 (Chem-XI)", subs:["Alkenes: Prep & Properties", "Markonikov's Rule"]},
-               {name:"DT-30 (Chem-XI)", subs:["Alkynes: Prep & Properties", "Aromatic Hydrocarbons (Benzene)"]}
-           ]
-       },
-
-       // --- BIOLOGY: Unit 4 (Plant Physiology) ---
-       {
-           phase: 3, unit: "Plant Phys", subject: "Biology", topic: "Photosynthesis",
-           dailyTests: [
-               {name:"DT-11 (Bot-XI)", subs:["Pigments & Light Reaction", "Electron Transport Chain"]},
-               {name:"DT-12 (Bot-XI)", subs:["C3 Cycle (Calvin Cycle)", "C4 Cycle & Photorespiration"]}
-           ]
-       },
-       {
-           phase: 3, unit: "Plant Phys", subject: "Biology", topic: "Respiration in Plants",
-           dailyTests: [
-               {name:"DT-13 (Bot-XI)", subs:["Glycolysis & Fermentation", "Aerobic Respiration (TCA Cycle)"]},
-               {name:"DT-14 (Bot-XI)", subs:["ETS & Oxidative Phosphorylation", "Respiratory Quotient"]}
-           ]
-       },
-       {
-           phase: 3, unit: "Plant Phys", subject: "Biology", topic: "Plant Growth & Development",
-           dailyTests: [
-               {name:"DT-15 (Bot-XI)", subs:["Growth Phases & Curves", "Auxins & Gibberellins"]},
-               {name:"DT-16 (Bot-XI)", subs:["Cytokinins, Ethylene, ABA", "Photoperiodism & Vernalization"]}
-           ]
-       },
-
-       // ============================================================
-       // PHASE 4: Mar 15 - Mar 30 (15 Days)
-       // Focus: Rotation, Gravity, Thermo, Equilibrium, Human Phys
-       // ============================================================
-
-       // --- PHYSICS: Unit 5 & 6 (Mechanics II) ---
-              {
-           phase: 4, unit: "Mechanics II", subject: "Physics", topic: "Gravitation",
-           dailyTests: [
-               {name:"DT-28 (Phy-XI)", subs:["Newton's Law of Gravitation", "Acceleration due to Gravity (g)"]},
-               {name:"DT-29 (Phy-XI)", subs:["Gravitational Potential & Field", "Escape Velocity & Satellites"]},
-               {name:"DT-30 (Phy-XI)", subs:["Kepler's Laws", "Weightlessness"]}
-           ]
-       },
-       {
-           phase: 4, unit: "Thermodynamics", subject: "Physics", topic: "Thermodynamics (Phy)",
-           dailyTests: [
-               {name:"DT-41 (Phy-XI)", subs:["Thermal Equilibrium & Zeroth Law", "First Law of Thermodynamics"]},
-               {name:"DT-42 (Phy-XI)", subs:["Thermodynamic Processes (Iso/Adia)", "Heat Engines & Refrigerators"]},
-               {name:"DT-43 (Phy-XI)", subs:["Kinetic Theory of Gases", "Law of Equipartition of Energy"]}
-           ]
-       },
-
-       // --- CHEMISTRY: Unit 6 & 7 (Physical Chem) ---
-       {
-           phase: 4, unit: "Physical Chem", subject: "Chemistry", topic: "Thermodynamics (Chem)",
-           dailyTests: [
-               {name:"DT-15 (Chem-XI)", subs:["System & Surroundings", "Internal Energy & Enthalpy (H)"]},
-               {name:"DT-16 (Chem-XI)", subs:["Hess's Law & Bond Enthalpy", "Entropy & Second Law"]},
-               {name:"DT-17 (Chem-XI)", subs:["Gibbs Energy & Spontaneity", "Third Law of Thermodynamics"]}
-           ]
-       },
-       {
-           phase: 4, unit: "Physical Chem", subject: "Chemistry", topic: "Equilibrium",
-           dailyTests: [
-               {name:"DT-18 (Chem-XI)", subs:["Law of Mass Action & Kc/Kp", "Le Chatelier's Principle"]},
-               {name:"DT-19 (Chem-XI)", subs:["Ionization of Acids/Bases", "pH Scale & Calculations"]},
-               {name:"DT-20 (Chem-XI)", subs:["Buffer Solutions", "Solubility Product (Ksp)"]}
-           ]
-       },
-       // p-Block Elements (Group 13-14)
-       {
-           phase: 4, unit: "Inorganic", subject: "Chemistry", topic: "p-Block Elements",
-           dailyTests: [
-               {name:"DT-21 (Chem-XI)", subs:["Group 13: Boron Family Trends", "Important Compounds of Boron"]},
-               {name:"DT-22 (Chem-XI)", subs:["Group 14: Carbon Family Trends", "Allotropes of Carbon"]}
-           ]
-       },
-
-       // --- BIOLOGY: Unit 5 (Human Physiology) ---
-       {
-           phase: 4, unit: "Human Phys", subject: "Biology", topic: "Breathing & Exchange of Gases",
-           dailyTests: [
-               {name:"DT-17 (Zoo-XI)", subs:["Respiratory Organs", "Mechanism of Breathing"]},
-               {name:"DT-18 (Zoo-XI)", subs:["Exchange & Transport of Gases", "Regulation & Disorders"]}
-           ]
-       },
-       {
-           phase: 4, unit: "Human Phys", subject: "Biology", topic: "Body Fluids & Circulation",
-           dailyTests: [
-               {name:"DT-19 (Zoo-XI)", subs:["Blood Components & Groups", "Lymph & Circulatory Pathways"]},
-               {name:"DT-20 (Zoo-XI)", subs:["Human Heart & Cardiac Cycle", "ECG & Disorders"]}
-           ]
-       },
-       {
-           phase: 4, unit: "Human Phys", subject: "Biology", topic: "Excretory Products",
-           dailyTests: [
-               {name:"DT-21 (Zoo-XI)", subs:["Human Excretory System", "Urine Formation"]},
-               {name:"DT-22 (Zoo-XI)", subs:["Counter Current Mechanism", "Regulation of Kidney Function"]}
-           ]
-       },
-       {
-           phase: 4, unit: "Human Phys", subject: "Biology", topic: "Locomotion & Movement",
-           dailyTests: [
-               {name:"DT-23 (Zoo-XI)", subs:["Types of Movement & Muscle", "Mechanism of Muscle Contraction"]},
-               {name:"DT-24 (Zoo-XI)", subs:["Skeletal System", "Joints & Disorders"]}
-           ]
-       },
-       {
-           phase: 4, unit: "Human Phys", subject: "Biology", topic: "Neural Control & Coordination",
-           dailyTests: [
-               {name:"DT-25 (Zoo-XI)", subs:["Neuron Structure & Nerve Impulse", "Synaptic Transmission"]},
-               {name:"DT-26 (Zoo-XI)", subs:["Central Neural System (Brain)", "Reflex Action & Sensory Organs"]}
-           ]
-       },
-       {
-           phase: 4, unit: "Human Phys", subject: "Biology", topic: "Chemical Coordination",
-           dailyTests: [
-               {name:"DT-27 (Zoo-XI)", subs:["Hypothalamus & Pituitary", "Thyroid, Parathyroid, Adrenal"]},
-               {name:"DT-28 (Zoo-XI)", subs:["Pancreas & Gonads", "Mechanism of Hormone Action"]}
-           ]
-       }
-   ]
+    
 };
 
         // --- STATE MODIFICATION: USE REAL DATE ---
@@ -1356,6 +1135,18 @@ window.checkSyllabusOverlap = function() {
         }, 1500); // Small delay so it appears after load
     }
 };
+
+// --- NEW STUDY PLAN DATA ---
+const studyPlan = [
+    { id: "aiats7", title: "AIATS 7 Target", subject: "aiats", desc: "Prepare for AIATS 7 exam.", start: "2026-02-12", end: "2026-02-22", icon: "clipboard-check", color: "blue" },
+    { id: "aiats6", title: "AIATS 6 Target", subject: "aiats", desc: "Prepare for AIATS 6 exam.", start: "2026-02-23", end: "2026-03-08", icon: "clipboard-list", color: "purple" },
+    { id: "org_chem", title: "Organic Chemistry", subject: "chemistry", desc: "Class 12th Organic (Excl. GOC)", start: "2026-02-12", end: "2026-03-08", icon: "flask-conical", color: "orange" },
+    { id: "bio_11", title: "Class 11 Biology", subject: "biology", desc: "Complete Class 11 Biology Syllabus", start: "2026-02-12", end: "2026-03-15", icon: "dna", color: "green" },
+    { id: "rem_chem", title: "Remaining Chemistry", subject: "chemistry", desc: "Complete rest of 11th/12th Chem.", start: "2026-03-09", end: "2026-03-15", icon: "beaker", color: "cyan" },
+    { id: "phy_electro", title: "Physics: Electro & Current", subject: "physics", desc: "Electrostatics & Current Electricity", start: "2026-03-09", end: "2026-03-15", icon: "zap", color: "yellow" },
+    { id: "phy_11_sel", title: "Class 11 Physics (Selected)", subject: "physics", desc: "Units, Motion, WPE, Gravitation, etc.", start: "2026-03-16", end: "2026-03-27", icon: "atom", color: "indigo" }
+];
+
 function init() {
     
     // Add this inside init()
@@ -1453,51 +1244,41 @@ function initLocalMode() {
     }
         
 function setupSchedule() {
-            // Get the current full date and time
-            const now = new Date();
-            
-            // Find the first exam where the deadline (5 PM on exam day) hasn't passed yet
-            state.nextExam = mainSchedule.find(e => {
-                const examDeadline = new Date(e.date);
-                examDeadline.setHours(17, 0, 0, 0); // Set deadline to 5:00 PM (17:00)
-                
-                // If the 5 PM deadline is still in the future, this is our current target
-                return examDeadline > now;
-            }) || mainSchedule[mainSchedule.length-1];
+    const today = new Date();
+    
+    // Find the active target from your NEW studyPlan
+    const activeTarget = studyPlan.find(t => {
+        const start = new Date(t.start);
+        const end = new Date(t.end);
+        // Include the whole end day
+        end.setHours(23, 59, 59, 999);
+        return today >= start && today <= end;
+    });
 
-            // ✅ SAFE ADD TASK LISTENER (Prevents crash since footer is removed)
-            
-// ✅ SAFE ADD TASK LISTENER
-            const addTaskForm = document.getElementById('add-task-form');
-            if (addTaskForm) {
-                const newForm = addTaskForm.cloneNode(true);
-                addTaskForm.parentNode.replaceChild(newForm, addTaskForm);
-                
-                newForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const input = document.getElementById('new-task-input');
-                    if (input && input.value.trim()) {
-                        
-                        // Safe selection of values without optional chaining
-                        const typeEl = document.getElementById('new-task-type');
-                        const subEl = document.getElementById('new-task-subject');
-                        
-                        const type = typeEl ? typeEl.value : 'main';
-                        const subject = subEl ? subEl.value : 'General';
-                        
-                        addTask(input.value.trim(), type, subject);
-                        input.value = '';
-                    }
-                });
-            }
-            // Setup Mistake Form Listener
-            const mistakeForm = document.getElementById('mistake-form');
-            if(mistakeForm) {
-                const newMForm = mistakeForm.cloneNode(true);
-                mistakeForm.parentNode.replaceChild(newMForm, mistakeForm);
-                newMForm.addEventListener('submit', window.saveMistake);
-            }
-        }
+    // Determine the "Next Exam" for the stats dashboard
+    if (activeTarget) {
+        state.nextExam = {
+            name: activeTarget.title,
+            date: new Date(activeTarget.end),
+            syllabus: [] // Keep empty for now to prevent other crashes
+        };
+    } else {
+        // Fallback if nothing is active
+        state.nextExam = {
+            name: "No Active Target",
+            date: new Date(),
+            syllabus: []
+        };
+    }
+
+    // Initialize Mistake Form Listener
+    const mistakeForm = document.getElementById('mistake-form');
+    if(mistakeForm) {
+        const newMForm = mistakeForm.cloneNode(true);
+        mistakeForm.parentNode.replaceChild(newMForm, mistakeForm);
+        newMForm.addEventListener('submit', window.saveMistake);
+    }
+}
 
 
 // --- HELPER: CALCULATE STATS (Fair Ground: All Factors are 0-100%) ---
@@ -2590,27 +2371,21 @@ window.addTask = function(text, type = 'main', subject = 'General', chapter = nu
 
 window.switchView = function(view) {
     state.activeView = view;
-    toggleMobileMenu(true); // Close mobile menu if open
+    toggleMobileMenu(true); 
     
     // 1. Update Buttons Highlighting
-  ['overview','target','backlog', 'mistakes', 'leaderboard', 'namaz', 'points'].forEach(v => {
+    ['overview','ongoing','upcoming', 'mistakes', 'leaderboard', 'namaz', 'points'].forEach(v => {
          const btn = document.getElementById(`nav-${v}`);
         if(btn) {
-            // Reset all to default style
             btn.className = "group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-brand-600 dark:hover:text-brand-400 transition-all duration-200 hover:translate-x-1";
-            
-            // Remove any existing active indicators
             const existingDot = btn.querySelector('.active-indicator');
             if(existingDot) existingDot.classList.add('hidden');
 
-            // Apply Active Style
             if(v === view) {
                 btn.className = "group relative w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-400 shadow-sm ring-1 ring-brand-200 dark:ring-brand-800 transition-all";
                 if(existingDot) existingDot.classList.remove('hidden');
             }
         }
-        
-        // Hide all Views
         const viewEl = document.getElementById(`view-${v}`);
         if(viewEl) viewEl.classList.add('hidden');
     });
@@ -2619,9 +2394,9 @@ window.switchView = function(view) {
     const activeEl = document.getElementById(`view-${view}`);
     if(activeEl) activeEl.classList.remove('hidden');
     
-    // 3. FORCE RENDER (This fixes the blank page issue)
-    if(view === 'target') renderSyllabus('main');
-    if(view === 'backlog') renderSyllabus('backlog');
+    // 3. FORCE RENDER (Updated Logic)
+    if(view === 'ongoing') renderOngoing();   // <--- NEW
+    if(view === 'upcoming') renderUpcoming(); // <--- NEW
     if(view === 'leaderboard') fetchLeaderboard();
     if(view === 'namaz') renderNamazView();
     if(view === 'points') renderPointsAnalytics();
@@ -2631,7 +2406,6 @@ window.switchView = function(view) {
     }
     if(view === 'overview') renderTasks();
     
-    // Initialize icons for the new view
     if(window.lucide) lucide.createIcons();
 };
 
@@ -3692,220 +3466,241 @@ window.renderStats = function() {
             `;
         }       
 
-function renderTasks() {
 
-            const list = document.getElementById('overview-task-list');
-            if(!list) return;
-            const k = formatDateKey(state.selectedDate);
-            const tasks = state.tasks[k] || [];
-            
-            list.innerHTML = '';
+/* --- RESTORED renderTasks WITH ALL FEATURES --- */
+window.renderTasks = function() {
+    const list = document.getElementById('overview-task-list');
+    if(!list) return;
 
-            // --- IMPROVED LOGIC: DETECT "READY" TESTS ONLY ---
-            
-            // 1. Snapshot of all completed tasks
-            const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
-            const readyTests = [];
+    const k = formatDateKey(state.selectedDate);
+    const tasks = state.tasks[k] || [];
+    
+    list.innerHTML = '';
 
-            // 2. Scan Syllabus
-            function scanSyllabus(syllabusArray, source) {
-                if(!syllabusArray) return;
-                
-                syllabusArray.forEach(chapter => {
-                    chapter.dailyTests.forEach(test => {
-                        // Skip if already done
-                        if(state.dailyTestsAttempted[test.name]) return;
+    // --- 1. SNAPSHOT & PREPARATION ---
+    // Get a list of everything you've ever completed to see what's "Ready"
+    const allCompleted = new Set(Object.values(state.tasks).flat().filter(t => t.completed).map(t => t.text));
+    const readyTests = [];
 
-                        // Check subtopics
-                        const missingSubs = [];
-                        test.subs.forEach(sub => {
-                            const expectedTaskName = `Study: ${chapter.topic} - ${sub}`;
-                            if(!allCompleted.has(expectedTaskName)) {
-                                missingSubs.push(sub);
-                            }
-                        });
+    // --- 2. SCAN SYLLABUS FUNCTION ---
+    // This checks if you've finished all subtopics for a test
+    function scanSyllabus(syllabusArray, source) {
+        if(!syllabusArray) return;
+        
+        syllabusArray.forEach(chapter => {
+            if(!chapter.dailyTests) return;
+            chapter.dailyTests.forEach(test => {
+                // Skip if already done
+                if(state.dailyTestsAttempted[test.name]) return;
 
-                        const total = test.subs.length;
-                        const missingCount = missingSubs.length;
-
-                        // Case A: Fully Ready (All topics done)
-                        if(missingCount === 0 && total > 0) {
-                            readyTests.push({
-                                name: test.name,
-                                topic: chapter.topic,
-                                subject: chapter.subject,
-                                subs: test.subs,
-                                source: source
-                            });
-                        }
-                    });
+                // Check subtopics
+                const missingSubs = [];
+                test.subs.forEach(sub => {
+                    const expectedTaskName = `Study: ${chapter.topic} - ${sub}`;
+                    if(!allCompleted.has(expectedTaskName)) {
+                        missingSubs.push(sub);
+                    }
                 });
-            }
 
-            // 3. Run Scan
-            if(state.nextExam) scanSyllabus(state.nextExam.syllabus, 'main');
-            if(typeof backlogPlan !== 'undefined') scanSyllabus(backlogPlan.syllabus, 'backlog');
+                const total = test.subs.length;
+                const missingCount = missingSubs.length;
 
-     
-// 4. Render "READY" Cards (Smart Grouping - ALWAYS BUNDLE)
-            if(readyTests.length > 0) {
-                // Helper to generate a single card HTML
-                const generateCard = (test, isGrouped = false) => {
-                    const subSummary = test.subs.slice(0, 3).join(', ') + (test.subs.length > 3 ? '...' : '');
-                    const safeTestName = test.name.replace(/'/g, "\\'");
-                    
-                    return `
-                    <div class="${isGrouped ? 'mb-3 last:mb-0' : 'mb-6'} bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-5 text-white shadow-lg shadow-emerald-500/20 relative overflow-hidden group animate-in slide-in-from-top-2 fade-in duration-300">
-                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="award" class="w-24 h-24 rotate-12"></i></div>
-                        <div class="relative z-10">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <span class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-white border border-white/10">Unlocked</span>
-                                    <h3 class="text-xl font-bold text-white tracking-tight mt-1">${test.name}</h3>
-                                    <p class="text-xs text-emerald-100 font-medium">Topic: ${test.topic}</p>
-                                </div>
-                                <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm shadow-sm animate-pulse"><i data-lucide="unlock" class="w-6 h-6 text-white"></i></div>
-                            </div>
-                            <div class="bg-black/10 rounded-lg p-2 mb-4">
-                                <p class="text-[10px] uppercase font-bold text-emerald-200 mb-1">Includes</p>
-                                <p class="text-xs text-white/90 font-medium truncate">${subSummary}</p>
-                            </div>
-                            <button onclick="confetti({particleCount: 150, spread: 60, origin: { y: 0.7 }}); toggleTestAttempt('${safeTestName}'); renderAll();" class="w-full bg-white text-emerald-700 py-3 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                                <i data-lucide="check-circle-2" class="w-4 h-4"></i> Attempt & Mark Done
-                            </button>
-                        </div>
-                    </div>`;
-                };
-
-                // --- ALWAYS BUNDLE LOGIC ---
-                const bundleId = `unlock-bundle-${Date.now()}`;
-                
-                const finalHtml = `
-                <div class="mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-1 shadow-xl shadow-indigo-500/20 animate-in slide-in-from-top-2 fade-in duration-300 cursor-pointer select-none group" onclick="const el = document.getElementById('${bundleId}'); el.classList.toggle('hidden'); this.querySelector('.arrow-icon').classList.toggle('rotate-180');">
-                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-lg flex justify-between items-center border border-white/10 hover:bg-white/20 transition-all">
-                        <div class="flex items-center gap-4">
-                            <div class="bg-white p-2.5 rounded-xl text-indigo-600 shadow-sm relative">
-                                <i data-lucide="layers" class="w-6 h-6"></i>
-                                <div class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600">
-                                    ${readyTests.length}
-                                </div>
-                            </div>
-                            <div class="text-white">
-                                <h3 class="font-bold text-lg leading-tight">Tests Ready!</h3>
-                                <p class="text-xs text-indigo-100 font-medium opacity-80">Tap to expand stack</p>
-                            </div>
-                        </div>
-                        <div class="bg-black/20 p-2 rounded-full arrow-icon transition-transform duration-300">
-                            <i data-lucide="chevron-down" class="w-5 h-5 text-white"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="${bundleId}" class="hidden pl-2 border-l-2 border-indigo-100 dark:border-indigo-900/30 mb-8 space-y-4">
-                    ${readyTests.map(test => generateCard(test, true)).join('')}
-                </div>
-                `;
-
-                list.insertAdjacentHTML('beforeend', finalHtml);
-            }
-
-            // --- END NEW LOGIC ---
-
-            // --- STANDARD TASK RENDERING ---
-            if(tasks.length === 0 && readyTests.length === 0) {
-                list.innerHTML = `<div class="h-40 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 text-sm"><i data-lucide="coffee" class="w-8 h-8 mb-2 opacity-50"></i>No focus targets set.</div>`;
-                if(window.lucide) lucide.createIcons({ root: list });        
-                return;
-            }
-
-            const groups = {};
-            const standalone = [];
-            tasks.forEach(t => {
-                let chap = t.chapter;
-                if (!chap && t.text.startsWith("Study: ")) {
-                    const parts = t.text.replace("Study: ", "").split(" - ");
-                    if (parts.length > 1) chap = parts[0];
+                // Fully Ready (All topics done)
+                if(missingCount === 0 && total > 0) {
+                    readyTests.push({
+                        name: test.name,
+                        topic: chapter.topic,
+                        subject: chapter.subject,
+                        subs: test.subs,
+                        source: source
+                    });
                 }
-                if (chap) {
-                    if (!groups[chap]) groups[chap] = { name: chap, tasks: [], subject: t.subject, type: t.type };
-                    groups[chap].tasks.push(t);
-                } else standalone.push(t);
             });
+        });
+    }
 
-            standalone.forEach(t => {
-                const el = document.createElement('div');
-                el.innerHTML = createTaskElementHTML(t, false);
-                list.appendChild(el.firstElementChild);
-            });
+    // --- 3. RUN SCAN (Updated for New StudyPlan) ---
+    // We look for the active target in your new studyPlan
+    const today = new Date();
+    const currentTarget = studyPlan.find(t => {
+        const start = new Date(t.start); start.setHours(0,0,0,0);
+        const end = new Date(t.end); end.setHours(23,59,59,999);
+        return today >= start && today <= end;
+    });
 
-            Object.values(groups).forEach(group => {
-                const isExpanded = state.expandedFocusGroups[group.name];
-                const completedCount = group.tasks.filter(t => t.completed).length;
-                const totalCount = group.tasks.length;
-                const isAllDone = totalCount > 0 && completedCount === totalCount;
-                
-                let groupBorder = 'border-slate-200 dark:border-slate-800';
-                let groupBg = 'bg-white dark:bg-slate-900';
-                if(group.type === 'main') { groupBorder = 'border-brand-200 dark:border-brand-900'; groupBg = 'bg-brand-50/30 dark:bg-brand-900/10'; }
-                if(group.type === 'backlog') { groupBorder = 'border-orange-200 dark:border-orange-900'; groupBg = 'bg-orange-50/30 dark:bg-orange-900/10'; }
-                
-                let typeBadge = '';
-                if (group.type === 'main') typeBadge = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300">Exam</span>`;
-                else if (group.type === 'backlog') typeBadge = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300">Backlog</span>`;
-                
-                const safeGroupName = group.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-                const escapeQuote = (str) => str.replace(/'/g, "\\'");
+    // If the active target has a 'syllabus' list, scan it!
+    if(currentTarget && currentTarget.syllabus) {
+        scanSyllabus(currentTarget.syllabus, 'main');
+    }
+    // Also scan backlog if it exists
+    if(typeof backlogPlan !== 'undefined') {
+        scanSyllabus(backlogPlan.syllabus, 'backlog');
+    }
 
-                const groupContainer = document.createElement('div');
-                groupContainer.className = `rounded-xl border ${groupBorder} ${groupBg} overflow-hidden mb-2 transition-all shadow-sm group`;
-                
-                const headerHtml = `
-                    <div class="p-3 flex items-center justify-between cursor-pointer hover:bg-opacity-50 transition-colors" onclick="toggleFocusGroup('${escapeQuote(group.name)}')">
-                        <div class="flex items-center gap-3">
-                            <div class="p-1.5 rounded-lg ${isAllDone ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300' : 'bg-white dark:bg-slate-800 shadow-sm text-slate-500 dark:text-slate-400'}">
-                                <i data-lucide="${isAllDone ? 'check-circle' : 'book-open'}" class="w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">${safeGroupName}</h4>
-                                <div class="flex items-center gap-2 mt-0.5">
-                                    <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">${group.subject}</span>
-                                    ${typeBadge}
-                                    <span class="text-[9px] font-medium text-slate-400">•</span>
-                                    <span class="text-[9px] font-medium ${isAllDone ? 'text-green-600 dark:text-green-400' : 'text-slate-500 dark:text-slate-400'}">${completedCount}/${totalCount} Done</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="deleteGroup('${escapeQuote(group.name)}'); event.stopPropagation();" class="text-slate-300 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100" title="Delete Chapter">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}"></i>
-                        </div>
-                    </div>
-                `;
-                
-                let bodyHtml = '';
-                if (isExpanded) {
-                    const taskListHtml = group.tasks.map(t => createTaskElementHTML(t, true)).join('');
-                    bodyHtml = `
-                        <div class="border-t ${groupBorder} p-2 pl-4 bg-white/50 dark:bg-slate-900/50 animate-in fade-in slide-in-from-top-1 duration-200">
-                            ${taskListHtml}
-                        </div>
-                    `;
-                }
-                groupContainer.innerHTML = headerHtml + bodyHtml;
-                list.appendChild(groupContainer);
-            });
+    // --- 4. RENDER "READY" CARDS (Smart Grouping) ---
+    if(readyTests.length > 0) {
+        // Helper to generate a single card HTML
+        const generateCard = (test, isGrouped = false) => {
+            const subSummary = test.subs.slice(0, 3).join(', ') + (test.subs.length > 3 ? '...' : '');
+            const safeTestName = test.name.replace(/'/g, "\\'");
             
-            if(window.lucide) lucide.createIcons({ root: list });
+            return `
+            <div class="${isGrouped ? 'mb-3 last:mb-0' : 'mb-6'} bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-5 text-white shadow-lg shadow-emerald-500/20 relative overflow-hidden group animate-in slide-in-from-top-2 fade-in duration-300">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="award" class="w-24 h-24 rotate-12"></i></div>
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-white border border-white/10">Unlocked</span>
+                            <h3 class="text-xl font-bold text-white tracking-tight mt-1">${test.name}</h3>
+                            <p class="text-xs text-emerald-100 font-medium">Topic: ${test.topic}</p>
+                        </div>
+                        <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm shadow-sm animate-pulse"><i data-lucide="unlock" class="w-6 h-6 text-white"></i></div>
+                    </div>
+                    <div class="bg-black/10 rounded-lg p-2 mb-4">
+                        <p class="text-[10px] uppercase font-bold text-emerald-200 mb-1">Includes</p>
+                        <p class="text-xs text-white/90 font-medium truncate">${subSummary}</p>
+                    </div>
+                    <button onclick="confetti({particleCount: 150, spread: 60, origin: { y: 0.7 }}); toggleTestAttempt('${safeTestName}'); renderAll();" class="w-full bg-white text-emerald-700 py-3 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i> Attempt & Mark Done
+                    </button>
+                </div>
+            </div>`;
+        };
+
+        const bundleId = `unlock-bundle-${Date.now()}`;
+        
+        const finalHtml = `
+        <div class="mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-1 shadow-xl shadow-indigo-500/20 animate-in slide-in-from-top-2 fade-in duration-300 cursor-pointer select-none group" onclick="const el = document.getElementById('${bundleId}'); el.classList.toggle('hidden'); this.querySelector('.arrow-icon').classList.toggle('rotate-180');">
+            <div class="bg-white/10 backdrop-blur-md p-4 rounded-lg flex justify-between items-center border border-white/10 hover:bg-white/20 transition-all">
+                <div class="flex items-center gap-4">
+                    <div class="bg-white p-2.5 rounded-xl text-indigo-600 shadow-sm relative">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                        <div class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-indigo-600">
+                            ${readyTests.length}
+                        </div>
+                    </div>
+                    <div class="text-white">
+                        <h3 class="font-bold text-lg leading-tight">Tests Ready!</h3>
+                        <p class="text-xs text-indigo-100 font-medium opacity-80">Tap to expand stack</p>
+                    </div>
+                </div>
+                <div class="bg-black/20 p-2 rounded-full arrow-icon transition-transform duration-300">
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-white"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div id="${bundleId}" class="hidden pl-2 border-l-2 border-indigo-100 dark:border-indigo-900/30 mb-8 space-y-4">
+            ${readyTests.map(test => generateCard(test, true)).join('')}
+        </div>
+        `;
+
+        list.insertAdjacentHTML('beforeend', finalHtml);
+    }
+
+    // --- 5. STANDARD TASK RENDERING (Your Checklist) ---
+    // If list is empty and no ready tests, show "No focus"
+    if(tasks.length === 0 && readyTests.length === 0) {
+        list.innerHTML = `<div class="h-40 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 text-sm"><i data-lucide="coffee" class="w-8 h-8 mb-2 opacity-50"></i>No focus targets set.</div>`;
+        if(window.lucide) lucide.createIcons({ root: list });        
+        return;
+    }
+
+    const groups = {};
+    const standalone = [];
+    
+    // Group tasks by Chapter
+    tasks.forEach(t => {
+        let chap = t.chapter;
+        if (!chap && t.text.startsWith("Study: ")) {
+            const parts = t.text.replace("Study: ", "").split(" - ");
+            if (parts.length > 1) chap = parts[0];
         }
+        if (chap) {
+            if (!groups[chap]) groups[chap] = { name: chap, tasks: [], subject: t.subject, type: t.type };
+            groups[chap].tasks.push(t);
+        } else standalone.push(t);
+    });
+
+    // Render Standalone Tasks
+    standalone.forEach(t => {
+        const el = document.createElement('div');
+        el.innerHTML = createTaskElementHTML(t, false);
+        list.appendChild(el.firstElementChild);
+    });
+
+    // Render Grouped Tasks
+    Object.values(groups).forEach(group => {
+        const isExpanded = state.expandedFocusGroups ? state.expandedFocusGroups[group.name] : false;
+        const completedCount = group.tasks.filter(t => t.completed).length;
+        const totalCount = group.tasks.length;
+        const isAllDone = totalCount > 0 && completedCount === totalCount;
+        
+        let groupBorder = 'border-slate-200 dark:border-slate-800';
+        let groupBg = 'bg-white dark:bg-slate-900';
+        if(group.type === 'main') { groupBorder = 'border-brand-200 dark:border-brand-900'; groupBg = 'bg-brand-50/30 dark:bg-brand-900/10'; }
+        if(group.type === 'backlog') { groupBorder = 'border-orange-200 dark:border-orange-900'; groupBg = 'bg-orange-50/30 dark:bg-orange-900/10'; }
+        
+        let typeBadge = '';
+        if (group.type === 'main') typeBadge = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300">Exam</span>`;
+        else if (group.type === 'backlog') typeBadge = `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300">Backlog</span>`;
+        
+        const safeGroupName = group.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        const escapeQuote = (str) => str.replace(/'/g, "\\'");
+
+        const groupContainer = document.createElement('div');
+        groupContainer.className = `rounded-xl border ${groupBorder} ${groupBg} overflow-hidden mb-2 transition-all shadow-sm group`;
+        
+        const headerHtml = `
+            <div class="p-3 flex items-center justify-between cursor-pointer hover:bg-opacity-50 transition-colors" onclick="toggleFocusGroup('${escapeQuote(group.name)}')">
+                <div class="flex items-center gap-3">
+                    <div class="p-1.5 rounded-lg ${isAllDone ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300' : 'bg-white dark:bg-slate-800 shadow-sm text-slate-500 dark:text-slate-400'}">
+                        <i data-lucide="${isAllDone ? 'check-circle' : 'book-open'}" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">${safeGroupName}</h4>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-[9px] uppercase font-bold tracking-wider text-slate-500 dark:text-slate-400">${group.subject || 'General'}</span>
+                            ${typeBadge}
+                            <span class="text-[9px] font-medium text-slate-400">•</span>
+                            <span class="text-[9px] font-medium ${isAllDone ? 'text-green-600 dark:text-green-400' : 'text-slate-500 dark:text-slate-400'}">${completedCount}/${totalCount} Done</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="deleteGroup('${escapeQuote(group.name)}'); event.stopPropagation();" class="text-slate-300 hover:text-red-500 transition-colors p-1 opacity-0 group-hover:opacity-100" title="Delete Chapter">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}"></i>
+                </div>
+            </div>
+        `;
+        
+        let bodyHtml = '';
+        if (isExpanded) {
+            const taskListHtml = group.tasks.map(t => createTaskElementHTML(t, true)).join('');
+            bodyHtml = `
+                <div class="border-t ${groupBorder} p-2 pl-4 bg-white/50 dark:bg-slate-900/50 animate-in fade-in slide-in-from-top-1 duration-200">
+                    ${taskListHtml}
+                </div>
+            `;
+        }
+        groupContainer.innerHTML = headerHtml + bodyHtml;
+        list.appendChild(groupContainer);
+    });
+    
+    if(window.lucide) lucide.createIcons({ root: list });
+};
+
 window.renderSyllabus = function(type, searchQuery = '') {
     const container = document.getElementById(type === 'main' ? 'main-syllabus-container' : 'backlog-syllabus-container');
     if(!container) return;
     
     container.innerHTML = '';
-    const rawData = type === 'main' ? state.nextExam.syllabus : backlogPlan.syllabus;
-    
+    // Safety check: if backlogPlan is missing, just use main syllabus or empty list
+const rawData = (type === 'main' || typeof backlogPlan === 'undefined') 
+    ? (state.nextExam ? state.nextExam.syllabus : []) 
+    : backlogPlan.syllabus;
     // --- 4. DEADLINE & PROGRESS LOGIC ---
     if(type === 'backlog') {
         const planStart = backlogPlan.startDate || new Date();
@@ -4662,3 +4457,84 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('auth-modal').classList.remove('lights-on');
     }
 });
+// --- NEW RENDER FUNCTIONS ---
+window.renderOngoing = function() {
+    const today = new Date();
+    const grid = document.getElementById('ongoing-grid');
+    const dateDisplay = document.getElementById('ongoing-date-display');
+    if(!grid) return;
+    
+    dateDisplay.innerText = "Current Focus: " + today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    grid.innerHTML = '';
+
+    const activeTargets = studyPlan.filter(item => {
+        const start = new Date(item.start);
+        const end = new Date(item.end);
+        start.setHours(0,0,0,0); end.setHours(23,59,59,999);
+        const checkDay = new Date(today); checkDay.setHours(12,0,0,0);
+        return checkDay >= start && checkDay <= end;
+    });
+
+    if (activeTargets.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400">No active targets today.</div>`;
+        return;
+    }
+
+    activeTargets.forEach(target => {
+        const card = document.createElement('div');
+        card.className = `relative overflow-hidden rounded-2xl border bg-white dark:bg-slate-900 p-6 transition-all hover:shadow-lg group border-slate-200 dark:border-slate-800`;
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+                <div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl"><i data-lucide="${target.icon}" class="w-6 h-6 text-brand-600"></i></div>
+                <span class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">Ends: ${new Date(target.end).toLocaleDateString(undefined, {month:'short', day:'numeric'})}</span>
+            </div>
+            <h3 class="text-xl font-bold mb-2 dark:text-white">${target.title}</h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">${target.desc}</p>
+        `;
+        grid.appendChild(card);
+    });
+    if(window.lucide) lucide.createIcons({root: grid});
+};
+
+window.renderUpcoming = function() {
+    const today = new Date();
+    const grid = document.getElementById('upcoming-grid');
+    const dateDisplay = document.getElementById('upcoming-date-display');
+    if(!grid) return;
+    
+    dateDisplay.innerText = "Roadmap from: " + today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    grid.innerHTML = '';
+
+    const futureTargets = studyPlan.filter(item => {
+        const start = new Date(item.start);
+        start.setHours(0,0,0,0);
+        return start > today;
+    }).sort((a, b) => new Date(a.start) - new Date(b.start));
+
+    if (futureTargets.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400">No upcoming targets found.</div>`;
+        return;
+    }
+
+    futureTargets.forEach(target => {
+        const diff = new Date(target.start) - today;
+        const daysUntil = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        const card = document.createElement('div');
+        card.className = `group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-md transition-all`;
+        card.innerHTML = `
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <i data-lucide="${target.icon}" class="w-6 h-6 text-slate-500"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white">${target.title}</h3>
+                    <p class="text-xs text-brand-600 font-bold uppercase tracking-wider">Starts in ${daysUntil} Days</p>
+                </div>
+            </div>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">${target.desc}</p>
+            <div class="text-xs font-medium text-slate-400 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg inline-block">Start: ${new Date(target.start).toLocaleDateString()}</div>
+        `;
+        grid.appendChild(card);
+    });
+    if(window.lucide) lucide.createIcons({root: grid});
+};
