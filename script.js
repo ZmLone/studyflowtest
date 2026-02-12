@@ -4553,78 +4553,151 @@ window.renderUpcoming = function() {
 };
 
 /* --- NEW SYLLABUS VIEWER LOGIC --- */
+/* --- NEW ACCORDION SYLLABUS VIEWER --- */
+
+/* --- NEW ACCORDION SYLLABUS VIEWER (FIXED) --- */
 window.openTargetSyllabus = function(targetId) {
     const data = syllabusDatabase[targetId];
     
     if (!data) {
-        showToast("⚠️ Syllabus details not found for this target.", "warning");
+        showToast("⚠️ Syllabus details coming soon!", "warning");
         return;
     }
 
-    // 1. Save current view so "Back" button works
+    // 1. Setup Header
     state.lastView = state.activeView;
+    document.getElementById('detail-title').textContent = data.title;
+    document.getElementById('detail-subtitle').textContent = "Select topics to add to your plan";
 
-    // 2. Populate Header
-    document.getElementById('detail-title').textContent = data.title || "Syllabus Details";
-    document.getElementById('detail-subtitle').textContent = "Detailed Chapter Breakdown";
-
-    // 3. Render Content
     const container = document.getElementById('syllabus-detail-content');
-    container.innerHTML = ''; // Clear previous content
+    container.innerHTML = ''; 
 
-    if (!data.subjects || data.subjects.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-slate-400">No chapters listed yet.</div>`;
-    } else {
-        data.subjects.forEach(subject => {
-            const subjectSection = document.createElement('div');
-            subjectSection.className = "mb-8 animate-in slide-in-from-bottom-4 duration-500";
+    // 2. Render Subjects & Chapters
+    data.subjects.forEach(subject => {
+        // Subject Header
+        let subjectColor = 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20';
+        if (subject.name === 'Physics' || subject.name.includes('Phy')) subjectColor = 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20';
+        if (subject.name === 'Chemistry' || subject.name.includes('Chem')) subjectColor = 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/20';
+        
+        container.innerHTML += `
+            <div class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-950 py-2 mb-2">
+                <span class="px-3 py-1 rounded-lg font-bold text-xs uppercase tracking-wider ${subjectColor}">
+                    ${subject.name}
+                </span>
+            </div>
+        `;
+
+        // Render Chapters
+        subject.chapters.forEach(chap => {
+            const chapterCard = document.createElement('div');
+            chapterCard.className = "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 mb-6 overflow-hidden shadow-sm";
             
-            // Header Color based on Subject
-            let colorClass = "text-slate-800 dark:text-white";
-            let bgClass = "bg-slate-100 dark:bg-slate-800";
-            if(subject.name === 'Physics') { colorClass = "text-blue-600 dark:text-blue-400"; bgClass = "bg-blue-50 dark:bg-blue-900/20"; }
-            else if(subject.name === 'Chemistry') { colorClass = "text-orange-600 dark:text-orange-400"; bgClass = "bg-orange-50 dark:bg-orange-900/20"; }
-            else if(subject.name.includes('Bio') || subject.name === 'Botany' || subject.name === 'Zoology') { colorClass = "text-emerald-600 dark:text-emerald-400"; bgClass = "bg-emerald-50 dark:bg-emerald-900/20"; }
+            // Chapter Title
+            let html = `
+                <div class="p-4 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200">${chap.title}</h3>
+                </div>
+                <div class="divide-y divide-slate-100 dark:divide-slate-800">
+            `;
 
-            let chaptersHtml = '';
-            subject.chapters.forEach(chap => {
-                const testsHtml = chap.tests.map(t => `
-                    <div class="flex items-start gap-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800/50">
-                        <i data-lucide="check-circle-2" class="w-4 h-4 text-slate-300 mt-0.5"></i>
-                        <div>
-                            <div class="text-xs font-bold text-slate-700 dark:text-slate-300">${t.id}</div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">${t.topics}</div>
-                        </div>
-                    </div>
-                `).join('');
+            // Daily Tests (Accordion Items)
+            chap.tests.forEach(test => {
+                const uniqueId = `test-${Math.random().toString(36).substr(2, 9)}`;
+                
+                // ✅ DATA ADAPTER FIX: Handle 'topics' string OR 'subs' array
+                let subTopics = [];
+                if (test.subs && Array.isArray(test.subs)) {
+                    subTopics = test.subs;
+                } else if (test.topics && typeof test.topics === 'string') {
+                    // Split the string by comma and trim whitespace
+                    subTopics = test.topics.split(',').map(s => s.trim());
+                }
 
-                chaptersHtml += `
-                    <div class="mb-4 last:mb-0">
-                        <div class="px-4 py-2 font-bold text-sm text-slate-700 dark:text-slate-200 border-l-4 border-slate-300 dark:border-slate-600 mb-2">
-                            ${chap.title}
+                html += `
+                <div>
+                    <div class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
+                         onclick="document.getElementById('${uniqueId}').classList.toggle('hidden'); this.querySelector('.arrow').classList.toggle('rotate-180');">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold">
+                                ${(test.id.split('-')[1] || 'T').split(' ')[0]}
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">${test.name || test.id}</h4>
+                                <p class="text-[10px] text-slate-400 font-medium">${subTopics.length} Sub-topics</p>
+                            </div>
                         </div>
-                        <div class="grid gap-2 pl-2">
-                            ${testsHtml}
-                        </div>
+                        <i data-lucide="chevron-down" class="arrow w-4 h-4 text-slate-400 transition-transform duration-300"></i>
                     </div>
+
+                    <div id="${uniqueId}" class="hidden bg-slate-50 dark:bg-slate-950/50 p-3 space-y-2 border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-2 duration-200">
+                        ${subTopics.map(sub => {
+                            const taskCheck = `Study: ${chap.title} - ${sub}`;
+                            // Generate unique ID for button to update it later
+                            const btnId = `btn-${btoa(taskCheck).replace(/=/g,'')}`; 
+                            
+                            // Escape single quotes for the function call
+                            const safeTitle = chap.title.replace(/'/g, "\\'");
+                            const safeSub = sub.replace(/'/g, "\\'");
+
+                            return `
+                            <div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                                <span class="text-xs font-medium text-slate-600 dark:text-slate-400 truncate pr-2">${sub}</span>
+                                <button id="${btnId}" onclick="addToFocus('${safeTitle}', '${safeSub}')" 
+                                        class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 transition-all active:scale-90" title="Add to Today">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
                 `;
             });
 
-            subjectSection.innerHTML = `
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="px-3 py-1 rounded-lg font-bold text-xs uppercase tracking-wider ${bgClass} ${colorClass}">
-                        ${subject.name}
-                    </div>
-                    <div class="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
-                </div>
-                <div class="space-y-4">
-                    ${chaptersHtml}
-                </div>
-            `;
-            container.appendChild(subjectSection);
+            html += `</div>`; // End divide-y
+            chapterCard.innerHTML = html;
+            container.appendChild(chapterCard);
         });
+    });
+
+    // 3. Switch View
+    switchView('syllabus');
+};
+
+/* --- LOGIC: ADD TOPIC TO TODAY --- */
+window.addToFocus = function(chapterTitle, subTopic) {
+    const todayKey = formatDateKey(new Date()); // Uses today's date
+    const taskText = `Study: ${chapterTitle} - ${subTopic}`;
+    
+    // 1. Initialize today's list if empty
+    if (!state.tasks[todayKey]) state.tasks[todayKey] = [];
+
+    // 2. Check if already exists
+    const exists = state.tasks[todayKey].some(t => t.text === taskText);
+    if (exists) {
+        showToast("Already in your plan!", "info");
+        return;
     }
 
-    // 4. Switch View
-    switchView('syllabus');
+    // 3. Add the task
+    state.tasks[todayKey].push({
+        id: Date.now(),
+        text: taskText,
+        completed: false,
+        chapter: chapterTitle,
+        type: 'main' // Mark as main exam prep
+    });
+
+    // 4. Save and Notify
+    saveData();
+    showToast(`Added: ${subTopic}`, "success");
+    
+    // 5. Update Button UI visually (Optional immediate feedback)
+    const btn = document.getElementById(`btn-${btoa(taskText).replace(/=/g,'')}`);
+    if(btn) {
+        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i>`;
+        btn.className = "p-2 rounded-lg bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400 cursor-default";
+        btn.onclick = null;
+    }
+    if(window.lucide) lucide.createIcons();
 };
