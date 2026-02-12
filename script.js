@@ -2987,7 +2987,6 @@ renderHeaderPrayerWidget();
     if(window.lucide) lucide.createIcons();
 };
 
-window.renderTasks = renderTasks;
 
 
 window.renderHeader = function() {
@@ -4458,6 +4457,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 // --- NEW RENDER FUNCTIONS ---
+/* REPLACE existing renderOngoing with this: */
 window.renderOngoing = function() {
     const today = new Date();
     const grid = document.getElementById('ongoing-grid');
@@ -4482,7 +4482,10 @@ window.renderOngoing = function() {
 
     activeTargets.forEach(target => {
         const card = document.createElement('div');
-        card.className = `relative overflow-hidden rounded-2xl border bg-white dark:bg-slate-900 p-6 transition-all hover:shadow-lg group border-slate-200 dark:border-slate-800`;
+        // Added onclick event below 👇
+        card.className = `relative overflow-hidden rounded-2xl border bg-white dark:bg-slate-900 p-6 transition-all hover:shadow-lg hover:-translate-y-1 cursor-pointer group border-slate-200 dark:border-slate-800`;
+        card.onclick = () => openTargetSyllabus(target.id); // <--- THIS MAKES IT CLICKABLE
+        
         card.innerHTML = `
             <div class="flex justify-between items-start mb-4">
                 <div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl"><i data-lucide="${target.icon}" class="w-6 h-6 text-brand-600"></i></div>
@@ -4490,12 +4493,16 @@ window.renderOngoing = function() {
             </div>
             <h3 class="text-xl font-bold mb-2 dark:text-white">${target.title}</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400">${target.desc}</p>
+            <div class="mt-4 flex items-center text-xs font-bold text-brand-600 dark:text-brand-400">
+                View Syllabus <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+            </div>
         `;
         grid.appendChild(card);
     });
     if(window.lucide) lucide.createIcons({root: grid});
 };
 
+/* REPLACE existing renderUpcoming with this: */
 window.renderUpcoming = function() {
     const today = new Date();
     const grid = document.getElementById('upcoming-grid');
@@ -4520,7 +4527,10 @@ window.renderUpcoming = function() {
         const diff = new Date(target.start) - today;
         const daysUntil = Math.ceil(diff / (1000 * 60 * 60 * 24));
         const card = document.createElement('div');
-        card.className = `group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-md transition-all`;
+        // Added onclick event below 👇
+        card.className = `group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-md hover:-translate-y-1 cursor-pointer transition-all`;
+        card.onclick = () => openTargetSyllabus(target.id); // <--- THIS MAKES IT CLICKABLE
+
         card.innerHTML = `
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
@@ -4532,9 +4542,89 @@ window.renderUpcoming = function() {
                 </div>
             </div>
             <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">${target.desc}</p>
-            <div class="text-xs font-medium text-slate-400 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg inline-block">Start: ${new Date(target.start).toLocaleDateString()}</div>
+            <div class="flex justify-between items-center">
+                <div class="text-xs font-medium text-slate-400 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg inline-block">Start: ${new Date(target.start).toLocaleDateString()}</div>
+                <div class="text-xs font-bold text-slate-400 group-hover:text-brand-500 transition-colors flex items-center">Details <i data-lucide="arrow-right" class="w-3 h-3 ml-1"></i></div>
+            </div>
         `;
         grid.appendChild(card);
     });
     if(window.lucide) lucide.createIcons({root: grid});
+};
+
+/* --- NEW SYLLABUS VIEWER LOGIC --- */
+window.openTargetSyllabus = function(targetId) {
+    const data = syllabusDatabase[targetId];
+    
+    if (!data) {
+        showToast("⚠️ Syllabus details not found for this target.", "warning");
+        return;
+    }
+
+    // 1. Save current view so "Back" button works
+    state.lastView = state.activeView;
+
+    // 2. Populate Header
+    document.getElementById('detail-title').textContent = data.title || "Syllabus Details";
+    document.getElementById('detail-subtitle').textContent = "Detailed Chapter Breakdown";
+
+    // 3. Render Content
+    const container = document.getElementById('syllabus-detail-content');
+    container.innerHTML = ''; // Clear previous content
+
+    if (!data.subjects || data.subjects.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-slate-400">No chapters listed yet.</div>`;
+    } else {
+        data.subjects.forEach(subject => {
+            const subjectSection = document.createElement('div');
+            subjectSection.className = "mb-8 animate-in slide-in-from-bottom-4 duration-500";
+            
+            // Header Color based on Subject
+            let colorClass = "text-slate-800 dark:text-white";
+            let bgClass = "bg-slate-100 dark:bg-slate-800";
+            if(subject.name === 'Physics') { colorClass = "text-blue-600 dark:text-blue-400"; bgClass = "bg-blue-50 dark:bg-blue-900/20"; }
+            else if(subject.name === 'Chemistry') { colorClass = "text-orange-600 dark:text-orange-400"; bgClass = "bg-orange-50 dark:bg-orange-900/20"; }
+            else if(subject.name.includes('Bio') || subject.name === 'Botany' || subject.name === 'Zoology') { colorClass = "text-emerald-600 dark:text-emerald-400"; bgClass = "bg-emerald-50 dark:bg-emerald-900/20"; }
+
+            let chaptersHtml = '';
+            subject.chapters.forEach(chap => {
+                const testsHtml = chap.tests.map(t => `
+                    <div class="flex items-start gap-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800/50">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-slate-300 mt-0.5"></i>
+                        <div>
+                            <div class="text-xs font-bold text-slate-700 dark:text-slate-300">${t.id}</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">${t.topics}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                chaptersHtml += `
+                    <div class="mb-4 last:mb-0">
+                        <div class="px-4 py-2 font-bold text-sm text-slate-700 dark:text-slate-200 border-l-4 border-slate-300 dark:border-slate-600 mb-2">
+                            ${chap.title}
+                        </div>
+                        <div class="grid gap-2 pl-2">
+                            ${testsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            subjectSection.innerHTML = `
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="px-3 py-1 rounded-lg font-bold text-xs uppercase tracking-wider ${bgClass} ${colorClass}">
+                        ${subject.name}
+                    </div>
+                    <div class="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
+                </div>
+                <div class="space-y-4">
+                    ${chaptersHtml}
+                </div>
+            `;
+            container.appendChild(subjectSection);
+        });
+    }
+
+    // 4. Switch View
+    switchView('syllabus');
 };

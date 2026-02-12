@@ -309,7 +309,8 @@ body.loaded {
 /* ✅ FORCE GLOBAL SCROLLING: Updated for New Views */
 #view-overview, 
 #view-ongoing, 
-#view-upcoming, 
+#view-upcoming,
+#view-syllabus,
 #view-mistakes, 
 #view-leaderboard, 
 #view-namaz, 
@@ -321,7 +322,8 @@ body.loaded {
 
 #view-overview:not(.hidden), 
 #view-ongoing:not(.hidden), 
-#view-upcoming:not(.hidden), 
+#view-upcoming:not(.hidden),
+#view-syllabus:not(.hidden),
 #view-mistakes:not(.hidden), 
 #view-leaderboard:not(.hidden), 
 #view-namaz:not(.hidden), 
