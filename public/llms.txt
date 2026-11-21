@@ -1,0 +1,12 @@
+# PromptBill (https://promptbill.online)
+
+> LLM Leaderboard, AI API Pricing Calculator, LLM Selector, Token Counter, Deals & Methodology for November 2026.
+
+## Indexed Routes
+- https://promptbill.online/
+- https://promptbill.online/pricing
+- https://promptbill.online/tools/llm-selector
+- https://promptbill.online/tools/token-counter
+- https://promptbill.online/deals
+- https://promptbill.online/methodology
+- https://promptbill.online/advertise

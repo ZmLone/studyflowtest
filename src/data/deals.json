@@ -1,0 +1,42 @@
+[
+  {
+    "id": "deal-pro-pass",
+    "badge": "FEATURED DEAL",
+    "title": "PromptBill Pro Lifetime Pass ($9)",
+    "provider": "Dodo Payments",
+    "savings": "One-time payment \u00b7 No subscription",
+    "description": "Unlock unlimited scenario exports, custom routing sheets, and multi-model cost comparisons with instant license delivery.",
+    "ctaLabel": "Get Pro Pass ($9)",
+    "useEnvCheckout": true
+  },
+  {
+    "id": "deal-batch-api",
+    "badge": "50% API DISCOUNT",
+    "title": "Asynchronous Batch API Savings (Up to 50% Off)",
+    "provider": "OpenAI \u00b7 Anthropic \u00b7 Gemini",
+    "savings": "Save 50% on non-realtime jobs",
+    "description": "Ideal for overnight evaluations, bulk embeddings, dataset labeling, and scheduled reports where 24-hour turnaround is acceptable.",
+    "ctaLabel": "Calculate Batch Savings",
+    "targetPath": "/pricing"
+  },
+  {
+    "id": "deal-prompt-caching",
+    "badge": "UP TO 90%\u201395% CACHE OFF",
+    "title": "Prompt Caching for System Prompts & RAG Context",
+    "provider": "Multi-Provider",
+    "savings": "Cuts repeated input token bills",
+    "description": "Reuse static instructions, documentation chunks, and few-shot examples across requests to slash input token spend.",
+    "ctaLabel": "Model Cache Hit Rate",
+    "targetPath": "/pricing"
+  },
+  {
+    "id": "deal-model-routing",
+    "badge": "SMART ROUTING",
+    "title": "Tiered Routing: Economy Model + Flagship Escalation",
+    "provider": "PromptBill Selector",
+    "savings": "Cut routine call cost by 60%+",
+    "description": "Handle simple queries and formatting on low-cost models while escalating hard reasoning prompts to flagship models.",
+    "ctaLabel": "Open LLM Selector",
+    "targetPath": "/tools/llm-selector"
+  }
+]

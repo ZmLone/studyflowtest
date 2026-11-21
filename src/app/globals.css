@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}
